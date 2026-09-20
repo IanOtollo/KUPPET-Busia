@@ -427,7 +427,7 @@ export default function RegisterPage() {
                   <p className="text-[11.5px] text-[var(--muted)] mb-2">
                     Click to select all subjects you teach:
                   </p>
-                  <div className="flex flex-wrap gap-1.5 p-3 bg-slate-50 border border-slate-200 rounded-lg max-h-36 overflow-y-auto">
+                  <div className="flex flex-wrap gap-2 p-3 bg-slate-50 border border-slate-200 rounded-lg">
                     {TEACHING_SUBJECTS.map((sub) => {
                       const isSelected = selectedSubjects.includes(sub);
                       return (
@@ -451,7 +451,8 @@ export default function RegisterPage() {
 
                 <Button
                   type="button"
-                  className="w-full mt-6 bg-[var(--navy)] text-white hover:bg-[var(--navy-light)]"
+                  variant="primary"
+                  className="w-full mt-6"
                   onClick={onNextStep}
                 >
                   <span>Continue to Security</span>
@@ -563,8 +564,9 @@ export default function RegisterPage() {
                   </Button>
                   <Button
                     type="submit"
+                    variant="primary"
                     disabled={isSubmitting}
-                    className="w-2/3 bg-[var(--navy)] text-white hover:bg-[var(--navy-light)]"
+                    className="w-2/3"
                   >
                     {isSubmitting ? "Creating Account..." : "Complete Registration"}
                   </Button>
