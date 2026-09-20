@@ -181,7 +181,13 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--canvas)] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[var(--canvas)] py-12 px-4 sm:px-6 lg:px-8 relative">
+      <div className="absolute top-4 left-4 sm:top-8 sm:left-8">
+        <Link href="/" className="text-[13px] text-[var(--muted)] hover:text-[var(--navy)] flex items-center gap-1.5 transition-colors font-medium">
+          <ArrowLeft className="h-4 w-4" /> Back to Home
+        </Link>
+      </div>
+
       <div className="sm:mx-auto sm:w-full sm:max-w-xl">
         <Link href="/" className="flex items-center justify-center gap-2 mb-6">
           <Image src="/logo.png" alt="KUPPET Logo" width={60} height={60} className="rounded-[var(--r-md)] bg-white object-contain p-1 select-none shadow-sm" />
@@ -566,6 +572,15 @@ export default function RegisterPage() {
               </>
             )}
           </form>
+        </div>
+        
+        <div className="mt-6 text-center">
+          <p className="text-[13px] text-[var(--muted)]">
+            Already have an account?{" "}
+            <Link href="/login" className="font-medium text-[var(--navy)] hover:underline">
+              Sign in here
+            </Link>
+          </p>
         </div>
       </div>
     </div>

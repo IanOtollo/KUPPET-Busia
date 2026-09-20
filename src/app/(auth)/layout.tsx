@@ -67,7 +67,12 @@ export default function AuthLayout({
       </div>
 
       {/* Right Form Panel */}
-      <div className="flex items-center justify-center p-4 sm:p-6 lg:p-12 overflow-y-auto">
+      <div className="flex items-center justify-center p-4 sm:p-6 lg:p-12 overflow-y-auto relative">
+        <div className="absolute top-4 right-4 sm:top-8 sm:right-8 lg:hidden">
+           <Link href="/" className="text-[13px] text-[var(--muted)] hover:text-[var(--ink)] flex items-center gap-1.5 transition-colors font-medium">
+             Back to Home
+           </Link>
+        </div>
         <div className="w-full max-w-[420px] bg-[var(--surface)] lg:border lg:border-[var(--line)] lg:rounded-[var(--r-lg)] p-6 sm:p-8 lg:shadow-[var(--shadow-hair)]">
           {children}
         </div>
