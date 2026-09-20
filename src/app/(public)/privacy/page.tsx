@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -8,9 +9,7 @@ export default function PrivacyPage() {
       <header className="border-b border-[var(--line)] bg-[var(--surface)]">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-10 h-18 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-[var(--r-md)] bg-[var(--union)] flex items-center justify-center text-white font-serif font-bold text-lg">
-              K
-            </div>
+            <Image src="/logo.png" alt="KUPPET Logo" width={36} height={36} className="rounded-[var(--r-md)] bg-white object-contain p-0.5 shrink-0 shadow-sm border border-black/5" />
             <span className="text-[13px] font-semibold tracking-[0.08em] text-[var(--ink)] uppercase">
               KUPPET BUSIA
             </span>

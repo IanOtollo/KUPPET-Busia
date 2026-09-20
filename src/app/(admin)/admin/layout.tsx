@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
@@ -64,9 +65,7 @@ export default function AdminLayout({
           {/* Logo Lockup */}
           <div className="h-[72px] px-6 flex items-center justify-between border-b border-white/10">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-[var(--r-md)] bg-white text-[var(--ink)] flex items-center justify-center font-serif font-bold text-[18px]">
-                K
-              </div>
+              <Image src="/logo.png" alt="KUPPET Logo" width={36} height={36} className="rounded-[var(--r-md)] bg-white object-contain p-0.5 shrink-0" />
               <div>
                 <span className="block text-[13px] font-semibold tracking-[0.08em] text-white uppercase">
                   KUPPET BUSIA
