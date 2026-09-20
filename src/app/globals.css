@@ -1,0 +1,124 @@
+@import "tailwindcss";
+
+@theme {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-sunk: var(--surface-sunk);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+
+  --color-ink: var(--ink);
+  --color-ink-body: var(--ink-body);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-inverse: var(--ink-inverse);
+
+  --color-union: var(--union);
+  --color-union-hover: var(--union-hover);
+  --color-union-soft: var(--union-soft);
+
+  --color-brass: var(--brass);
+  --color-brass-soft: var(--brass-soft);
+
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+  --radius-full: 999px;
+
+  --font-serif: var(--font-source-serif), Georgia, serif;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-mono: var(--font-ibm-plex-mono), monospace;
+}
+
+:root {
+  /* Surfaces */
+  --canvas:        #F7F6F3;  /* page background — warm paper */
+  --surface:       #FFFFFF;  /* cards, panels, inputs */
+  --surface-sunk:  #F1EFEA;  /* table header, disabled input, code block */
+  --line:          #E3E0D9;  /* 1px borders, dividers */
+  --line-strong:   #CFCBC2;  /* input borders, table rules */
+
+  /* Ink */
+  --ink:           #101A24;  /* headings, primary text */
+  --ink-body:      #2C3A47;  /* body copy */
+  --ink-muted:     #66727F;  /* helper text, meta, placeholders */
+  --ink-inverse:   #FFFFFF;
+
+  /* Brand */
+  --union:         #1F3D5C;  /* primary — buttons, active nav, links */
+  --union-hover:   #17304A;
+  --union-soft:    #E8EDF3;  /* active nav background, info panel */
+  --brass:         #A9803E;  /* accent — eyebrow rules, badges, focus underline. SPARING. */
+  --brass-soft:    #F4EDE1;
+
+  /* Semantic */
+  --success:       #2E6F4E;  --success-soft: #E7F1EB;
+  --warning:       #8A6212;  --warning-soft: #F7EEDC;
+  --danger:        #8C2F2F;  --danger-soft:  #F6E8E8;
+  --info:          #29506F;  --info-soft:    #E8EEF4;
+
+  /* Elevation */
+  --shadow-hair:  0 1px 2px rgba(16, 26, 36, 0.06);
+  --shadow-panel: 0 4px 16px rgba(16, 26, 36, 0.08);
+
+  /* Radii */
+  --r-sm: 4px;  --r-md: 6px;  --r-lg: 10px;  --r-xl: 14px;  --r-full: 999px;
+}
+
+* {
+  border-color: var(--line);
+}
+
+body {
+  background-color: var(--canvas);
+  color: var(--ink-body);
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Eye-brow typography token */
+.eyebrow {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 11.5px;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--brass);
+}
+
+/* Monospace reference token */
+.mono-ref {
+  font-family: var(--font-ibm-plex-mono), monospace;
+  font-size: 13px;
+  line-height: 1.4;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+/* Focus visible styles */
+*:focus-visible {
+  outline: 2px solid var(--union);
+  outline-offset: 2px;
+}
