@@ -27,7 +27,7 @@ import {
   GENDERS,
 } from "@/lib/constants";
 import { useMutation } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
+import { api } from "../../../convex/_generated/api";
 import { toast } from "sonner";
 import { Eye, EyeOff, ArrowLeft, ArrowRight, ShieldCheck, BookOpen, Check } from "lucide-react";
 
