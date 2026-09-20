@@ -181,6 +181,9 @@ export const listMembers = query({
     subCounty: v.optional(subCountyValidator),
   },
   handler: async (ctx: QueryCtx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+
     await requireRole(ctx, ["admin", "superadmin"]);
 
     let members = await ctx.db.query("users").collect();
