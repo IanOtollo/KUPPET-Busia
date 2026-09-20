@@ -151,7 +151,7 @@ export default function AdminMembersPage() {
       ) : (
         <DataTable
           columns={columns}
-          data={members}
+          data={members || []}
           keyExtractor={(item) => item._id}
         />
       )}

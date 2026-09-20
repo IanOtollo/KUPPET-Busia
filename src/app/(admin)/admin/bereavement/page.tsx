@@ -229,7 +229,7 @@ export default function AdminBereavementPage() {
       {cases !== undefined && (
         <DataTable
           columns={columns}
-          data={cases}
+          data={cases || []}
           keyExtractor={(item) => item._id}
           emptyMessage="No bereavement cases match the selected filter criteria."
           onRowClick={(item) => router.push(`/admin/bereavement/${item._id}`)}

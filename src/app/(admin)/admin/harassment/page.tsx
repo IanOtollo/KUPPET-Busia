@@ -174,7 +174,7 @@ export default function AdminHarassmentPage() {
       {reports !== undefined && (
         <DataTable
           columns={columns}
-          data={reports}
+          data={reports || []}
           keyExtractor={(item) => item._id}
           emptyMessage="No harassment reports match the selected criteria."
           onRowClick={(item) => router.push(`/admin/harassment/${item._id}`)}

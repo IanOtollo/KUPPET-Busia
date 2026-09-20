@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -183,9 +184,7 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-[var(--canvas)] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-xl">
         <Link href="/" className="flex items-center justify-center gap-2 mb-6">
-          <div className="w-10 h-10 rounded-[var(--r-md)] bg-[var(--navy)] text-white flex items-center justify-center font-serif font-bold text-xl">
-            K
-          </div>
+          <Image src="/logo.png" alt="KUPPET Logo" width={40} height={40} className="rounded-[var(--r-md)] bg-white object-contain p-1 select-none shadow-sm" />
           <span className="font-serif font-bold text-xl text-[var(--navy)] tracking-tight">
             KUPPET BUSIA
           </span>

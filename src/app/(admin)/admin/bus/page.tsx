@@ -173,7 +173,7 @@ export default function AdminBusPage() {
       <PageHeader
         eyebrow="FLEET & ASSET MANAGEMENT"
         title="Union Bus Reservations Queue"
-        lead="Manage member 62-seater bus booking requests, inspect date conflicts, assign official drivers, and record fuel contributions."
+        lead="Manage member bus booking requests, inspect date conflicts, assign official drivers, and record fuel contributions."
         breadcrumbs={[
           { label: "Admin Operations", href: "/admin" },
           { label: "Bus Reservations" },
@@ -235,7 +235,7 @@ export default function AdminBusPage() {
           ) : (
             <DataTable
               columns={columns}
-              data={bookings}
+              data={bookings || []}
               keyExtractor={(item) => item._id}
               emptyMessage="No bus booking requests match the current filter."
               onRowClick={(item) => handleOpenAction(item)}

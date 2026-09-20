@@ -72,7 +72,7 @@ export default function MemberBusPage() {
       <PageHeader
         eyebrow="UNION SERVICES"
         title="Branch Bus Reservations"
-        lead="Reserve the KUPPET Busia 62-seater branch bus for academic trips, union meetings, sports events, or funeral transportation."
+        lead="Reserve the KUPPET Busia bus branch bus for academic trips, union meetings, sports events, or funeral transportation."
         breadcrumbs={[
           { label: "Dashboard", href: "/dashboard" },
           { label: "Union Bus" },

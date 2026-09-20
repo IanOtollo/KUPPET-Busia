@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Check } from "lucide-react";
 
 export default function AuthLayout({
@@ -12,9 +13,7 @@ export default function AuthLayout({
       <div className="bg-[var(--union)] text-white flex flex-col justify-between p-6 sm:p-8 lg:p-16 h-auto min-h-[128px] lg:min-h-screen lg:h-screen lg:sticky lg:top-0">
         {/* Top brand header */}
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-[var(--r-md)] bg-white text-[var(--union)] flex items-center justify-center font-serif font-bold text-xl select-none">
-            K
-          </div>
+          <Image src="/logo.png" alt="KUPPET Logo" width={44} height={44} className="rounded-[var(--r-md)] bg-white object-contain p-1 select-none shrink-0" />
           <div>
             <Link
               href="/"
@@ -56,7 +55,7 @@ export default function AuthLayout({
               <span className="w-5 h-5 rounded-full bg-white/15 flex items-center justify-center text-white shrink-0">
                 <Check className="h-3.5 w-3.5 stroke-[2.5]" />
               </span>
-              <span>Transparent union 62-seater bus reservation</span>
+              <span>Transparent union bus reservation</span>
             </li>
           </ul>
         </div>

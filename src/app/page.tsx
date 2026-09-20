@@ -97,7 +97,7 @@ export default function HomePage() {
                   Union Bus Booking
                 </h3>
                 <p className="text-[14px] leading-relaxed text-[var(--ink-muted)]">
-                  Transparent 62-seater bus reservation system with live availability calendars and zero double-booking.
+                  Transparent bus reservation system with live availability calendars and zero double-booking.
                 </p>
               </div>
 
