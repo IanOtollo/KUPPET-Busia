@@ -94,7 +94,7 @@ export default function MemberLayout({
         <div>
           {/* Logo block 72px */}
           <div className="h-[72px] px-5 flex items-center gap-3 border-b border-[var(--line)]">
-            <Image src="/logo.png" alt="KUPPET Logo" width={36} height={36} className="rounded-[var(--r-md)] bg-white object-contain p-0.5 shrink-0 shadow-sm border border-black/5" />
+            <Image src="/logo.png" alt="KUPPET Logo" width={52} height={52} className="rounded-[var(--r-md)] bg-white object-contain p-0.5 shrink-0 shadow-sm border border-black/5" />
             <div>
               <span className="block text-[13px] font-semibold tracking-[0.08em] text-[var(--ink)] uppercase">
                 KUPPET BUSIA
