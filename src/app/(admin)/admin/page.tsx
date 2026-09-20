@@ -27,10 +27,10 @@ export default function AdminDashboardPage() {
   const busBookings = useQuery(api.busBookings.listAllAdmin, {});
   const auditLogs = useQuery(api.auditLog.listRecentAdmin, { limit: 6 });
 
-  const pendingMembers = members?.filter((m: { status: string }) => m.status === "pending_approval" || m.status === "pending_verification") || [];
-  const pendingBereavement = bereavementCases?.filter((c: { status: string }) => c.status === "submitted" || c.status === "under_review") || [];
-  const pendingHarassment = harassmentReports?.filter((r: { status: string }) => r.status === "submitted" || r.status === "acknowledged") || [];
-  const pendingBus = busBookings?.filter((b: { status: string }) => b.status === "requested" || b.status === "under_review") || [];
+  const pendingMembers = members?.filter((m: { status: string }) => m.status === "pending_approval" || m.status === "pending_verification") ?? [];
+  const pendingBereavement = bereavementCases?.filter((c: { status: string }) => c.status === "submitted" || c.status === "under_review") ?? [];
+  const pendingHarassment = harassmentReports?.filter((r: { status: string }) => r.status === "submitted" || r.status === "acknowledged") ?? [];
+  const pendingBus = busBookings?.filter((b: { status: string }) => b.status === "requested" || b.status === "under_review") ?? [];
 
   // Needs attention: submitted > 48h ago
   const now = Date.now();

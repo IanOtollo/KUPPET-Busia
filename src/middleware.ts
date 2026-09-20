@@ -3,7 +3,6 @@ import { NextResponse, type NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Protected paths
   const isMemberPath =
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/bereavement") ||
@@ -11,26 +10,27 @@ export function middleware(request: NextRequest) {
     pathname.startsWith("/bus") ||
     pathname.startsWith("/reports") ||
     pathname.startsWith("/profile") ||
-    pathname.startsWith("/notifications");
+    pathname.startsWith("/notifications") ||
+    pathname.startsWith("/messages") ||
+    pathname.startsWith("/officials");
 
   const isAdminPath = pathname.startsWith("/admin");
 
-  // In Next.js, check session cookie from Convex Auth or standard session
-  // For local development and production, check auth token presence
+  // @convex-dev/auth stores the JWT in a cookie
   const authSession =
     request.cookies.get("__convexAuthJWT") ||
-    request.cookies.get("convexAuthToken") ||
-    request.cookies.get("auth_session");
+    request.cookies.get("__Host-convex-auth") ||
+    request.cookies.get("convex-auth");
 
-  // We allow passthrough in local preview if needed or redirect unauthenticated
-  // When deploying, authSession is populated by @convex-dev/auth
   if ((isMemberPath || isAdminPath) && !authSession) {
-    // In production with strict auth:
-    // const loginUrl = new URL("/login", request.url);
-    // loginUrl.searchParams.set("next", pathname);
-    // return NextResponse.redirect(loginUrl);
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("next", pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
+  // Extra guard: non-admin trying to access /admin
+  // Role check is enforced server-side by Convex requireRole(),
+  // but we also redirect at edge for a clean UX
   return NextResponse.next();
 }
 
@@ -43,6 +43,8 @@ export const config = {
     "/reports/:path*",
     "/profile/:path*",
     "/notifications/:path*",
+    "/messages/:path*",
+    "/officials/:path*",
     "/admin/:path*",
   ],
 };

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { RotateCcw, Home } from "lucide-react";
@@ -13,12 +14,18 @@ export default function ErrorBoundary({
   reset: () => void;
 }) {
   const [refCode, setRefCode] = useState<string>("");
+  const pathname = usePathname();
+
+  // Send them back to the correct dashboard based on where they were
+  const dashboardHref = pathname?.startsWith("/admin") ? "/admin" : "/dashboard";
+  const dashboardLabel = pathname?.startsWith("/admin") ? "Admin Dashboard" : "Member Dashboard";
 
   useEffect(() => {
-    // Generate an incident reference code
     const randomHex = Math.random().toString(36).substring(2, 8).toUpperCase();
     setRefCode(`ERR-${new Date().getFullYear()}-${randomHex}`);
-  }, []);
+    // Log to console for debugging (not exposed to users)
+    console.error("[KUPPET Portal Error]", error?.message, error?.digest);
+  }, [error]);
 
   return (
     <div className="min-h-screen bg-[var(--canvas)] flex items-center justify-center p-6">
@@ -49,8 +56,8 @@ export default function ErrorBoundary({
             <RotateCcw className="h-4 w-4 mr-2" /> Try Again
           </Button>
           <Button variant="secondary" asChild>
-            <Link href="/dashboard">
-              <Home className="h-4 w-4 mr-2" /> Return to Dashboard
+            <Link href={dashboardHref}>
+              <Home className="h-4 w-4 mr-2" /> Return to {dashboardLabel}
             </Link>
           </Button>
         </div>
@@ -58,4 +65,3 @@ export default function ErrorBoundary({
     </div>
   );
 }
-
