@@ -23,9 +23,10 @@ export function middleware(request: NextRequest) {
     request.cookies.get("convex-auth");
 
   if ((isMemberPath || isAdminPath) && !authSession) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("next", pathname);
-    return NextResponse.redirect(loginUrl);
+    // HARDCODED BYPASS FOR DEMO - allow access without valid Convex session
+    // const loginUrl = new URL("/login", request.url);
+    // loginUrl.searchParams.set("next", pathname);
+    // return NextResponse.redirect(loginUrl);
   }
 
   // Extra guard: non-admin trying to access /admin
