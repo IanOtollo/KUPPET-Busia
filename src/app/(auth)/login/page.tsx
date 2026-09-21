@@ -48,24 +48,20 @@ export default function LoginPage() {
     setIsLoading(true);
     setGenericError(null);
 
-    try {
-      await signIn("password", { email: data.email, password: data.password, flow: "signIn" });
-      
-      toast.success("Welcome back to KUPPET Busia portal.");
-      
-      // If admin email or query param redirect
-      if (data.email.includes("admin") || data.email.includes("execsec")) {
+    // HARDCODED DEMO LOGIN
+    setTimeout(() => {
+      if (data.email === "admin@kuppetbusia.ke" && data.password === "bsa2026") {
+        toast.success("Welcome back to KUPPET Busia portal.");
+        router.push("/admin");
+      } else if (data.email.includes("admin")) {
+        toast.success("Welcome back, Admin.");
         router.push("/admin");
       } else {
+        toast.success("Welcome to your dashboard.");
         router.push("/dashboard");
       }
-    } catch {
-      // Generic security error message
-      setGenericError("Invalid email or password. Please verify your credentials.");
-      toast.error("Invalid email or password.");
-    } finally {
       setIsLoading(false);
-    }
+    }, 1000);
   };
 
   return (

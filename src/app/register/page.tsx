@@ -435,13 +435,13 @@ export default function RegisterPage() {
                           key={sub}
                           type="button"
                           onClick={() => toggleSubject(sub)}
-                          className={`text-xs px-2.5 py-1 rounded-full border transition-colors flex items-center gap-1 cursor-pointer ${
+                          className={`text-xs px-3 py-1.5 rounded-full border-2 transition-all flex items-center gap-1.5 cursor-pointer font-medium ${
                             isSelected
-                              ? "bg-[var(--navy)] text-white border-[var(--navy)] font-semibold"
-                              : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100"
+                              ? "bg-[#1F3D5C] text-white border-[#1F3D5C] shadow-sm"
+                              : "bg-white text-slate-600 border-slate-300 hover:border-[#1F3D5C] hover:text-[#1F3D5C]"
                           }`}
                         >
-                          {isSelected && <Check className="h-3 w-3" />}
+                          {isSelected && <Check className="h-3 w-3 text-white shrink-0" />}
                           {sub}
                         </button>
                       );
