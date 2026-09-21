@@ -122,3 +122,25 @@ body {
   outline: 2px solid var(--union);
   outline-offset: 2px;
 }
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line-strong, #CFCBC2);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-muted, #706F6C);
+}
+
+/* Prevent global horizontal scroll */
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}

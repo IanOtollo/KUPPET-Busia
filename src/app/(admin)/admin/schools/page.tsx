@@ -162,8 +162,8 @@ export default function AdminSchoolsPage() {
       </div>
 
       {/* Filters & Search */}
-      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-white p-4 border border-[var(--line)] rounded-lg shadow-sm">
-        <div className="relative w-full sm:w-80">
+      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white p-4 border border-[var(--line)] rounded-lg shadow-sm">
+        <div className="relative w-full sm:w-80 shrink-0">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-[var(--muted)]" />
           <Input
             placeholder="Search school name or principal..."
@@ -173,12 +173,13 @@ export default function AdminSchoolsPage() {
           />
         </div>
 
-        <div className="flex items-center space-x-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+        <div className="flex items-center space-x-2 w-full overflow-x-auto pb-1 sm:pb-0 scrollbar-thin">
           <span className="text-xs text-[var(--muted)] font-medium mr-1 shrink-0">Sub-County:</span>
           <Button
             variant={selectedSubCounty === "ALL" ? "primary" : "secondary"}
             size="sm"
             onClick={() => setSelectedSubCounty("ALL")}
+            className="shrink-0"
           >
             All ({totalSchools})
           </Button>
