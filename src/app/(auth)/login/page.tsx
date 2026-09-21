@@ -28,8 +28,6 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [genericError, setGenericError] = useState<string | null>(null);
 
-  const { signIn } = useAuthActions();
-
   const {
     register,
     handleSubmit,
