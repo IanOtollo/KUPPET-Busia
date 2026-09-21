@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+import { useAuthActions } from "@convex-dev/auth/react";
 import { Eye, EyeOff, LogIn } from "lucide-react";
 
 const loginSchema = z.object({
@@ -26,6 +27,8 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [genericError, setGenericError] = useState<string | null>(null);
+
+  const { signIn } = useAuthActions();
 
   const {
     register,
@@ -46,8 +49,8 @@ export default function LoginPage() {
     setGenericError(null);
 
     try {
-      // In production, signIn with Password provider handles authentication.
-      // For local testing, we route to dashboard or admin based on user role.
+      await signIn("password", { email: data.email, password: data.password, flow: "signIn" });
+      
       toast.success("Welcome back to KUPPET Busia portal.");
       
       // If admin email or query param redirect
