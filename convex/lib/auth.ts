@@ -11,16 +11,21 @@ type Context = QueryCtx | MutationCtx;
  * Throws UNAUTHENTICATED if not logged in.
  */
 export async function getCurrentUser(ctx: Context): Promise<Doc<"users">> {
-  // HARDCODED DEMO BYPASS: Always return the admin user
-  const user = await ctx.db
-    .query("users")
-    .withIndex("by_email", (q) => q.eq("email", "admin@kuppetbusia.ke"))
-    .first();
+  const userId = await getAuthUserId(ctx);
+
+  if (userId === null) {
+    throw new ConvexError({
+      code: "UNAUTHENTICATED",
+      message: "You must be signed in to continue.",
+    });
+  }
+
+  const user = await ctx.db.get(userId);
 
   if (!user) {
     throw new ConvexError({
       code: "UNAUTHENTICATED",
-      message: "Admin user not found. Database might be unseeded.",
+      message: "Your account could not be found. Please sign in again.",
     });
   }
 

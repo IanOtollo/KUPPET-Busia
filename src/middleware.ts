@@ -16,22 +16,13 @@ export function middleware(request: NextRequest) {
 
   const isAdminPath = pathname.startsWith("/admin");
 
-  // @convex-dev/auth stores the JWT in a cookie
-  const authSession =
-    request.cookies.get("__convexAuthJWT") ||
-    request.cookies.get("__Host-convex-auth") ||
-    request.cookies.get("convex-auth");
+  // NOTE: the Convex auth client stores its tokens in the browser (localStorage),
+  // not in a cookie, so this edge middleware cannot read the session.
+  // Route protection is enforced by the client-side guards in the member/admin
+  // layouts and, authoritatively, by requireUser()/requireRole() in Convex.
+  void isMemberPath;
+  void isAdminPath;
 
-  if ((isMemberPath || isAdminPath) && !authSession) {
-    // HARDCODED BYPASS FOR DEMO - allow access without valid Convex session
-    // const loginUrl = new URL("/login", request.url);
-    // loginUrl.searchParams.set("next", pathname);
-    // return NextResponse.redirect(loginUrl);
-  }
-
-  // Extra guard: non-admin trying to access /admin
-  // Role check is enforced server-side by Convex requireRole(),
-  // but we also redirect at edge for a clean UX
   return NextResponse.next();
 }
 

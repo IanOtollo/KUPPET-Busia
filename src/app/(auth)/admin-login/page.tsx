@@ -11,20 +11,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useAuthActions } from "@convex-dev/auth/react";
-import { useConvex } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
 import { Eye, EyeOff, LogIn } from "lucide-react";
 
-const loginSchema = z.object({
-  tscNumber: z.string().min(1, "Enter your TSC number"),
+const adminLoginSchema = z.object({
+  email: z.string().email("Enter a valid email address"),
   password: z.string().min(1, "Enter your password"),
 });
 
-type LoginFormData = z.infer<typeof loginSchema>;
+type AdminLoginFormData = z.infer<typeof adminLoginSchema>;
 
-export default function LoginPage() {
+export default function AdminLoginPage() {
   const router = useRouter();
-  const convex = useConvex();
   const { signIn } = useAuthActions();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -33,35 +30,26 @@ export default function LoginPage() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: { tscNumber: "", password: "" },
+  } = useForm<AdminLoginFormData>({
+    resolver: zodResolver(adminLoginSchema),
+    defaultValues: { email: "", password: "" },
   });
 
-  const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = async (data: AdminLoginFormData) => {
     setIsLoading(true);
     try {
-      const account = await convex.query(api.users.getEmailByTsc, {
-        tscNumber: data.tscNumber,
-      });
-
-      if (!account) {
-        toast.error("No account found for that TSC number.");
-        return;
-      }
-
       await signIn("password", {
-        email: account.email,
+        email: data.email,
         password: data.password,
         flow: "signIn",
       });
 
-      router.push("/dashboard");
+      router.push("/admin");
     } catch (err: any) {
       const raw = err?.data?.message || err?.message || "";
       toast.error(
         /invalid credentials/i.test(raw)
-          ? "Invalid TSC number or password."
+          ? "Invalid email or password."
           : raw || "Sign in failed. Please try again."
       );
     } finally {
@@ -73,41 +61,33 @@ export default function LoginPage() {
     <div>
       <div className="mb-6">
         <h2 className="font-serif text-[26px] font-semibold text-[var(--ink)] leading-tight">
-          Teacher Sign In
+          Admin &amp; Officials Sign In
         </h2>
         <p className="text-[14px] text-[var(--ink-muted)] mt-1">
-          Use your TSC number and password.
+          Branch administration accounts use an email address.
         </p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
-          <Label htmlFor="tscNumber">TSC Number</Label>
+          <Label htmlFor="email">Email Address</Label>
           <Input
-            id="tscNumber"
-            inputMode="numeric"
-            placeholder="e.g. 456789"
-            autoComplete="username"
-            error={!!errors.tscNumber}
-            {...register("tscNumber")}
+            id="email"
+            type="email"
+            placeholder="name@kuppetbusia.ke"
+            autoComplete="email"
+            error={!!errors.email}
+            {...register("email")}
           />
-          {errors.tscNumber && (
+          {errors.email && (
             <p className="text-[13px] text-[var(--danger)] mt-1">
-              {errors.tscNumber.message}
+              {errors.email.message}
             </p>
           )}
         </div>
 
         <div>
-          <div className="flex items-center justify-between mb-1">
-            <Label htmlFor="password">Password</Label>
-            <Link
-              href="/forgot-password"
-              className="text-[12.5px] text-[var(--union)] hover:underline"
-            >
-              Forgot password?
-            </Link>
-          </div>
+          <Label htmlFor="password">Password</Label>
           <div className="relative">
             <Input
               id="password"
@@ -149,21 +129,12 @@ export default function LoginPage() {
       </form>
 
       <div className="mt-6 pt-6 border-t border-[var(--line)] text-center text-[13.5px] text-[var(--ink-muted)]">
-        New teacher?{" "}
+        Teacher?{" "}
         <Link
-          href="/register"
+          href="/login"
           className="text-[var(--union)] font-medium hover:underline"
         >
-          Create an account
-        </Link>
-      </div>
-
-      <div className="mt-3 text-center">
-        <Link
-          href="/admin-login"
-          className="text-[12.5px] text-[var(--ink-muted)] hover:text-[var(--union)] hover:underline"
-        >
-          Admin &amp; Officials sign in
+          Sign in with your TSC number
         </Link>
       </div>
     </div>

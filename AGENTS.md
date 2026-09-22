@@ -34,20 +34,39 @@ Required for the app to actually function (external service credentials, deliver
 
 Placeholders live in `.env.base44-defaults` (listed FIRST in `env_file`); `/run/base44/app.env` is LAST so real values win.
 
-## Backend setup (must be done on the Convex deployment, not here)
+## Auth model (no hardcoded credentials anywhere)
 
-1. Deploy functions: `npx convex dev` (or `npx convex deploy`).
-2. Seed the database (creates the superadmin + Busia schools):
+- **Teachers** sign in at `/login` with **TSC number + password**. The client resolves
+  TSC -> email via `users.getEmailByTsc`, then calls `signIn("password", { flow: "signIn" })`.
+- **Admin / officials** sign in at `/admin-login` with **email + password** (no TSC needed).
+  Linked from the bottom of the teacher login.
+- Registration (`/register`) calls the `users.registerMember` **action**, which enforces
+  uniqueness of National ID, TSC number, phone and email server-side and then creates the
+  Convex auth credentials + user record. The client signs in afterwards.
+- New teachers are created `status: "active"` so they can sign in immediately (there is no
+  working email-verification step — RESEND is not configured).
+
+### `@convex-dev/auth` gotchas (learned the hard way)
+
+- The Password provider calls `profile` **synchronously**; an `async` profile callback
+  returns a Promise and fails with "Promise {} is not a supported Convex type".
+- The credentials provider runs in an **action** context — there is no `ctx.db`, use
+  `ctx.runQuery`. This is why account creation goes through `users.registerMember`.
+- The Convex auth client stores its tokens in **localStorage, not cookies**, so
+  `src/middleware.ts` cannot read the session. Route protection lives in the member/admin
+  layouts (client-side redirect) and, authoritatively, in `requireUser`/`requireRole`.
+
+## Backend setup (on the Convex deployment, not here)
+
+1. Deploy functions: `npx convex deploy` (the sandbox deploy key works; target is a dev deployment).
+2. Seed reference data (schools + officials):
    ```bash
-   npx convex run seed:seedDatabase '{ "adminEmail": "admin@kuppetbusia.ke", "adminFullName": "Branch Secretariat Admin" }'
+   npx convex run seed:seedDatabase
    ```
-   Until this runs, `convex/lib/auth.ts#getCurrentUser` throws "Admin user not found. Database might be unseeded."
-
-## Demo bypasses (intentional, in the source)
-
-- `convex/lib/auth.ts#getCurrentUser` always returns `admin@kuppetbusia.ke` (hardcoded demo bypass).
-- `src/app/(auth)/login/page.tsx` does a hardcoded client-side login (`admin@kuppetbusia.ke` / `bsa2026` → `/admin`, any email containing "admin" → `/admin`, else → `/dashboard`) — it does not call Convex auth.
-- `src/middleware.ts` auth redirects are commented out.
+3. Create the first superadmin — there are **no default credentials**, you must pass them:
+   ```bash
+   npx convex run adminSetup:createSuperAdmin '{"email":"you@example.com","password":"<your password>","fullName":"Your Name"}'
+   ```
 
 ## Verifying it works
 

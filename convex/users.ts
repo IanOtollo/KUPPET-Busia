@@ -1,4 +1,14 @@
-import { query, mutation, QueryCtx, MutationCtx } from "./_generated/server";
+import {
+  query,
+  mutation,
+  action,
+  internalQuery,
+  QueryCtx,
+  MutationCtx,
+  ActionCtx,
+} from "./_generated/server";
+import { createAccount } from "@convex-dev/auth/server";
+import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { getCurrentUser, requireRole, requireUser } from "./lib/auth";
 import { writeAudit } from "./lib/audit";
@@ -21,6 +31,187 @@ export const getMyProfile = query({
     } catch {
       return null;
     }
+  },
+});
+
+/**
+ * Returns the first duplicated identity field, if any. A teacher may only hold
+ * one account, so National ID, TSC number, mobile phone and email are unique.
+ */
+async function findDuplicate(
+  ctx: QueryCtx,
+  values: { idNumber: string; tscNumber: string; phone: string; email: string }
+): Promise<{ field: string; message: string } | null> {
+  const { idNumber, tscNumber, phone, email } = values;
+
+  const existingId = await ctx.db
+    .query("users")
+    .withIndex("by_idNumber", (q) => q.eq("idNumber", idNumber))
+    .first();
+  if (existingId) {
+    return {
+      field: "idNumber",
+      message: "A teacher with this National ID number is already registered.",
+    };
+  }
+
+  const existingTsc = await ctx.db
+    .query("users")
+    .withIndex("by_tsc", (q) => q.eq("tscNumber", tscNumber))
+    .first();
+  if (existingTsc) {
+    return {
+      field: "tscNumber",
+      message: "A teacher with this TSC number is already registered.",
+    };
+  }
+
+  const existingPhone = await ctx.db
+    .query("users")
+    .withIndex("by_phone", (q) => q.eq("phone", phone))
+    .first();
+  if (existingPhone) {
+    return {
+      field: "phone",
+      message: "A teacher with this mobile phone number is already registered.",
+    };
+  }
+
+  const existingEmail = await ctx.db
+    .query("users")
+    .withIndex("by_email", (q) => q.eq("email", email))
+    .first();
+  if (existingEmail) {
+    return {
+      field: "email",
+      message: "A teacher with this email address is already registered.",
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Creates a teacher account (Convex auth credentials + user record).
+ * Uniqueness of National ID, TSC number, phone and email is enforced here,
+ * server-side, before any account is written.
+ */
+export const registerMember = action({
+  args: {
+    email: v.string(),
+    password: v.string(),
+    fullName: v.string(),
+    idNumber: v.string(),
+    tscNumber: v.string(),
+    phone: v.string(),
+    school: v.string(),
+    subCounty: subCountyValidator,
+    designation: designationValidator,
+    schoolRole: v.optional(v.string()),
+    subjects: v.optional(v.array(v.string())),
+    gender: v.optional(v.string()),
+  },
+  handler: async (ctx: ActionCtx, args) => {
+    const email = args.email.toLowerCase().trim();
+    const idNumber = args.idNumber.trim();
+    const tscNumber = args.tscNumber.toUpperCase().trim();
+    const phone = args.phone.trim();
+
+    const duplicate = await ctx.runQuery(internal.users.checkDuplicates, {
+      idNumber,
+      tscNumber,
+      phone,
+      email,
+    });
+
+    if (duplicate) {
+      throw new ConvexError({
+        code: `DUPLICATE_${duplicate.field.toUpperCase()}`,
+        message: duplicate.message,
+      });
+    }
+
+    const now = Date.now();
+
+    await createAccount(ctx as any, {
+      provider: "password",
+      account: { id: email, secret: args.password },
+      profile: {
+        email,
+        fullName: args.fullName.trim(),
+        idNumber,
+        tscNumber,
+        phone,
+        school: args.school.trim(),
+        subCounty: args.subCounty,
+        designation: args.designation,
+        schoolRole: args.schoolRole,
+        subjects: args.subjects,
+        gender: args.gender,
+        role: "member",
+        status: "active",
+        failedLoginCount: 0,
+        createdAt: now,
+        updatedAt: now,
+      },
+      shouldLinkViaEmail: false,
+      shouldLinkViaPhone: false,
+    });
+
+    return { success: true };
+  },
+});
+
+/**
+ * Public pre-check used by the registration form so the applicant gets an
+ * immediate, friendly message instead of a failed sign-up.
+ */
+export const checkRegistrationAvailability = query({
+  args: {
+    idNumber: v.string(),
+    tscNumber: v.string(),
+    phone: v.string(),
+    email: v.string(),
+  },
+  handler: async (ctx: QueryCtx, args) =>
+    findDuplicate(ctx, {
+      idNumber: args.idNumber.trim(),
+      tscNumber: args.tscNumber.toUpperCase().trim(),
+      phone: args.phone.trim(),
+      email: args.email.toLowerCase().trim(),
+    }),
+});
+
+/**
+ * Authoritative uniqueness backstop, called from the auth profile callback
+ * (which runs in an action context without direct database access).
+ */
+export const checkDuplicates = internalQuery({
+  args: {
+    idNumber: v.string(),
+    tscNumber: v.string(),
+    phone: v.string(),
+    email: v.string(),
+  },
+  handler: async (ctx: QueryCtx, args) => findDuplicate(ctx, args),
+});
+
+/**
+ * Resolves the account email for a teacher signing in with their TSC number.
+ * Returns null when no account carries that TSC number.
+ */
+export const getEmailByTsc = query({
+  args: { tscNumber: v.string() },
+  handler: async (ctx: QueryCtx, args: { tscNumber: string }) => {
+    const cleanTsc = args.tscNumber.toUpperCase().trim();
+    if (!cleanTsc) return null;
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_tsc", (q) => q.eq("tscNumber", cleanTsc))
+      .first();
+
+    return user ? { email: user.email } : null;
   },
 });
 
