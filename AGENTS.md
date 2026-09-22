@@ -59,6 +59,12 @@ Placeholders live in `.env.base44-defaults` (listed FIRST in `env_file`); `/run/
 ## Backend setup (on the Convex deployment, not here)
 
 1. Deploy functions: `npx convex deploy` (the sandbox deploy key works; target is a dev deployment).
+
+   > **After ANY edit under `convex/`, re-run the deploy** — otherwise the deployment keeps
+   > serving the previous functions and the UI fails with server-side errors such as
+   > "Promise {} is not a supported Convex type" or "Cannot read properties of undefined
+   > (reading 'query')" from stale `auth.ts`. From the sandbox:
+   > `docker compose -f docker-compose.base44.yml exec -T web npx convex deploy`
 2. Seed reference data (schools + officials):
    ```bash
    npx convex run seed:seedDatabase
