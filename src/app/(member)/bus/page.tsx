@@ -99,14 +99,14 @@ export default function MemberBusPage() {
 
       {/* Calendar Legend & Availability Strip */}
       <div className="p-5 rounded-[var(--r-lg)] border border-[var(--line)] bg-[var(--surface)] mb-8 shadow-[var(--shadow-hair)]">
-        <div className="flex items-center justify-between mb-4">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <CalendarIcon className="h-5 w-5 text-[var(--union)]" />
             <h3 className="font-serif text-[18px] font-semibold text-[var(--ink)]">
               Branch Bus Calendar Status
             </h3>
           </div>
-          <div className="flex items-center gap-4 text-[12.5px]">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[12.5px]">
             <span className="flex items-center gap-1.5">
               <span className="w-3 h-3 rounded-full bg-[var(--surface-sunk)] border border-[var(--line-strong)]" />
               Available

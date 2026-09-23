@@ -2,6 +2,8 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
+import { useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 
 const TITLES: Record<string, string> = {
   "/": "KUPPET Busia Branch",
@@ -10,6 +12,8 @@ const TITLES: Record<string, string> = {
   "/register": "Member Registration",
   "/forgot-password": "Reset Password",
   "/officials": "Branch Officials",
+  "/branch/officials": "Member Branch Officials",
+  "/branch/contact": "Member Branch Contact",
   "/about": "About the Branch",
   "/contact": "Contact the Branch",
   "/privacy": "Privacy Policy",
@@ -48,10 +52,19 @@ function getTitle(pathname: string) {
 
 export function PageTitle() {
   const pathname = usePathname();
+  const profile = useQuery(api.users.getMyProfile);
 
   useEffect(() => {
-    document.title = `${getTitle(pathname)} — KUPPET Busia Branch`;
-  }, [pathname]);
+    let title = getTitle(pathname);
+    if (profile && pathname === "/dashboard") {
+      title = `${profile.fullName} — Member Portal`;
+    } else if (profile && pathname === "/admin") {
+      title = profile.role === "official"
+        ? `${profile.fullName} — Officials Workspace`
+        : `${profile.fullName} — Administration Workspace`;
+    }
+    document.title = `${title} — KUPPET Busia Branch`;
+  }, [pathname, profile]);
 
   return null;
 }

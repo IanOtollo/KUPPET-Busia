@@ -22,7 +22,7 @@ type AdminLoginFormData = z.infer<typeof adminLoginSchema>;
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const { signIn } = useAuthActions();
+  const { signIn, signOut } = useAuthActions();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -38,6 +38,8 @@ export default function AdminLoginPage() {
   const onSubmit = async (data: AdminLoginFormData) => {
     setIsLoading(true);
     try {
+      // A teacher session must never be reused as an administration session.
+      await signOut();
       await signIn("password", {
         email: data.email,
         password: data.password,

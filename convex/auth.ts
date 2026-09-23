@@ -38,7 +38,7 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
           ...(Array.isArray(params.subjects) ? { subjects: params.subjects } : {}),
           ...(params.gender ? { gender: String(params.gender) } : {}),
           role: "member",
-          status: "active",
+          status: "pending_approval",
           failedLoginCount: 0,
           createdAt: Date.now(),
           updatedAt: Date.now(),

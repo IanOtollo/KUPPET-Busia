@@ -15,7 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { formatShortDate } from "@/lib/format";
-import { CheckCircle2, Mail, Phone, School, ShieldCheck, UserRound } from "lucide-react";
+import { CheckCircle2, Mail, Phone, School, ShieldCheck, UserRound, UserCheck } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { Doc, Id } from "../../../../../convex/_generated/dataModel";
@@ -28,8 +28,10 @@ export default function AdminMembersPage() {
 
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [selectedMember, setSelectedMember] = useState<Doc<"users"> | null>(null);
+  const pendingApprovalCount = members?.filter((member) => member.status === "pending_approval").length ?? 0;
 
   const handleApprove = async (userId: Id<"users">) => {
+    if (!confirm("Approve this teacher's membership and grant portal access?")) return;
     setProcessingId(userId);
     try {
       await approveMemberMutation({ userId });
@@ -110,35 +112,6 @@ export default function AdminMembersPage() {
       header: "Status",
       render: (item) => <StatusBadge status={item.status} />,
     },
-    {
-      key: "actions",
-      header: "Actions",
-      className: "text-right w-36",
-      render: (item) => (
-        <div className="flex items-center justify-end gap-2">
-          {item.status !== "active" && item.role === "member" && (
-            <Button
-              size="sm"
-              loading={processingId === item._id}
-              onClick={() => handleApprove(item._id)}
-            >
-              <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Approve
-            </Button>
-          )}
-          {item.status === "active" && item.role === "member" && (
-            <Button
-              variant="secondary"
-              size="sm"
-              className="text-[var(--danger)] hover:bg-[var(--danger-soft)]"
-              loading={processingId === item._id}
-              onClick={() => handleSuspend(item._id)}
-            >
-              Suspend
-            </Button>
-          )}
-        </div>
-      ),
-    },
   ];
 
   return (
@@ -151,7 +124,29 @@ export default function AdminMembersPage() {
           { label: "Admin Operations", href: "/admin" },
           { label: "Members Management" },
         ]}
+        action={
+          pendingApprovalCount > 0 ? (
+            <div className="inline-flex items-center gap-2 rounded-[var(--r-full)] border border-[var(--warning)]/30 bg-[var(--warning-soft)] px-3 py-2 text-[13px] font-semibold text-[var(--warning)]">
+              <UserCheck className="h-4 w-4" />
+              {pendingApprovalCount} awaiting review
+            </div>
+          ) : null
+        }
       />
+
+      {pendingApprovalCount > 0 && (
+        <button
+          type="button"
+          onClick={() => {
+            const firstPending = members?.find((member) => member.status === "pending_approval");
+            if (firstPending) setSelectedMember(firstPending);
+          }}
+          className="mb-6 flex w-full items-center gap-3 rounded-[var(--r-md)] border border-[var(--warning)]/30 bg-[var(--warning-soft)] p-4 text-left text-[13.5px] text-[var(--ink-body)] transition-colors hover:bg-[var(--brass-soft)]"
+        >
+          <UserCheck className="h-5 w-5 shrink-0 text-[var(--warning)]" />
+          <span><strong>{pendingApprovalCount} membership application{pendingApprovalCount === 1 ? "" : "s"} need review.</strong> Open each teacher record to verify their details before approving access.</span>
+        </button>
+      )}
 
       {members === undefined ? (
         <div className="space-y-3">

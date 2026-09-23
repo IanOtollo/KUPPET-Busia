@@ -9,25 +9,25 @@ export default function HomePage() {
       {/* Header */}
       <header className="border-b border-[var(--line)] bg-[var(--surface)] sticky top-0 z-40">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-10 h-18 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
             <Image src="/logo.png" alt="KUPPET Logo" width={84} height={56} className="h-14 w-auto object-contain shrink-0" priority />
-            <div>
-              <span className="block text-[13px] font-semibold tracking-[0.08em] text-[var(--ink)] uppercase">
+            <div className="min-w-0">
+              <span className="block truncate text-[11px] font-semibold tracking-[0.04em] text-[var(--ink)] uppercase sm:text-[13px] sm:tracking-[0.08em]">
                 KUPPET BUSIA
               </span>
-              <span className="block text-[11.5px] text-[var(--ink-muted)]">
+              <span className="block text-[10px] text-[var(--ink-muted)] sm:text-[11.5px]">
                 Branch Portal
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
             <Button variant="ghost" size="sm" className="hidden sm:inline-flex" asChild>
               <Link href="/officials">Branch Officials</Link>
             </Button>
             <Button variant="secondary" size="sm" asChild>
               <Link href="/login">Sign In</Link>
             </Button>
-            <Button variant="primary" size="sm" asChild>
+            <Button variant="primary" size="sm" className="hidden xs:inline-flex" asChild>
               <Link href="/register">Join Portal</Link>
             </Button>
           </div>
@@ -124,7 +124,7 @@ export default function HomePage() {
             <Link href="/about" className="hover:text-[var(--ink)]">About Branch</Link>
             <Link href="/privacy" className="hover:text-[var(--ink)]">Privacy Policy</Link>
             <Link href="/contact" className="hover:text-[var(--ink)]">Contact Office</Link>
-            <Link href="/admin" className="hover:text-[var(--ink)] font-medium text-[var(--union)]">Admin Portal</Link>
+            <Link href="/admin-login" className="hover:text-[var(--ink)] font-medium text-[var(--union)]">Admin Portal</Link>
           </div>
         </div>
       </footer>

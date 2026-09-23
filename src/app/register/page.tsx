@@ -26,7 +26,6 @@ import {
   TEACHING_SUBJECTS,
   GENDERS,
 } from "@/lib/constants";
-import { useAuthActions } from "@convex-dev/auth/react";
 import { useConvex } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { toast } from "sonner";
@@ -98,7 +97,6 @@ export default function RegisterPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
 
-  const { signIn } = useAuthActions();
   const convex = useConvex();
 
   const {
@@ -190,15 +188,8 @@ export default function RegisterPage() {
         gender: data.gender,
       });
 
-      // Establish the session for the freshly created account.
-      await signIn("password", {
-        email: data.email,
-        password: data.password,
-        flow: "signIn",
-      });
-
-      toast.success("Account created. Welcome!");
-      router.push("/dashboard");
+      toast.success("Application submitted. The branch office must approve your membership before you can sign in.");
+      router.replace("/login?pending=1");
     } catch (err: any) {
       const msg =
         err.data?.message ||

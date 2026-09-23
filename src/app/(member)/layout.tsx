@@ -56,7 +56,7 @@ const NAV_GROUPS = [
   {
     title: "Branch",
     items: [
-      { href: "/officials", label: "Branch Officials", icon: Users },
+      { href: "/branch/officials", label: "Branch Officials", icon: Users },
       { href: "/messages", label: "Messages", icon: MessageSquare },
       { href: "/notifications", label: "Notifications", icon: Bell },
     ],
@@ -89,11 +89,17 @@ export default function MemberLayout({
   useEffect(() => {
     if (profile === null) {
       router.replace("/login");
+      return;
     }
-  }, [profile, router]);
+    if (profile && (profile.role !== "member" || profile.status !== "active")) {
+      void signOut().finally(() => router.replace("/login?pending=1"));
+    }
+  }, [profile, router, signOut]);
 
   // Hold protected member pages until the authenticated profile is available.
-  if (!profile) return <SecureAccessLoader label="Preparing your member portal" />;
+  if (!profile || profile.role !== "member" || profile.status !== "active") {
+    return <SecureAccessLoader label="Checking your member access" />;
+  }
 
   const handleSignOut = async () => {
     try {
@@ -107,7 +113,7 @@ export default function MemberLayout({
     pathname.startsWith("/bereavement") || pathname.startsWith("/harassment");
   const isBusActive = pathname.startsWith("/bus");
   const isHomeActive = pathname === "/dashboard";
-  const isOfficialsActive = pathname === "/officials";
+  const isOfficialsActive = pathname.startsWith("/branch/officials");
   const isMoreActive =
     pathname.startsWith("/reports") ||
     pathname.startsWith("/profile") ||
@@ -233,11 +239,9 @@ export default function MemberLayout({
 
       {/* 2. MOBILE TOP BAR (<1024px) */}
       <header className="lg:hidden sticky top-0 z-30 h-[56px] bg-[var(--surface)] border-b border-[var(--line)] px-4 flex items-center justify-between">
-        <Link href="/dashboard" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-[var(--r-md)] bg-[var(--union)] text-white flex items-center justify-center font-serif font-bold text-base">
-            K
-          </div>
-          <span className="text-[13px] font-semibold tracking-[0.08em] text-[var(--ink)] uppercase">
+        <Link href="/dashboard" className="flex min-w-0 items-center gap-2">
+          <Image src="/logo.png" alt="KUPPET Busia" width={40} height={32} className="h-8 w-auto shrink-0 object-contain" priority />
+          <span className="truncate text-[11px] font-semibold tracking-[0.04em] text-[var(--ink)] uppercase sm:text-[13px] sm:tracking-[0.08em]">
             KUPPET BUSIA
           </span>
         </Link>
@@ -353,7 +357,7 @@ export default function MemberLayout({
 
         {/* Item 4: Officials */}
         <Link
-          href="/officials"
+          href="/branch/officials"
           className="relative flex flex-col items-center justify-center flex-1 h-full min-w-[48px] py-1 cursor-pointer"
         >
           {isOfficialsActive && (
@@ -484,7 +488,7 @@ export default function MemberLayout({
               <User className="h-4 w-4 text-[var(--ink-muted)]" /> My Account & Profile
             </Link>
             <Link
-              href="/contact"
+              href="/branch/contact"
               onClick={() => setMoreSheetOpen(false)}
               className="flex items-center gap-3 p-3 rounded-[var(--r-md)] hover:bg-[var(--surface-sunk)] text-[14.5px] text-[var(--ink)] font-medium"
             >

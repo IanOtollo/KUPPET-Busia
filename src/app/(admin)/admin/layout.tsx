@@ -55,8 +55,13 @@ export default function AdminLayout({
 
   const { signOut } = useAuthActions();
   const profile = useQuery(api.users.getMyProfile);
+  const members = useQuery(
+    api.users.listMembers,
+    profile && ["admin", "superadmin"].includes(profile.role) ? {} : "skip"
+  );
   const adminName = profile?.fullName ?? "Executive Secretary";
   const adminEmail = profile?.email ?? "";
+  const pendingMemberCount = members?.filter((member) => member.status === "pending_approval").length ?? 0;
 
   const handleSignOut = async () => {
     await signOut();
@@ -139,6 +144,11 @@ export default function AdminLayout({
                     )}
                   />
                   <span>{item.label}</span>
+                  {item.href === "/admin/members" && pendingMemberCount > 0 && (
+                    <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-[var(--brass)] px-1 text-[10px] font-bold text-[var(--ink)]">
+                      {pendingMemberCount > 99 ? "99+" : pendingMemberCount}
+                    </span>
+                  )}
                 </Link>
               );
             })}
