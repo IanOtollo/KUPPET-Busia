@@ -27,7 +27,16 @@ export const listActive = query({
       .withIndex("by_active", (q) => q.eq("isActive", true))
       .collect();
 
-    return officials.sort((a, b) => a.displayOrder - b.displayOrder);
+    return await Promise.all(
+      officials
+        .sort((a, b) => a.displayOrder - b.displayOrder)
+        .map(async (official) => ({
+          ...official,
+          photoUrl: official.photoStorageId
+            ? await ctx.storage.getUrl(official.photoStorageId)
+            : null,
+        }))
+    );
   },
 });
 
@@ -39,7 +48,16 @@ export const listAllAdmin = query({
   handler: async (ctx: QueryCtx) => {
     await requireRole(ctx, ["admin", "superadmin"]);
     const officials = await ctx.db.query("officials").collect();
-    return officials.sort((a, b) => a.displayOrder - b.displayOrder);
+    return await Promise.all(
+      officials
+        .sort((a, b) => a.displayOrder - b.displayOrder)
+        .map(async (official) => ({
+          ...official,
+          photoUrl: official.photoStorageId
+            ? await ctx.storage.getUrl(official.photoStorageId)
+            : null,
+        }))
+    );
   },
 });
 
@@ -60,6 +78,9 @@ export const syncCurrentRoster = mutation({
       if (existing) {
         await ctx.db.replace(existing._id, {
           ...rosterEntry,
+          ...(existing.photoStorageId
+            ? { photoStorageId: existing.photoStorageId }
+            : {}),
           isActive: true,
           createdAt: existing.createdAt,
           updatedAt: now,
@@ -86,6 +107,15 @@ export const syncCurrentRoster = mutation({
     });
 
     return { success: true, count: CURRENT_OFFICIAL_ROSTER.length };
+  },
+});
+
+/** Creates a short-lived upload URL for an official profile photograph. */
+export const generatePhotoUploadUrl = mutation({
+  args: {},
+  handler: async (ctx: MutationCtx) => {
+    await requireRole(ctx, ["admin", "superadmin"]);
+    return await ctx.storage.generateUploadUrl();
   },
 });
 

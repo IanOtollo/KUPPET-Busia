@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Phone, Mail, ChevronRight } from "lucide-react";
+import { Phone, Mail, ChevronRight, UserRound } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -18,37 +18,28 @@ export interface OfficialProps {
   portfolioArea?: string;
   phone?: string;
   email?: string;
-  photoUrl?: string;
+  photoUrl?: string | null;
   tier: "executive" | "official" | "subcounty";
 }
 
 export function OfficialCard({ official }: { official: OfficialProps }) {
   const [showModal, setShowModal] = useState(false);
 
-  // Derive 2-letter initials
-  const initials = official.fullName
-    .split(" ")
-    .map((n) => n[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-
   return (
     <>
       <div className="rounded-[var(--r-lg)] border border-[var(--line)] bg-[var(--surface)] p-6 shadow-[var(--shadow-hair)] flex flex-col justify-between min-h-[220px]">
         <div>
-          {/* Avatar 64px */}
+          {/* Larger official portrait, with a clear default when no photo is set. */}
           <div className="mb-4">
             {official.photoUrl ? (
               <img
                 src={official.photoUrl}
                 alt={official.fullName}
-                className="w-16 h-16 rounded-full object-cover border border-[var(--line)]"
+                className="h-24 w-24 rounded-full border-2 border-[var(--brass)]/50 object-cover shadow-sm"
               />
             ) : (
-              <div className="w-16 h-16 rounded-full bg-[var(--union)] text-[var(--brass)] flex items-center justify-center font-sans font-semibold text-[20px] select-none">
-                {initials}
+              <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-[var(--brass)]/40 bg-[var(--surface-sunk)] text-[var(--union)]" aria-label={`${official.fullName} profile placeholder`}>
+                <UserRound className="h-11 w-11 stroke-[1.5]" aria-hidden="true" />
               </div>
             )}
           </div>

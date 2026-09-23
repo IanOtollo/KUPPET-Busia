@@ -378,7 +378,12 @@ export const listMembers = query({
 
     await requireRole(ctx, ["admin", "superadmin"]);
 
-    let members = await ctx.db.query("users").collect();
+    // This is the teacher-membership workspace. Administrative and official
+    // accounts are managed through their respective role workflows and must
+    // not be mixed into TSC verification records.
+    let members = (await ctx.db.query("users").collect()).filter(
+      (user) => user.role === "member"
+    );
 
     if (args.status) {
       members = members.filter((m) => m.status === args.status);

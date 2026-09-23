@@ -55,7 +55,7 @@ export default function AdminLayout({
 
   const { signOut } = useAuthActions();
   const profile = useQuery(api.users.getMyProfile);
-  const adminName = profile?.fullName ?? "Branch Administrator";
+  const adminName = profile?.fullName ?? "Executive Secretary";
   const adminEmail = profile?.email ?? "";
 
   const handleSignOut = async () => {
@@ -94,14 +94,9 @@ export default function AdminLayout({
           <div className="h-[72px] px-6 flex items-center justify-between border-b border-white/10">
             <div className="flex items-center gap-3">
               <Image src="/logo.png" alt="KUPPET Logo" width={84} height={56} className="h-14 w-auto object-contain shrink-0" priority />
-              <div>
-                <span className="block text-[13px] font-semibold tracking-[0.08em] text-white uppercase">
-                  KUPPET BUSIA
-                </span>
-                <span className="block text-[11px] tracking-[0.14em] text-[var(--brass)] font-semibold uppercase">
-                  BRANCH ADMIN
-                </span>
-              </div>
+              <span className="whitespace-nowrap text-[12px] font-semibold tracking-[0.06em] text-white uppercase">
+                KUPPET BUSIA
+              </span>
             </div>
 
             {/* Mobile close button */}

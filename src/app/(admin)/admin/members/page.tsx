@@ -6,8 +6,16 @@ import { DataTable, Column } from "@/components/data/DataTable";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/data/StatusBadge";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { formatShortDate } from "@/lib/format";
-import { CheckCircle2, XCircle, Shield, UserCheck } from "lucide-react";
+import { CheckCircle2, Mail, Phone, School, ShieldCheck, UserRound } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { Doc, Id } from "../../../../../convex/_generated/dataModel";
@@ -19,12 +27,14 @@ export default function AdminMembersPage() {
   const setMemberStatusMutation = useMutation(api.users.setMemberStatus);
 
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [selectedMember, setSelectedMember] = useState<Doc<"users"> | null>(null);
 
   const handleApprove = async (userId: Id<"users">) => {
     setProcessingId(userId);
     try {
       await approveMemberMutation({ userId });
       toast.success("Member account verified and approved.");
+      setSelectedMember((current) => current?._id === userId ? { ...current, status: "active" } : current);
     } catch {
       toast.error("Failed to approve member.");
     } finally {
@@ -38,6 +48,7 @@ export default function AdminMembersPage() {
     try {
       await setMemberStatusMutation({ userId, newStatus: "suspended", reason: "Admin action" });
       toast.success("Member account suspended.");
+      setSelectedMember((current) => current?._id === userId ? { ...current, status: "suspended" } : current);
     } catch {
       toast.error("Failed to suspend member.");
     } finally {
@@ -105,7 +116,7 @@ export default function AdminMembersPage() {
       className: "text-right w-36",
       render: (item) => (
         <div className="flex items-center justify-end gap-2">
-          {item.status !== "active" && (
+          {item.status !== "active" && item.role === "member" && (
             <Button
               size="sm"
               loading={processingId === item._id}
@@ -153,8 +164,74 @@ export default function AdminMembersPage() {
           columns={columns}
           data={members || []}
           keyExtractor={(item) => item._id}
+          onRowClick={setSelectedMember}
         />
       )}
+
+      <Dialog open={!!selectedMember} onOpenChange={(open) => !open && setSelectedMember(null)}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[680px]">
+          {selectedMember && (
+            <>
+              <DialogHeader>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--union)] text-[var(--brass)]">
+                    <UserRound className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <span className="eyebrow block mb-1">MEMBER ACCOUNT RECORD</span>
+                    <DialogTitle>{selectedMember.fullName}</DialogTitle>
+                    <DialogDescription>{selectedMember.tscNumber} · {selectedMember.email}</DialogDescription>
+                  </div>
+                </div>
+              </DialogHeader>
+
+              <div className="grid gap-3 py-2 sm:grid-cols-2">
+                <Detail label="Account status"><StatusBadge status={selectedMember.status} /></Detail>
+                <Detail label="Branch role"><span className="capitalize font-semibold">{selectedMember.role}</span></Detail>
+                <Detail label="TSC number"><span className="mono-ref">{selectedMember.tscNumber}</span></Detail>
+                <Detail label="National ID"><span className="mono-ref">{selectedMember.idNumber}</span></Detail>
+                <Detail label="School"><span className="inline-flex items-center gap-1.5"><School className="h-4 w-4 text-[var(--ink-muted)]" />{selectedMember.school}</span></Detail>
+                <Detail label="Sub-county">{selectedMember.subCounty}</Detail>
+                <Detail label="Designation">{selectedMember.designation}</Detail>
+                <Detail label="School role">{selectedMember.schoolRole || "Not provided"}</Detail>
+                <Detail label="Telephone"><a className="inline-flex items-center gap-1.5 text-[var(--union)] hover:underline" href={`tel:${selectedMember.phone}`}><Phone className="h-4 w-4" />{selectedMember.phone}</a></Detail>
+                <Detail label="Email"><a className="inline-flex items-center gap-1.5 break-all text-[var(--union)] hover:underline" href={`mailto:${selectedMember.email}`}><Mail className="h-4 w-4" />{selectedMember.email}</a></Detail>
+                <Detail label="Subjects" className="sm:col-span-2">{selectedMember.subjects?.length ? selectedMember.subjects.join(", ") : "Not provided"}</Detail>
+                <Detail label="Registered">{formatShortDate(selectedMember.createdAt)}</Detail>
+                <Detail label="Approval">{selectedMember.approvedAt ? `${formatShortDate(selectedMember.approvedAt)} · verified` : "Awaiting approval"}</Detail>
+              </div>
+
+              <div className="rounded-[var(--r-md)] border border-[var(--line)] bg-[var(--surface-sunk)] p-3 text-sm text-[var(--ink-body)]">
+                <span className="inline-flex items-center gap-1.5 font-semibold text-[var(--ink)]"><ShieldCheck className="h-4 w-4 text-[var(--success)]" />Administrative controls</span>
+                <p className="mt-1 text-xs leading-relaxed text-[var(--ink-muted)]">Account actions are recorded in the audit log. Privileged branch accounts cannot be suspended from this member-management screen.</p>
+              </div>
+
+              <DialogFooter className="gap-2 sm:gap-0">
+                <Button type="button" variant="secondary" onClick={() => setSelectedMember(null)}>Close</Button>
+                {selectedMember.status !== "active" && selectedMember.role === "member" && (
+                  <Button type="button" loading={processingId === selectedMember._id} onClick={() => handleApprove(selectedMember._id)}>
+                    <CheckCircle2 className="mr-1.5 h-4 w-4" />Approve Member
+                  </Button>
+                )}
+                {selectedMember.status === "active" && selectedMember.role === "member" && (
+                  <Button type="button" variant="secondary" className="text-[var(--danger)] hover:bg-[var(--danger-soft)]" loading={processingId === selectedMember._id} onClick={() => handleSuspend(selectedMember._id)}>
+                    Suspend Account
+                  </Button>
+                )}
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function Detail({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) {
+  return (
+    <div className={`rounded-[var(--r-md)] border border-[var(--line)] bg-[var(--surface)] p-3 ${className}`}>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--ink-muted)]">{label}</p>
+      <div className="mt-1 text-sm text-[var(--ink-body)]">{children}</div>
     </div>
   );
 }

@@ -50,7 +50,7 @@ To seed the initial Busia County secondary schools, official positions, portfoli
 
 1. Open the Convex Dashboard or execute the seed mutation:
 ```bash
-npx convex run seed:seedDatabase '{ "adminEmail": "admin@kuppetbusia.ke", "adminFullName": "Branch Secretariat Admin" }'
+npx convex run seed:seedDatabase '{ "adminEmail": "admin@kuppetbusia.ke", "adminFullName": "Executive Secretary" }'
 ```
 
 ---

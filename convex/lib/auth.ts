@@ -49,7 +49,7 @@ export async function requireUser(ctx: Context): Promise<Doc<"users">> {
   if (user.status === "pending_approval") {
     throw new ConvexError({
       code: "PENDING_APPROVAL",
-      message: "Your membership account is awaiting branch administrator verification.",
+      message: "Your membership account is awaiting branch office verification.",
     });
   }
 

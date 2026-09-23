@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/data/StatusBadge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Edit2, Archive, Sparkles, ShieldCheck } from "lucide-react";
+import { Plus, Edit2, Archive, Sparkles, ShieldCheck, UserRound } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { Id } from "../../../../../convex/_generated/dataModel";
@@ -43,6 +43,8 @@ interface OfficialRow {
   displayOrder: number;
   canHandleHarassment: boolean;
   isActive: boolean;
+  photoStorageId?: Id<"_storage">;
+  photoUrl?: string | null;
 }
 
 export default function AdminOfficialsPage() {
@@ -51,12 +53,16 @@ export default function AdminOfficialsPage() {
   const updateOfficial = useMutation(api.officials.update);
   const archiveOfficial = useMutation(api.officials.archive);
   const syncRoster = useMutation(api.officials.syncCurrentRoster);
+  const generatePhotoUploadUrl = useMutation(api.officials.generatePhotoUploadUrl);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedId, setSelectedId] = useState<Id<"officials"> | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
+  const [photoStorageId, setPhotoStorageId] = useState<Id<"_storage"> | undefined>();
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -85,6 +91,8 @@ export default function AdminOfficialsPage() {
       displayOrder: (officials?.length || 0) + 1,
       canHandleHarassment: false,
     });
+    setPhotoStorageId(undefined);
+    setPhotoPreviewUrl(null);
     setDialogOpen(true);
   };
 
@@ -102,7 +110,39 @@ export default function AdminOfficialsPage() {
       displayOrder: official.displayOrder,
       canHandleHarassment: official.canHandleHarassment,
     });
+    setPhotoStorageId(official.photoStorageId);
+    setPhotoPreviewUrl(official.photoUrl ?? null);
     setDialogOpen(true);
+  };
+
+  const handlePhotoUpload = async (file: File) => {
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      toast.error("Choose a JPG, PNG, or WebP profile image.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Profile photos must be 5 MB or smaller.");
+      return;
+    }
+
+    setIsUploadingPhoto(true);
+    try {
+      const uploadUrl = await generatePhotoUploadUrl({});
+      const response = await fetch(uploadUrl, {
+        method: "POST",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      if (!response.ok) throw new Error("Profile photo upload failed");
+      const { storageId } = await response.json();
+      setPhotoStorageId(storageId as Id<"_storage">);
+      setPhotoPreviewUrl(URL.createObjectURL(file));
+      toast.success("Profile photo uploaded. Save the official to publish it.");
+    } catch {
+      toast.error("The profile photo could not be uploaded. Please try again.");
+    } finally {
+      setIsUploadingPhoto(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -114,10 +154,14 @@ export default function AdminOfficialsPage() {
         await updateOfficial({
           id: selectedId,
           ...formData,
+          ...(photoStorageId ? { photoStorageId } : {}),
         });
         toast.success("Official profile updated successfully.");
       } else {
-        await createOfficial(formData);
+        await createOfficial({
+          ...formData,
+          ...(photoStorageId ? { photoStorageId } : {}),
+        });
         toast.success("New official added to directory.");
       }
       setDialogOpen(false);
@@ -265,7 +309,6 @@ export default function AdminOfficialsPage() {
         ]}
         action={
           <div className="flex items-center gap-3">
-            {(!officials || officials.length === 0) && (
               <Button
                 variant="secondary"
                 size="sm"
@@ -275,7 +318,6 @@ export default function AdminOfficialsPage() {
               >
                 <Sparkles className="h-4 w-4 mr-1.5" /> Apply Current Official Roster
               </Button>
-            )}
             <Button size="sm" onClick={handleOpenCreate}>
               <Plus className="h-4 w-4 mr-1.5" /> Add Official
             </Button>
@@ -311,6 +353,30 @@ export default function AdminOfficialsPage() {
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-4 py-2">
+            <div className="flex items-center gap-4 rounded-[var(--r-md)] border border-[var(--line)] bg-[var(--surface-sunk)] p-3">
+              <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-[var(--brass)]/50 bg-[var(--surface)] text-[var(--union)]">
+                {photoPreviewUrl ? (
+                  <img src={photoPreviewUrl} alt="Official profile preview" className="h-full w-full object-cover" />
+                ) : (
+                  <UserRound className="h-9 w-9 stroke-[1.5]" aria-hidden="true" />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <Label htmlFor="official-photo">Profile photo</Label>
+                <Input
+                  id="official-photo"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  disabled={isUploadingPhoto || isSubmitting}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (file) void handlePhotoUpload(file);
+                  }}
+                  className="mt-1 cursor-pointer text-xs"
+                />
+                <p className="mt-1 text-xs text-[var(--ink-muted)]">JPG, PNG, or WebP up to 5 MB. Leave blank to use the default profile icon.</p>
+              </div>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="name">Full Name</Label>
