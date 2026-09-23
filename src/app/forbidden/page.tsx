@@ -4,7 +4,13 @@ import { ShieldAlert, ArrowLeft } from "lucide-react";
 
 export default function ForbiddenPage() {
   return (
-    <div className="min-h-screen bg-[var(--canvas)] flex items-center justify-center p-6">
+    <div className="min-h-screen bg-[var(--canvas)] flex items-center justify-center p-6 relative">
+      <Link
+        href="/"
+        className="absolute top-4 left-4 sm:top-8 sm:left-8 flex items-center gap-1.5 text-[13px] font-medium text-[var(--ink-muted)] hover:text-[var(--ink)] transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" /> Back to Home
+      </Link>
       <div className="w-full max-w-[480px] text-center">
         <div className="w-12 h-12 rounded-full bg-[var(--warning-soft)] text-[var(--warning)] flex items-center justify-center mx-auto mb-4">
           <ShieldAlert className="h-6 w-6" />
@@ -22,9 +28,6 @@ export default function ForbiddenPage() {
             <Link href="/dashboard">
               <ArrowLeft className="h-4 w-4 mr-2" /> Return to Member Dashboard
             </Link>
-          </Button>
-          <Button variant="secondary" asChild>
-            <Link href="/">Back to Homepage</Link>
           </Button>
         </div>
       </div>
