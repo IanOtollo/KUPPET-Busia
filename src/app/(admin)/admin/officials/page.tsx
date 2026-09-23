@@ -124,6 +124,9 @@ export default function AdminOfficialsPage() {
       toast.error("Profile photos must be 5 MB or smaller.");
       return;
     }
+    if (!confirm(`Upload ${file.name} as this official's profile photograph?`)) {
+      return;
+    }
 
     setIsUploadingPhoto(true);
     try {
@@ -147,6 +150,10 @@ export default function AdminOfficialsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const action = isEditing ? "save these changes" : "create this official";
+    if (!confirm(`Please confirm you want to ${action}. This change will be recorded in the audit log.`)) {
+      return;
+    }
     setIsSubmitting(true);
 
     try {
@@ -185,6 +192,9 @@ export default function AdminOfficialsPage() {
   };
 
   const handleRunSeed = async () => {
+    if (!confirm("Apply the approved current roster? This will replace the active officials and archive any surplus entries. Existing official profile photos are retained.")) {
+      return;
+    }
     setIsSeeding(true);
     try {
       const res = await syncRoster({});
