@@ -273,7 +273,7 @@ export default function AdminOfficialsPage() {
                 loading={isSeeding}
                 loadingText="Seeding…"
               >
-                <Sparkles className="h-4 w-4 mr-1.5" /> Initialize Default Roster
+                <Sparkles className="h-4 w-4 mr-1.5" /> Apply Current Official Roster
               </Button>
             )}
             <Button size="sm" onClick={handleOpenCreate}>
@@ -294,7 +294,7 @@ export default function AdminOfficialsPage() {
           columns={columns}
           data={officials}
           keyExtractor={(item) => item._id}
-          emptyMessage="No officials found. Click 'Initialize Default Roster' or 'Add Official' above."
+          emptyMessage="No officials found. Click 'Apply Current Official Roster' or 'Add Official' above."
         />
       )}
 
