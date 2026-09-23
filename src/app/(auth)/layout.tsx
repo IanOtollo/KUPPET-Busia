@@ -13,7 +13,7 @@ export default function AuthLayout({
       <div className="bg-[var(--union)] text-white flex flex-col justify-between p-6 sm:p-8 lg:p-16 h-auto min-h-[128px] lg:min-h-screen lg:h-screen lg:sticky lg:top-0">
         {/* Top brand header */}
         <div className="flex items-center gap-3">
-          <Image src="/logo.png" alt="KUPPET Logo" width={68} height={68} className="rounded-[var(--r-md)] bg-white object-contain p-1 select-none shrink-0" />
+          <Image src="/logo.png" alt="KUPPET Logo" width={96} height={64} className="h-16 w-auto object-contain select-none shrink-0" priority />
           <div>
             <Link
               href="/"

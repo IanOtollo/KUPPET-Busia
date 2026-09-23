@@ -86,7 +86,7 @@ export default function AdminLayout({
           {/* Logo Lockup */}
           <div className="h-[72px] px-6 flex items-center justify-between border-b border-white/10">
             <div className="flex items-center gap-3">
-              <Image src="/logo.png" alt="KUPPET Logo" width={52} height={52} className="rounded-[var(--r-md)] bg-white object-contain p-0.5 shrink-0" />
+              <Image src="/logo.png" alt="KUPPET Logo" width={84} height={56} className="h-14 w-auto object-contain shrink-0" priority />
               <div>
                 <span className="block text-[13px] font-semibold tracking-[0.08em] text-white uppercase">
                   KUPPET BUSIA

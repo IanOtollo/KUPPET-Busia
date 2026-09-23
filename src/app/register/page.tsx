@@ -220,7 +220,7 @@ export default function RegisterPage() {
 
       <div className="sm:mx-auto sm:w-full sm:max-w-xl">
         <Link href="/" className="flex items-center justify-center gap-2 mb-6">
-          <Image src="/logo.png" alt="KUPPET Logo" width={60} height={60} className="rounded-[var(--r-md)] bg-white object-contain p-1 select-none shadow-sm" />
+          <Image src="/logo.png" alt="KUPPET Logo" width={96} height={64} className="h-16 w-auto object-contain select-none" priority />
           <span className="font-serif font-bold text-xl text-[var(--navy)] tracking-tight">
             KUPPET BUSIA
           </span>
