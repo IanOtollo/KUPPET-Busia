@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/data/StatusBadge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Edit2, Archive, Sparkles, ShieldCheck, UserRound } from "lucide-react";
+import { Plus, Edit2, Archive, ShieldCheck, UserRound } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { Id } from "../../../../../convex/_generated/dataModel";
@@ -52,14 +52,12 @@ export default function AdminOfficialsPage() {
   const createOfficial = useMutation(api.officials.create);
   const updateOfficial = useMutation(api.officials.update);
   const archiveOfficial = useMutation(api.officials.archive);
-  const syncRoster = useMutation(api.officials.syncCurrentRoster);
   const generatePhotoUploadUrl = useMutation(api.officials.generatePhotoUploadUrl);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedId, setSelectedId] = useState<Id<"officials"> | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSeeding, setIsSeeding] = useState(false);
   const [photoStorageId, setPhotoStorageId] = useState<Id<"_storage"> | undefined>();
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
@@ -191,21 +189,6 @@ export default function AdminOfficialsPage() {
     }
   };
 
-  const handleRunSeed = async () => {
-    if (!confirm("Apply the approved current roster? This will replace the active officials and archive any surplus entries. Existing official profile photos are retained.")) {
-      return;
-    }
-    setIsSeeding(true);
-    try {
-      const res = await syncRoster({});
-      toast.success(`Current roster updated (${res.count} officials).`);
-    } catch {
-      toast.error("Roster update failed. Confirm you are signed in as an administrator.");
-    } finally {
-      setIsSeeding(false);
-    }
-  };
-
   const columns: Column<OfficialRow>[] = [
     {
       key: "displayOrder",
@@ -319,15 +302,6 @@ export default function AdminOfficialsPage() {
         ]}
         action={
           <div className="flex items-center gap-3">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleRunSeed}
-                loading={isSeeding}
-                loadingText="Seeding…"
-              >
-                <Sparkles className="h-4 w-4 mr-1.5" /> Apply Current Official Roster
-              </Button>
             <Button size="sm" onClick={handleOpenCreate}>
               <Plus className="h-4 w-4 mr-1.5" /> Add Official
             </Button>
@@ -346,7 +320,7 @@ export default function AdminOfficialsPage() {
           columns={columns}
           data={officials}
           keyExtractor={(item) => item._id}
-          emptyMessage="No officials found. Click 'Apply Current Official Roster' or 'Add Official' above."
+          emptyMessage="No officials found. Add the first official above."
         />
       )}
 
