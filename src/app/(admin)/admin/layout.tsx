@@ -27,6 +27,7 @@ import {
 import { useQuery } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from "../../../../convex/_generated/api";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const ADMIN_NAV_ITEMS = [
   { href: "/admin", label: "Operations Overview", icon: LayoutDashboard, exact: true },
@@ -76,16 +77,8 @@ export default function AdminLayout({
   const isAdmin =
     profile && ["official", "admin", "superadmin"].includes(profile.role);
 
-  // Do not mount admin pages until the authoritative Convex role check has
-  // completed. This prevents protected child queries from throwing before the
-  // redirect for an unauthenticated or unauthorized visitor takes effect.
-  if (!isAdmin) {
-    return (
-      <main className="min-h-screen grid place-items-center bg-[var(--canvas)] text-sm text-[var(--ink-muted)]">
-        Checking secure access…
-      </main>
-    );
-  }
+  // Do not mount admin pages until the authoritative Convex role check completes.
+  if (!isAdmin) return <SecureAccessLoader label="Preparing the administration workspace" />;
 
   return (
     <div className="min-h-screen bg-[var(--canvas)] flex flex-col lg:flex-row">
@@ -236,6 +229,24 @@ export default function AdminLayout({
         </main>
       </div>
     </div>
+  );
+}
+
+function SecureAccessLoader({ label }: { label: string }) {
+  return (
+    <main className="min-h-screen bg-[var(--canvas)] px-4 py-8">
+      <div className="mx-auto flex max-w-lg flex-col items-center pt-[18vh]">
+        <div className="relative grid h-28 w-28 place-items-center rounded-full bg-white shadow-[0_12px_36px_rgba(31,61,92,0.14)]">
+          <span className="absolute inset-0 rounded-full bg-[var(--union)]/15 animate-ping" />
+          <Image src="/logo.png" alt="KUPPET Busia" width={96} height={72} className="relative h-[72px] w-auto animate-pulse object-contain" priority />
+        </div>
+        <p className="mt-6 text-sm font-medium text-[var(--ink-muted)]">{label}</p>
+        <div className="mt-8 w-full space-y-3 rounded-[var(--r-lg)] border border-[var(--line)] bg-[var(--surface)] p-5">
+          <Skeleton className="h-5 w-2/5" /><Skeleton className="h-4 w-full" /><Skeleton className="h-4 w-4/5" />
+          <div className="grid grid-cols-3 gap-3 pt-3"><Skeleton className="h-20" /><Skeleton className="h-20" /><Skeleton className="h-20" /></div>
+        </div>
+      </div>
+    </main>
   );
 }
 
