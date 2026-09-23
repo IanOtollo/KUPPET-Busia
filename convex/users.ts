@@ -197,6 +197,26 @@ export const checkDuplicates = internalQuery({
 });
 
 /**
+ * Resolves the account email for a teacher signing in with a TSC number.
+ * The client deliberately presents a generic sign-in error for either an
+ * unknown TSC number or an incorrect password.
+ */
+export const getEmailByTsc = query({
+  args: { tscNumber: v.string() },
+  handler: async (ctx: QueryCtx, args) => {
+    const tscNumber = args.tscNumber.toUpperCase().trim();
+    if (!tscNumber) return null;
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_tsc", (q) => q.eq("tscNumber", tscNumber))
+      .first();
+
+    return user ? { email: user.email } : null;
+  },
+});
+
+/**
  * Register a new member account with pending_verification status.
  * Enforces uniqueness of national ID, TSC number, email, and phone.
  */

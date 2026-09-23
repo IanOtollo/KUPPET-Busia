@@ -50,7 +50,7 @@ export default function AdminOfficialsPage() {
   const createOfficial = useMutation(api.officials.create);
   const updateOfficial = useMutation(api.officials.update);
   const archiveOfficial = useMutation(api.officials.archive);
-  const seedDb = useMutation(api.seed.seedDatabase);
+  const syncRoster = useMutation(api.officials.syncCurrentRoster);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -143,10 +143,10 @@ export default function AdminOfficialsPage() {
   const handleRunSeed = async () => {
     setIsSeeding(true);
     try {
-      const res = await seedDb({ adminEmail: "admin@kuppetbusia.ke", adminFullName: "Branch Secretariat Admin" });
-      toast.success(res.message || "Database seeded with branch officials and schools.");
+      const res = await syncRoster({});
+      toast.success(`Current roster updated (${res.count} officials).`);
     } catch {
-      toast.error("Seed execution failed or database is already seeded.");
+      toast.error("Roster update failed. Confirm you are signed in as an administrator.");
     } finally {
       setIsSeeding(false);
     }

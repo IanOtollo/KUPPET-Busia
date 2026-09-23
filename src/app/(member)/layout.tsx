@@ -91,6 +91,17 @@ export default function MemberLayout({
     }
   }, [profile, router]);
 
+  // Hold protected member pages until the authenticated profile is available.
+  // Without this gate, child queries can run before the login redirect and
+  // surface an avoidable UNAUTHENTICATED error screen.
+  if (!profile) {
+    return (
+      <main className="min-h-screen grid place-items-center bg-[var(--canvas)] text-sm text-[var(--ink-muted)]">
+        Checking secure access…
+      </main>
+    );
+  }
+
   const handleSignOut = async () => {
     try {
       await signOut();

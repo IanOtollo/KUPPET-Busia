@@ -73,6 +73,20 @@ export default function AdminLayout({
     }
   }, [profile, router]);
 
+  const isAdmin =
+    profile && ["official", "admin", "superadmin"].includes(profile.role);
+
+  // Do not mount admin pages until the authoritative Convex role check has
+  // completed. This prevents protected child queries from throwing before the
+  // redirect for an unauthenticated or unauthorized visitor takes effect.
+  if (!isAdmin) {
+    return (
+      <main className="min-h-screen grid place-items-center bg-[var(--canvas)] text-sm text-[var(--ink-muted)]">
+        Checking secure access…
+      </main>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[var(--canvas)] flex flex-col lg:flex-row">
       {/* 1. ADMIN DARK SIDEBAR (Desktop 272px, Mobile Drawer) */}

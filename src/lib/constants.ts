@@ -183,13 +183,13 @@ export type AnnouncementPriority = (typeof ANNOUNCEMENT_PRIORITIES)[number];
 
 export const OFFICIAL_POSITIONS = [
   "Executive Secretary",
-  "Chairperson",
-  "Vice Chairperson",
   "Assistant Executive Secretary",
+  "Branch Chairperson",
+  "Assistant Chairperson",
   "Treasurer",
-  "Organising Secretary",
-  "Gender/Women Representative",
-  "Youth Representative",
+  "Organizing Secretary",
+  "Secretary – Secondary Schools",
+  "Secretary – Junior Secondary (JS)",
 ] as const;
 
 export type OfficialPosition = (typeof OFFICIAL_POSITIONS)[number];

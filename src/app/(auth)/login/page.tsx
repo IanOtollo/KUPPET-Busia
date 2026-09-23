@@ -11,10 +11,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useAuthActions } from "@convex-dev/auth/react";
+import { useConvex } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
 import { Eye, EyeOff, LogIn } from "lucide-react";
 
 const loginSchema = z.object({
-  email: z.string().email("Enter your registered email address"),
+  tscNumber: z.string().min(1, "Enter your TSC number"),
   password: z.string().min(1, "Enter your password"),
 });
 
@@ -22,6 +24,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
+  const convex = useConvex();
   const { signIn } = useAuthActions();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -32,14 +35,23 @@ export default function LoginPage() {
     formState: { errors },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { tscNumber: "", password: "" },
   });
 
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     try {
+      const account = await convex.query(api.users.getEmailByTsc, {
+        tscNumber: data.tscNumber,
+      });
+
+      if (!account) {
+        toast.error("Invalid TSC number or password.");
+        return;
+      }
+
       await signIn("password", {
-        email: data.email,
+        email: account.email,
         password: data.password,
         flow: "signIn",
       });
@@ -49,7 +61,7 @@ export default function LoginPage() {
       const raw = err?.data?.message || err?.message || "";
       toast.error(
         /invalid credentials/i.test(raw)
-          ? "Invalid email or password."
+          ? "Invalid TSC number or password."
           : raw || "Sign in failed. Please try again."
       );
     } finally {
@@ -64,24 +76,24 @@ export default function LoginPage() {
           Teacher Sign In
         </h2>
         <p className="text-[14px] text-[var(--ink-muted)] mt-1">
-          Use your registered email address and password.
+          Use your TSC number and password.
         </p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
-          <Label htmlFor="email">Email Address</Label>
+          <Label htmlFor="tscNumber">TSC Number</Label>
           <Input
-            id="email"
-            type="email"
-            placeholder="teacher@example.com"
-            autoComplete="email"
-            error={!!errors.email}
-            {...register("email")}
+            id="tscNumber"
+            inputMode="numeric"
+            placeholder="e.g. 456789"
+            autoComplete="username"
+            error={!!errors.tscNumber}
+            {...register("tscNumber")}
           />
-          {errors.email && (
+          {errors.tscNumber && (
             <p className="text-[13px] text-[var(--danger)] mt-1">
-              {errors.email.message}
+              {errors.tscNumber.message}
             </p>
           )}
         </div>

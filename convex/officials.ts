@@ -5,6 +5,17 @@ import { writeAudit } from "./lib/audit";
 import { officialTierValidator } from "./lib/validators";
 import { ConvexError } from "convex/values";
 
+const CURRENT_OFFICIAL_ROSTER = [
+  { fullName: "Charles Mukhwana", position: "Executive Secretary", responsibilities: "Leads branch administration, correspondence, and the implementation of Executive Committee decisions.", portfolioArea: "Branch Administration", displayOrder: 1, tier: "executive" as const, canHandleHarassment: true },
+  { fullName: "Hellen Mwene", position: "Assistant Executive Secretary", responsibilities: "Supports branch administration, records, correspondence, and member services.", portfolioArea: "Administration & Records", displayOrder: 2, tier: "executive" as const, canHandleHarassment: true },
+  { fullName: "James Omaset", position: "Branch Chairperson", responsibilities: "Chairs branch meetings, provides governance oversight, and represents the branch in official forums.", portfolioArea: "Branch Governance", displayOrder: 3, tier: "executive" as const, canHandleHarassment: true },
+  { fullName: "Alex Makana", position: "Assistant Chairperson", responsibilities: "Deputises the Branch Chairperson and supports branch governance and member welfare matters.", portfolioArea: "Branch Governance & Welfare", displayOrder: 4, tier: "executive" as const, canHandleHarassment: false },
+  { fullName: "Moses Were", position: "Treasurer", responsibilities: "Oversees branch finances, accounts, approved disbursements, and financial reporting.", portfolioArea: "Treasury & Finance", displayOrder: 5, tier: "executive" as const, canHandleHarassment: false },
+  { fullName: "Yonam Okoro", position: "Organizing Secretary", responsibilities: "Coordinates member mobilization, branch activities, meetings, and events.", portfolioArea: "Mobilization & Events", displayOrder: 6, tier: "executive" as const, canHandleHarassment: false },
+  { fullName: "Don Emacar", position: "Secretary – Secondary Schools", responsibilities: "Coordinates representation and member services for secondary-school teachers.", portfolioArea: "Secondary Schools", displayOrder: 7, tier: "official" as const, canHandleHarassment: false },
+  { fullName: "Kelvin Obilo", position: "Secretary – Junior Secondary (JS)", responsibilities: "Coordinates representation and member services for junior-secondary teachers.", portfolioArea: "Junior Secondary", displayOrder: 8, tier: "official" as const, canHandleHarassment: false },
+];
+
 /**
  * Public & Member query to list all active branch officials ordered by displayOrder.
  */
@@ -29,6 +40,52 @@ export const listAllAdmin = query({
     await requireRole(ctx, ["admin", "superadmin"]);
     const officials = await ctx.db.query("officials").collect();
     return officials.sort((a, b) => a.displayOrder - b.displayOrder);
+  },
+});
+
+/** Replaces the active branch roster with the approved current office holders. */
+export const syncCurrentRoster = mutation({
+  args: {},
+  handler: async (ctx: MutationCtx) => {
+    const admin = await requireRole(ctx, ["admin", "superadmin"]);
+    const now = Date.now();
+    const activeOfficials = (await ctx.db
+      .query("officials")
+      .withIndex("by_active", (q) => q.eq("isActive", true))
+      .collect()).sort((a, b) => a.displayOrder - b.displayOrder);
+
+    for (let index = 0; index < CURRENT_OFFICIAL_ROSTER.length; index++) {
+      const rosterEntry = CURRENT_OFFICIAL_ROSTER[index];
+      const existing = activeOfficials[index];
+      if (existing) {
+        await ctx.db.replace(existing._id, {
+          ...rosterEntry,
+          isActive: true,
+          createdAt: existing.createdAt,
+          updatedAt: now,
+        });
+      } else {
+        await ctx.db.insert("officials", {
+          ...rosterEntry,
+          isActive: true,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+    }
+
+    for (const surplus of activeOfficials.slice(CURRENT_OFFICIAL_ROSTER.length)) {
+      await ctx.db.patch(surplus._id, { isActive: false, updatedAt: now });
+    }
+
+    await writeAudit(ctx, {
+      action: "officials.roster_synced",
+      entityType: "officials",
+      actorId: admin._id,
+      actorRole: admin.role,
+    });
+
+    return { success: true, count: CURRENT_OFFICIAL_ROSTER.length };
   },
 });
 
