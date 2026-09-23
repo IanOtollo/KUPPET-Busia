@@ -173,8 +173,8 @@ export default function AdminSchoolsPage() {
           />
         </div>
 
-        <div className="flex items-center space-x-2 w-full overflow-x-auto pb-1 sm:pb-0 scrollbar-thin">
-          <span className="text-xs text-[var(--muted)] font-medium mr-1 shrink-0">Sub-County:</span>
+        <div className="flex w-full flex-wrap items-center gap-2">
+          <span className="mr-1 text-xs font-medium text-[var(--muted)]">Sub-County:</span>
           <Button
             variant={selectedSubCounty === "ALL" ? "primary" : "secondary"}
             size="sm"

@@ -14,7 +14,7 @@ import {
   Bus,
   AlertTriangle,
   History,
-  ArrowRight,
+  ArrowUpRight,
   TrendingUp,
 } from "lucide-react";
 import { useQuery } from "convex/react";
@@ -50,8 +50,8 @@ export default function AdminDashboardPage() {
       {/* 1. Pending Work Row (Clickable Tiles) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <Card interactive>
-          <Link href="/admin/members">
-            <CardContent className="pt-6 space-y-2">
+          <Link href="/admin/members" className="group block h-full">
+            <CardContent className="relative pt-6 pb-11 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">
                   Pending Members
@@ -66,13 +66,16 @@ export default function AdminDashboardPage() {
               <p className="text-[12.5px] text-[var(--ink-muted)]">
                 Awaiting TSC verification
               </p>
+              <span aria-hidden className="absolute -bottom-2 -right-2 grid h-10 w-10 place-items-center rounded-tl-[var(--r-md)] rounded-br-[var(--r-md)] bg-[var(--union)] text-white shadow-[0_4px_12px_rgba(31,61,92,0.28)] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
+                <ArrowUpRight className="h-5 w-5" />
+              </span>
             </CardContent>
           </Link>
         </Card>
 
         <Card interactive>
-          <Link href="/admin/bereavement">
-            <CardContent className="pt-6 space-y-2">
+          <Link href="/admin/bereavement" className="group block h-full">
+            <CardContent className="relative pt-6 pb-11 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">
                   Pending Bereavement
@@ -87,13 +90,16 @@ export default function AdminDashboardPage() {
               <p className="text-[12.5px] text-[var(--ink-muted)]">
                 Awaiting welfare review
               </p>
+              <span aria-hidden className="absolute -bottom-2 -right-2 grid h-10 w-10 place-items-center rounded-tl-[var(--r-md)] rounded-br-[var(--r-md)] bg-[var(--union)] text-white shadow-[0_4px_12px_rgba(31,61,92,0.28)] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
+                <ArrowUpRight className="h-5 w-5" />
+              </span>
             </CardContent>
           </Link>
         </Card>
 
         <Card interactive>
-          <Link href="/admin/harassment">
-            <CardContent className="pt-6 space-y-2">
+          <Link href="/admin/harassment" className="group block h-full">
+            <CardContent className="relative pt-6 pb-11 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">
                   Pending Harassment
@@ -108,13 +114,16 @@ export default function AdminDashboardPage() {
               <p className="text-[12.5px] text-[var(--ink-muted)]">
                 Confidential grievance queue
               </p>
+              <span aria-hidden className="absolute -bottom-2 -right-2 grid h-10 w-10 place-items-center rounded-tl-[var(--r-md)] rounded-br-[var(--r-md)] bg-[var(--union)] text-white shadow-[0_4px_12px_rgba(31,61,92,0.28)] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
+                <ArrowUpRight className="h-5 w-5" />
+              </span>
             </CardContent>
           </Link>
         </Card>
 
         <Card interactive>
-          <Link href="/admin/bus">
-            <CardContent className="pt-6 space-y-2">
+          <Link href="/admin/bus" className="group block h-full">
+            <CardContent className="relative pt-6 pb-11 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">
                   Pending Bus Requests
@@ -129,6 +138,9 @@ export default function AdminDashboardPage() {
               <p className="text-[12.5px] text-[var(--ink-muted)]">
                 Fleet schedule requests
               </p>
+              <span aria-hidden className="absolute -bottom-2 -right-2 grid h-10 w-10 place-items-center rounded-tl-[var(--r-md)] rounded-br-[var(--r-md)] bg-[var(--union)] text-white shadow-[0_4px_12px_rgba(31,61,92,0.28)] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
+                <ArrowUpRight className="h-5 w-5" />
+              </span>
             </CardContent>
           </Link>
         </Card>

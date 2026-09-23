@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Source_Serif_4, Inter, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { ConvexClientProvider } from "@/components/providers/ConvexClientProvider";
+import { PageTitle } from "@/components/layout/PageTitle";
 import { Toaster } from "sonner";
 
 const sourceSerif = Source_Serif_4({
@@ -46,6 +47,7 @@ export default function RootLayout({
     >
       <body className="min-h-screen bg-[var(--canvas)] text-[var(--ink-body)] antialiased">
         <ConvexClientProvider>
+          <PageTitle />
           {children}
           <Toaster
             position="top-right"
