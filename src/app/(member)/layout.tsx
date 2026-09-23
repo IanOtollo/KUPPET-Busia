@@ -22,6 +22,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { useQuery } from "convex/react";
+import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from "../../../convex/_generated/api";
 import {
   Dialog,
@@ -68,6 +69,7 @@ export default function MemberLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { signOut } = useAuthActions();
 
   const [welfareSheetOpen, setWelfareSheetOpen] = useState(false);
   const [moreSheetOpen, setMoreSheetOpen] = useState(false);
@@ -88,6 +90,14 @@ export default function MemberLayout({
       router.replace("/login");
     }
   }, [profile, router]);
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } finally {
+      router.replace("/login");
+    }
+  };
 
   const isWelfareActive =
     pathname.startsWith("/bereavement") || pathname.startsWith("/harassment");
@@ -206,7 +216,7 @@ export default function MemberLayout({
               <button
                 onClick={() => {
                   setUserMenuOpen(false);
-                  router.push("/login");
+                  void handleSignOut();
                 }}
                 className="w-full flex items-center gap-2.5 px-3 py-2 text-[13.5px] text-[var(--danger)] hover:bg-[var(--danger-soft)] rounded-[var(--r-sm)] cursor-pointer"
               >
@@ -480,7 +490,7 @@ export default function MemberLayout({
             <button
               onClick={() => {
                 setMoreSheetOpen(false);
-                router.push("/login");
+                void handleSignOut();
               }}
               className="w-full flex items-center gap-3 p-3 rounded-[var(--r-md)] text-[14.5px] text-[var(--danger)] hover:bg-[var(--danger-soft)] font-medium cursor-pointer"
             >

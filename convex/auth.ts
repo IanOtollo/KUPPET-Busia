@@ -11,7 +11,7 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
        * uniqueness before the account is created; this callback only maps the
        * submitted fields onto the `users` table.
        */
-      profile: (params: Record<string, unknown>) => {
+      profile: (params) => {
         const email = String(params.email ?? "")
           .toLowerCase()
           .trim();
@@ -30,11 +30,13 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
             .trim(),
           phone: String(params.phone ?? "").trim(),
           school: String(params.school ?? "").trim(),
-          subCounty: params.subCounty,
-          designation: params.designation,
-          schoolRole: params.schoolRole ? String(params.schoolRole) : undefined,
-          subjects: Array.isArray(params.subjects) ? params.subjects : undefined,
-          gender: params.gender ? String(params.gender) : undefined,
+          subCounty: String(params.subCounty ?? ""),
+          designation: String(params.designation ?? ""),
+          ...(params.schoolRole
+            ? { schoolRole: String(params.schoolRole) }
+            : {}),
+          ...(Array.isArray(params.subjects) ? { subjects: params.subjects } : {}),
+          ...(params.gender ? { gender: String(params.gender) } : {}),
           role: "member",
           status: "active",
           failedLoginCount: 0,

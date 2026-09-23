@@ -145,9 +145,9 @@ export const registerMember = action({
         school: args.school.trim(),
         subCounty: args.subCounty,
         designation: args.designation,
-        schoolRole: args.schoolRole,
-        subjects: args.subjects,
-        gender: args.gender,
+        ...(args.schoolRole ? { schoolRole: args.schoolRole } : {}),
+        ...(args.subjects ? { subjects: args.subjects } : {}),
+        ...(args.gender ? { gender: args.gender } : {}),
         role: "member",
         status: "active",
         failedLoginCount: 0,
@@ -194,25 +194,6 @@ export const checkDuplicates = internalQuery({
     email: v.string(),
   },
   handler: async (ctx: QueryCtx, args) => findDuplicate(ctx, args),
-});
-
-/**
- * Resolves the account email for a teacher signing in with their TSC number.
- * Returns null when no account carries that TSC number.
- */
-export const getEmailByTsc = query({
-  args: { tscNumber: v.string() },
-  handler: async (ctx: QueryCtx, args: { tscNumber: string }) => {
-    const cleanTsc = args.tscNumber.toUpperCase().trim();
-    if (!cleanTsc) return null;
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_tsc", (q) => q.eq("tscNumber", cleanTsc))
-      .first();
-
-    return user ? { email: user.email } : null;
-  },
 });
 
 /**
