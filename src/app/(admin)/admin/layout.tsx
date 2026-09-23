@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -24,6 +24,9 @@ import {
   Bell,
   MessageSquare,
 } from "lucide-react";
+import { useQuery } from "convex/react";
+import { useAuthActions } from "@convex-dev/auth/react";
+import { api } from "../../../../convex/_generated/api";
 
 const ADMIN_NAV_ITEMS = [
   { href: "/admin", label: "Operations Overview", icon: LayoutDashboard, exact: true },
@@ -49,8 +52,26 @@ export default function AdminLayout({
   const router = useRouter();
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
-  const adminName = "Branch Admin";
-  const adminEmail = "admin@kuppetbusia.ke";
+  const { signOut } = useAuthActions();
+  const profile = useQuery(api.users.getMyProfile);
+  const adminName = profile?.fullName ?? "Branch Administrator";
+  const adminEmail = profile?.email ?? "";
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push("/login");
+  };
+
+  useEffect(() => {
+    if (profile === null) {
+      router.replace("/admin-login");
+    } else if (
+      profile &&
+      !["official", "admin", "superadmin"].includes(profile.role)
+    ) {
+      router.replace("/dashboard");
+    }
+  }, [profile, router]);
 
   return (
     <div className="min-h-screen bg-[var(--canvas)] flex flex-col lg:flex-row">
@@ -139,7 +160,7 @@ export default function AdminLayout({
               </div>
             </div>
             <button
-              onClick={() => router.push("/login")}
+              onClick={handleSignOut}
               className="text-[#8E9CA8] hover:text-[var(--danger)] p-1.5 rounded-[var(--r-sm)] transition-colors cursor-pointer"
               title="Sign out of Admin"
               aria-label="Sign out"
@@ -192,12 +213,6 @@ export default function AdminLayout({
               <span>Pending Tasks</span>
             </Link>
 
-            <Link
-              href="/dashboard"
-              className="text-[13px] text-[var(--union)] hover:underline font-medium"
-            >
-              Switch to Member Portal
-            </Link>
           </div>
         </header>
 

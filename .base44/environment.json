@@ -1,0 +1,32 @@
+{
+  "previewPort": 3000,
+  "healthPath": "/",
+  "startCommand": "docker compose -f docker-compose.base44.yml up -d",
+  "secrets": [
+    {
+      "name": "NEXT_PUBLIC_CONVEX_URL",
+      "description": "Convex deployment URL (Convex dashboard -> Settings). Required for the app to function; the UI boots without it but all data queries stay empty.",
+      "requiredAtBoot": true
+    },
+    {
+      "name": "CONVEX_DEPLOYMENT",
+      "description": "Convex deployment name, used by the Convex CLI (Convex dashboard -> Settings).",
+      "requiredAtBoot": false
+    },
+    {
+      "name": "CONVEX_DEPLOY_KEY",
+      "description": "Convex deploy key for the CLI (Convex dashboard -> Settings -> Deploy Keys). The supplied key is deploy-only.",
+      "requiredAtBoot": false
+    },
+    {
+      "name": "AUTH_SECRET",
+      "description": "Random secret used by @convex-dev/auth for token signing. Must be set on the Convex deployment, not this container.",
+      "requiredAtBoot": false
+    },
+    {
+      "name": "RESEND_API_KEY",
+      "description": "Resend API key for email notifications. Must be set on the Convex deployment, not this container.",
+      "requiredAtBoot": false
+    }
+  ]
+}

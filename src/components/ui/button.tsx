@@ -78,7 +78,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       >
         {loading && <Loader2 className="h-4 w-4 animate-spin shrink-0" />}
-        <span>{loading ? loadingText || "Please wait…" : children}</span>
+        <span className="inline-flex items-center">
+          {loading ? loadingText || "Please wait…" : children}
+        </span>
       </button>
     );
   }

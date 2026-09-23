@@ -17,9 +17,14 @@ export const createSuperAdmin = action({
     fullName: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const email = (args.email ?? "admin@kuppetbusia.ke").toLowerCase();
-    const password = args.password ?? "bsa2026";
-    const fullName = args.fullName ?? "Branch Secretariat Admin";
+    if (!args.email || !args.password || !args.fullName) {
+      throw new Error(
+        "email, password and fullName are required. Pass them as arguments when running this one-time setup."
+      );
+    }
+    const email = args.email.toLowerCase().trim();
+    const password = args.password;
+    const fullName = args.fullName.trim();
 
     // Use the same createAccount fn that Password provider uses internally
     // This hashes the password with Scrypt (same as normal sign-up)

@@ -8,17 +8,17 @@ export default function ContactPage() {
     <div className="min-h-screen bg-[var(--canvas)] flex flex-col">
       <header className="border-b border-[var(--line)] bg-[var(--surface)]">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-10 h-18 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <Image src="/logo.png" alt="KUPPET Logo" width={52} height={52} className="rounded-[var(--r-md)] bg-white object-contain p-0.5 shrink-0 shadow-sm border border-black/5" />
-            <span className="text-[13px] font-semibold tracking-[0.08em] text-[var(--ink)] uppercase">
-              KUPPET BUSIA
-            </span>
-          </Link>
-          <Button variant="secondary" size="sm" asChild>
+          <Button variant="secondary" size="sm" asChild className="shrink-0">
             <Link href="/">
               <ArrowLeft className="h-4 w-4 mr-1.5" /> Back to Home
             </Link>
           </Button>
+          <Link href="/" className="flex items-center gap-3 min-w-0">
+            <Image src="/logo.png" alt="KUPPET Logo" width={52} height={52} className="rounded-[var(--r-md)] bg-white object-contain p-0.5 shrink-0 shadow-sm border border-black/5" />
+            <span className="text-[13px] font-semibold tracking-[0.08em] text-[var(--ink)] uppercase truncate">
+              KUPPET BUSIA
+            </span>
+          </Link>
         </div>
       </header>
 

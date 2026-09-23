@@ -26,7 +26,8 @@ import {
   TEACHING_SUBJECTS,
   GENDERS,
 } from "@/lib/constants";
-import { useMutation } from "convex/react";
+import { useAuthActions } from "@convex-dev/auth/react";
+import { useConvex } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { toast } from "sonner";
 import { Eye, EyeOff, ArrowLeft, ArrowRight, ShieldCheck, BookOpen, Check } from "lucide-react";
@@ -72,7 +73,7 @@ const step2Schema = z
   .object({
     password: z
       .string()
-      .min(10, "Password must be at least 10 characters")
+      .min(8, "Password must be at least 8 characters")
       .regex(/[A-Z]/, "Must include at least one uppercase letter")
       .regex(/[a-z]/, "Must include at least one lowercase letter")
       .regex(/[0-9]/, "Must include at least one digit"),
@@ -97,8 +98,8 @@ export default function RegisterPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
 
-  // Convex registration mutation
-  const registerMember = useMutation(api.users.register);
+  const { signIn } = useAuthActions();
+  const convex = useConvex();
 
   const {
     register,
@@ -106,6 +107,7 @@ export default function RegisterPage() {
     setValue,
     trigger,
     watch,
+    getValues,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(step === 1 ? step1Schema : step2Schema) as any,
@@ -120,7 +122,7 @@ export default function RegisterPage() {
   // Compute password strength 0–4
   const computePasswordStrength = (pass: string) => {
     let score = 0;
-    if (pass.length >= 10) score++;
+    if (pass.length >= 8) score++;
     if (/[A-Z]/.test(pass)) score++;
     if (/[a-z]/.test(pass)) score++;
     if (/[0-9]/.test(pass)) score++;
@@ -152,15 +154,34 @@ export default function RegisterPage() {
     }
   };
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async () => {
+    // The step-specific zod resolver only returns the fields of the current
+    // step, so read the full form values instead.
+    const data = getValues() as FormData;
     setIsSubmitting(true);
     try {
-      await registerMember({
+      const duplicate = await convex.query(
+        api.users.checkRegistrationAvailability,
+        {
+          idNumber: data.idNumber,
+          tscNumber: data.tscNumber,
+          phone: data.phone,
+          email: data.email,
+        }
+      );
+
+      if (duplicate) {
+        toast.error(duplicate.message);
+        return;
+      }
+
+      await convex.action(api.users.registerMember, {
+        email: data.email,
+        password: data.password,
         fullName: data.fullName,
         idNumber: data.idNumber,
         tscNumber: data.tscNumber,
         phone: data.phone,
-        email: data.email,
         school: data.school,
         subCounty: data.subCounty,
         designation: data.designation,
@@ -169,11 +190,20 @@ export default function RegisterPage() {
         gender: data.gender,
       });
 
-      toast.success("Account created successfully! Please verify your email.");
-      router.push("/login?registered=1");
+      // Establish the session for the freshly created account.
+      await signIn("password", {
+        email: data.email,
+        password: data.password,
+        flow: "signIn",
+      });
+
+      toast.success("Account created. Welcome!");
+      router.push("/dashboard");
     } catch (err: any) {
       const msg =
-        err.data?.message || err.message || "Registration failed. Please try again.";
+        err.data?.message ||
+        err.message ||
+        "Registration failed. Please try again.";
       toast.error(msg);
     } finally {
       setIsSubmitting(false);
@@ -415,7 +445,7 @@ export default function RegisterPage() {
                     </SelectContent>
                   </Select>
                   <p className="text-[11.5px] text-[var(--muted)] mt-1">
-                    Select your exact position at school (e.g., Games Master, HOD, Deputy Principal).
+                    e.g. Games Master, HOD, Deputy Principal
                   </p>
                 </div>
 
@@ -425,7 +455,7 @@ export default function RegisterPage() {
                     <BookOpen className="h-4 w-4 text-[var(--navy)]" /> Teaching Subject(s)
                   </Label>
                   <p className="text-[11.5px] text-[var(--muted)] mb-2">
-                    Click to select all subjects you teach:
+                    Select all that apply
                   </p>
                   <div className="flex flex-wrap gap-2 p-3 bg-slate-50 border border-slate-200 rounded-lg">
                     {TEACHING_SUBJECTS.map((sub) => {
@@ -485,7 +515,7 @@ export default function RegisterPage() {
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="At least 10 characters"
+                    placeholder="At least 8 characters"
                     error={!!errors.password}
                     {...register("password")}
                   />
@@ -504,7 +534,7 @@ export default function RegisterPage() {
                     ))}
                   </div>
                   <p className="text-[11.5px] text-[var(--muted)] mt-1.5">
-                    Must contain at least 10 characters, including uppercase, lowercase, and a digit.
+                    Must contain at least 8 characters, including uppercase, lowercase, and a digit.
                   </p>
                   {errors.password && (
                     <p className="text-[13px] text-[var(--danger)] mt-1">
@@ -542,7 +572,7 @@ export default function RegisterPage() {
                         htmlFor="consent"
                         className="text-xs text-[var(--navy)] font-medium leading-normal cursor-pointer"
                       >
-                        I confirm that my TSC and National ID credentials are authentic and accurate, and I consent to KUPPET Busia Branch processing my membership record.
+                        I confirm my TSC and National ID details are accurate.
                       </label>
                     </div>
                   </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -21,6 +21,8 @@ import {
   LifeBuoy,
   MessageSquare,
 } from "lucide-react";
+import { useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 import {
   Dialog,
   DialogContent,
@@ -71,10 +73,21 @@ export default function MemberLayout({
   const [moreSheetOpen, setMoreSheetOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
-  // Simulated member profile for header chip (or fetch from Convex)
-  const memberName = "Teacher Member";
-  const memberRole = "TSC Member";
-  const memberInitials = "TM";
+  const profile = useQuery(api.users.getMyProfile);
+  const memberName = profile?.fullName ?? "Member";
+  const memberRole = profile?.tscNumber ? `TSC ${profile.tscNumber}` : "Member";
+  const memberInitials = (profile?.fullName ?? "M")
+    .split(" ")
+    .map((part) => part[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
+  useEffect(() => {
+    if (profile === null) {
+      router.replace("/login");
+    }
+  }, [profile, router]);
 
   const isWelfareActive =
     pathname.startsWith("/bereavement") || pathname.startsWith("/harassment");
