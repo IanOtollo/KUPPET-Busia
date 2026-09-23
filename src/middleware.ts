@@ -11,8 +11,7 @@ export function middleware(request: NextRequest) {
     pathname.startsWith("/reports") ||
     pathname.startsWith("/profile") ||
     pathname.startsWith("/notifications") ||
-    pathname.startsWith("/messages") ||
-    pathname.startsWith("/officials");
+    pathname.startsWith("/messages");
 
   const isAdminPath = pathname.startsWith("/admin");
 
@@ -36,7 +35,6 @@ export const config = {
     "/profile/:path*",
     "/notifications/:path*",
     "/messages/:path*",
-    "/officials/:path*",
     "/admin/:path*",
   ],
 };
