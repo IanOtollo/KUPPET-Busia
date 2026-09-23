@@ -72,7 +72,7 @@ export default function MemberDashboardPage() {
             <strong className="font-semibold text-[var(--ink)] block">
               Membership Verification Pending
             </strong>
-            Your membership registration is awaiting verification by the branch secretariat office. Full welfare submission functions will be activated once your TSC credentials are confirmed.
+            Your registration is awaiting verification by the branch office.
           </div>
         </div>
       )}

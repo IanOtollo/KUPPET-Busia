@@ -20,8 +20,8 @@ export default function HomePage() {
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" asChild>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Button variant="ghost" size="sm" className="hidden sm:inline-flex" asChild>
               <Link href="/officials">Branch Officials</Link>
             </Button>
             <Button variant="secondary" size="sm" asChild>
@@ -44,7 +44,7 @@ export default function HomePage() {
                 Serving the secondary & tertiary educators of Busia County.
               </h1>
               <p className="text-[17px] leading-[1.6] text-[var(--ink-body)] mb-8 max-w-[68ch]">
-                The official welfare and administrative portal for Busia branch members. Report bereavement cases, confidentially submit workplace harassment concerns, reserve the union bus, and connect directly with your branch leadership.
+                Report bereavement cases, raise workplace concerns confidentially, book the union bus, and reach your branch leadership — all in one place.
               </p>
               <div className="flex flex-wrap items-center gap-4">
                 <Button size="lg" asChild>
@@ -72,7 +72,7 @@ export default function HomePage() {
                   Bereavement Welfare
                 </h3>
                 <p className="text-[14px] leading-relaxed text-[var(--ink-muted)]">
-                  Immediate, institutional welfare claims for members who have lost a mother, father, spouse, or child.
+                  Welfare claims for the loss of a parent, spouse, or child.
                 </p>
               </div>
 
@@ -84,7 +84,7 @@ export default function HomePage() {
                   Safe Harassment Reporting
                 </h3>
                 <p className="text-[14px] leading-relaxed text-[var(--ink-muted)]">
-                  Encrypted, confidential reporting with optional anonymity. Handled exclusively by designated branch officers.
+                  Confidential reporting with optional anonymity.
                 </p>
               </div>
 
@@ -96,7 +96,7 @@ export default function HomePage() {
                   Union Bus Booking
                 </h3>
                 <p className="text-[14px] leading-relaxed text-[var(--ink-muted)]">
-                  Transparent bus reservation system with live availability calendars and zero double-booking.
+                  Reserve the union bus with live availability.
                 </p>
               </div>
 
@@ -108,7 +108,7 @@ export default function HomePage() {
                   Branch Leadership
                 </h3>
                 <p className="text-[14px] leading-relaxed text-[var(--ink-muted)]">
-                  Clear directory of branch executive leaders and their respective portfolio responsibilities.
+                  Contact details for your branch executive leaders.
                 </p>
               </div>
             </div>

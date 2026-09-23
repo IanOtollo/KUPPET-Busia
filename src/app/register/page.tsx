@@ -445,7 +445,7 @@ export default function RegisterPage() {
                     </SelectContent>
                   </Select>
                   <p className="text-[11.5px] text-[var(--muted)] mt-1">
-                    Select your exact position at school (e.g., Games Master, HOD, Deputy Principal).
+                    e.g. Games Master, HOD, Deputy Principal
                   </p>
                 </div>
 
@@ -455,7 +455,7 @@ export default function RegisterPage() {
                     <BookOpen className="h-4 w-4 text-[var(--navy)]" /> Teaching Subject(s)
                   </Label>
                   <p className="text-[11.5px] text-[var(--muted)] mb-2">
-                    Click to select all subjects you teach:
+                    Select all that apply
                   </p>
                   <div className="flex flex-wrap gap-2 p-3 bg-slate-50 border border-slate-200 rounded-lg">
                     {TEACHING_SUBJECTS.map((sub) => {
@@ -572,7 +572,7 @@ export default function RegisterPage() {
                         htmlFor="consent"
                         className="text-xs text-[var(--navy)] font-medium leading-normal cursor-pointer"
                       >
-                        I confirm that my TSC and National ID credentials are authentic and accurate, and I consent to KUPPET Busia Branch processing my membership record.
+                        I confirm my TSC and National ID details are accurate.
                       </label>
                     </div>
                   </div>
