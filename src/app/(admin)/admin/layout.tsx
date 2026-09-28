@@ -308,18 +308,27 @@ export default function AdminLayout({
 
     if (!isAuthenticated) {
       router.replace("/login");
-    } else if (
-      profile &&
-      !["official", "admin", "superadmin"].includes(profile.role)
-    ) {
-      router.replace("/dashboard");
+      return;
     }
-  }, [authLoading, isAuthenticated, profile, router]);
+    if (!profile) return;
+
+    if (!["official", "admin", "superadmin"].includes(profile.role)) {
+      router.replace("/dashboard");
+      return;
+    }
+    // A role check alone isn't enough — a suspended/rejected admin or
+    // official must lose access the moment their status changes, not keep
+    // riding out their existing session.
+    if (profile.status !== "active") {
+      void signOut().finally(() => router.replace(`/login?blocked=${profile.status}`));
+    }
+  }, [authLoading, isAuthenticated, profile, router, signOut]);
 
   const isAdmin =
     isAuthenticated &&
     profile &&
-    ["official", "admin", "superadmin"].includes(profile.role);
+    ["official", "admin", "superadmin"].includes(profile.role) &&
+    profile.status === "active";
 
   // Do not mount admin pages until the authoritative Convex role check completes.
   if (!isAdmin) return <SecureAccessLoader label="Preparing the administration workspace" />;

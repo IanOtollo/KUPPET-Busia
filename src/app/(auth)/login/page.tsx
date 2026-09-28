@@ -44,7 +44,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const convex = useConvex();
-  const { signIn } = useAuthActions();
+  const { signIn, signOut } = useAuthActions();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -102,6 +102,22 @@ function LoginForm() {
         await new Promise((resolve) => setTimeout(resolve, 150));
         profile = await convex.query(api.users.getMyProfile);
       }
+
+      // The Password provider only verifies the credential — it has no idea
+      // about our own approval workflow, so a not-yet-approved (or suspended
+      // / rejected) account still signs in successfully here. Never let that
+      // reach an authenticated route: sign back out immediately and surface
+      // the same blocked message the destination layout would otherwise show
+      // a beat later.
+      if (profile && profile.status !== "active") {
+        await signOut();
+        toast.error(
+          BLOCKED_MESSAGES[profile.status] ||
+            "Your account cannot sign in right now. Please contact the branch office."
+        );
+        return;
+      }
+
       if (profile && profile.role !== "member") {
         router.push("/admin");
       } else if (profile) {

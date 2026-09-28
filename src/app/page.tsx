@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Shield, HeartHandshake, Bus, Users, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 export default function HomePage() {
   return (
@@ -41,7 +41,7 @@ export default function HomePage() {
                 Serving the secondary & tertiary educators of Busia County.
               </h1>
               <p className="text-[17px] leading-[1.6] text-[var(--ink-body)] mb-8 max-w-[68ch]">
-                Report bereavement cases, raise workplace concerns confidentially, book the union bus, and reach your branch leadership — all in one place.
+                Manage your membership, track branch announcements, and stay connected with the union — all in one place.
               </p>
               <div className="flex flex-wrap items-center gap-4">
                 <Button size="lg" asChild>
@@ -52,61 +52,6 @@ export default function HomePage() {
                 <Button variant="secondary" size="lg" asChild>
                   <Link href="/officials">Meet Branch Officials</Link>
                 </Button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Feature pillars */}
-        <section className="py-16 bg-[var(--surface)]">
-          <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-10">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="p-6 rounded-[var(--r-lg)] border border-[var(--line)] bg-[var(--canvas)]">
-                <div className="w-10 h-10 rounded-[var(--r-md)] bg-[var(--union-soft)] text-[var(--union)] flex items-center justify-center mb-4">
-                  <HeartHandshake className="h-5 w-5" />
-                </div>
-                <h3 className="font-serif text-[18px] font-semibold text-[var(--ink)] mb-2">
-                  Bereavement Welfare
-                </h3>
-                <p className="text-[14px] leading-relaxed text-[var(--ink-muted)]">
-                  Welfare claims for the loss of a parent, spouse, or child.
-                </p>
-              </div>
-
-              <div className="p-6 rounded-[var(--r-lg)] border border-[var(--line)] bg-[var(--canvas)]">
-                <div className="w-10 h-10 rounded-[var(--r-md)] bg-[var(--union-soft)] text-[var(--union)] flex items-center justify-center mb-4">
-                  <Shield className="h-5 w-5" />
-                </div>
-                <h3 className="font-serif text-[18px] font-semibold text-[var(--ink)] mb-2">
-                  Safe Harassment Reporting
-                </h3>
-                <p className="text-[14px] leading-relaxed text-[var(--ink-muted)]">
-                  Confidential reporting with optional anonymity.
-                </p>
-              </div>
-
-              <div className="p-6 rounded-[var(--r-lg)] border border-[var(--line)] bg-[var(--canvas)]">
-                <div className="w-10 h-10 rounded-[var(--r-md)] bg-[var(--union-soft)] text-[var(--union)] flex items-center justify-center mb-4">
-                  <Bus className="h-5 w-5" />
-                </div>
-                <h3 className="font-serif text-[18px] font-semibold text-[var(--ink)] mb-2">
-                  Union Bus Booking
-                </h3>
-                <p className="text-[14px] leading-relaxed text-[var(--ink-muted)]">
-                  Reserve the union bus with live availability.
-                </p>
-              </div>
-
-              <div className="p-6 rounded-[var(--r-lg)] border border-[var(--line)] bg-[var(--canvas)]">
-                <div className="w-10 h-10 rounded-[var(--r-md)] bg-[var(--union-soft)] text-[var(--union)] flex items-center justify-center mb-4">
-                  <Users className="h-5 w-5" />
-                </div>
-                <h3 className="font-serif text-[18px] font-semibold text-[var(--ink)] mb-2">
-                  Branch Leadership
-                </h3>
-                <p className="text-[14px] leading-relaxed text-[var(--ink-muted)]">
-                  Contact details for your branch executive leaders.
-                </p>
               </div>
             </div>
           </div>
