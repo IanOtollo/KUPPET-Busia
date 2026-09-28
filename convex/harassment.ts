@@ -51,6 +51,18 @@ async function requireHarassmentHandler(ctx: QueryCtx | MutationCtx) {
 }
 
 /**
+ * Creates a short-lived upload URL for harassment report evidence. Deliberately
+ * unauthenticated — a report itself can be filed anonymously, so evidence
+ * attached to it must be uploadable without signing in.
+ */
+export const generateEvidenceUploadUrl = mutation({
+  args: {},
+  handler: async (ctx: MutationCtx) => {
+    return await ctx.storage.generateUploadUrl();
+  },
+});
+
+/**
  * Submit a safe harassment report.
  * If isAnonymous is true, reporterName, reporterContact, and memberId are omitted entirely from DB record.
  */
@@ -262,7 +274,14 @@ export const getByIdAdmin = mutation({
       metadata: { reference: report.reference, viewerName: handlerUser.fullName },
     });
 
-    return report;
+    const evidenceUrls = await Promise.all(
+      report.evidenceIds.map(async (id) => ({
+        id,
+        url: await ctx.storage.getUrl(id),
+      }))
+    );
+
+    return { ...report, evidenceUrls };
   },
 });
 

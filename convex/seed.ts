@@ -1,22 +1,18 @@
 import { mutation, MutationCtx } from "./_generated/server";
-import { v } from "convex/values";
 import { SUB_COUNTIES, OFFICIAL_POSITIONS } from "../src/lib/constants";
 
 /**
  * Idempotent seed function to initialize:
  * - Busia County secondary schools
  * - Branch official structure with positions & portfolio descriptions
- * - Initial superadmin seed if none exists
+ *
+ * The first superadmin account is bootstrapped separately via
+ * `adminSetup:createDefaultAdmin` — that flow goes through an action so it can
+ * create a real sign-in credential, which a plain mutation like this cannot do.
  */
 export const seedDatabase = mutation({
-  args: {
-    adminEmail: v.optional(v.string()),
-    adminFullName: v.optional(v.string()),
-  },
-  handler: async (
-    ctx: MutationCtx,
-    args: { adminEmail?: string; adminFullName?: string }
-  ) => {
+  args: {},
+  handler: async (ctx: MutationCtx) => {
     // 1. Seed Schools if table empty
     const existingSchools = await ctx.db.query("schools").first();
     let schoolsCount = 0;
@@ -179,40 +175,10 @@ export const seedDatabase = mutation({
       }
     }
 
-    // 3. Superadmin registration fallback if email supplied and no superadmin exists
-    let superadminCreated = false;
-    if (args.adminEmail) {
-      const existingSuperadmin = await ctx.db
-        .query("users")
-        .withIndex("by_role", (q) => q.eq("role", "superadmin"))
-        .first();
-
-      if (!existingSuperadmin) {
-        const now = Date.now();
-        await ctx.db.insert("users", {
-          fullName: args.adminFullName || "Branch IT Administrator",
-          email: args.adminEmail.toLowerCase(),
-          idNumber: "11223344",
-          tscNumber: "ADM001",
-          phone: "+254700000000",
-          school: "KUPPET Busia Branch Secretariat",
-          subCounty: "Matayos",
-          designation: "Other",
-          role: "superadmin",
-          status: "active",
-          failedLoginCount: 0,
-          createdAt: now,
-          updatedAt: now,
-        });
-        superadminCreated = true;
-      }
-    }
-
     return {
       message: "Database seed completed successfully.",
       schoolsSeeded: schoolsCount,
       officialsSeeded: officialsCount,
-      superadminCreated,
     };
   },
 });

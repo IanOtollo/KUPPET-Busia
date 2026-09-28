@@ -22,7 +22,23 @@ export const listActive = query({
       reports = reports.filter((r) => r.category === args.category);
     }
 
-    return reports.sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+    const sorted = reports.sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+
+    return await Promise.all(
+      sorted.map(async (report) => ({
+        ...report,
+        fileUrl: await ctx.storage.getUrl(report.storageId),
+      }))
+    );
+  },
+});
+
+/** Creates a short-lived upload URL for a financial statement PDF. */
+export const generateUploadUrl = mutation({
+  args: {},
+  handler: async (ctx: MutationCtx) => {
+    await requireRole(ctx, ["admin", "superadmin"]);
+    return await ctx.storage.generateUploadUrl();
   },
 });
 

@@ -92,6 +92,18 @@ export const BEREAVEMENT_STATUSES = [
 ] as const;
 export type BereavementStatus = (typeof BEREAVEMENT_STATUSES)[number];
 
+// Mirrors convex/bereavement.ts's LEGAL_TRANSITIONS — kept here so the admin UI
+// can offer only legal next-states instead of the full enum.
+export const BEREAVEMENT_TRANSITIONS: Record<string, BereavementStatus[]> = {
+  submitted: ["under_review", "declined"],
+  under_review: ["verified", "declined"],
+  verified: ["support_approved", "declined"],
+  support_approved: ["disbursed", "closed"],
+  disbursed: ["closed"],
+  closed: [],
+  declined: [],
+};
+
 export const HARASSMENT_CATEGORIES = [
   "Verbal abuse or intimidation",
   "Sexual harassment",
@@ -131,6 +143,17 @@ export const HARASSMENT_STATUSES = [
 ] as const;
 export type HarassmentStatus = (typeof HARASSMENT_STATUSES)[number];
 
+// Mirrors convex/harassment.ts's LEGAL_HARASSMENT_TRANSITIONS.
+export const HARASSMENT_TRANSITIONS: Record<string, HarassmentStatus[]> = {
+  submitted: ["acknowledged", "under_investigation", "closed_no_action"],
+  acknowledged: ["under_investigation", "referred", "closed_no_action"],
+  under_investigation: ["action_taken", "referred", "resolved", "closed_no_action"],
+  action_taken: ["resolved", "referred", "closed_no_action"],
+  referred: ["resolved", "closed_no_action"],
+  resolved: [],
+  closed_no_action: [],
+};
+
 export const HARASSMENT_SUPPORT_OPTIONS = [
   "Legal advice & union representation",
   "Official dispute escalation with TSC / Ministry",
@@ -164,6 +187,17 @@ export const BUS_BOOKING_STATUSES = [
   "cancelled",
 ] as const;
 export type BusBookingStatus = (typeof BUS_BOOKING_STATUSES)[number];
+
+// Mirrors convex/busBookings.ts's LEGAL_BUS_TRANSITIONS.
+export const BUS_TRANSITIONS: Record<string, BusBookingStatus[]> = {
+  requested: ["under_review", "approved", "declined", "cancelled"],
+  under_review: ["approved", "declined", "cancelled"],
+  approved: ["confirmed", "declined", "cancelled"],
+  confirmed: ["completed", "cancelled"],
+  completed: [],
+  declined: [],
+  cancelled: [],
+};
 
 export const BUS_CAPACITY = 62;
 

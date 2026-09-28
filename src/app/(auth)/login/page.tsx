@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -13,7 +13,17 @@ import { toast } from "sonner";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useConvex } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
+import { buildMemberPrefix } from "@/lib/memberPath";
 import { Eye, EyeOff, LogIn } from "lucide-react";
+
+const BLOCKED_MESSAGES: Record<string, string> = {
+  pending_verification: "Please verify your email address to continue.",
+  pending_approval:
+    "Your membership registration is awaiting branch office approval. You'll be able to sign in once a branch administrator verifies your details.",
+  suspended: "Your account has been suspended. Please contact the branch office.",
+  rejected: "Your membership registration was not approved. Please contact the branch office.",
+  wrong_role: "That account isn't a teacher-member account. Use the admin sign-in link below.",
+};
 
 const loginSchema = z.object({
   tscNumber: z.string().min(1, "Enter your TSC number"),
@@ -23,7 +33,16 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const convex = useConvex();
   const { signIn } = useAuthActions();
   const [showPassword, setShowPassword] = useState(false);
@@ -38,6 +57,14 @@ export default function LoginPage() {
     defaultValues: { tscNumber: "", password: "" },
   });
 
+  useEffect(() => {
+    const blocked = searchParams.get("blocked") || (searchParams.get("pending") ? "pending_approval" : null);
+    if (blocked) {
+      toast.error(BLOCKED_MESSAGES[blocked] || "Your account cannot sign in right now. Please contact the branch office.");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     try {
@@ -46,24 +73,49 @@ export default function LoginPage() {
       });
 
       if (!account) {
-        toast.error("Invalid TSC number or password.");
+        toast.error(`No account found for TSC number "${data.tscNumber}". Check the number or create an account.`);
         return;
       }
 
-      await signIn("password", {
-        email: account.email,
-        password: data.password,
-        flow: "signIn",
-      });
+      try {
+        await signIn("password", {
+          email: account.email,
+          password: data.password,
+          flow: "signIn",
+        });
+      } catch {
+        // The TSC number itself is valid (we just resolved it above) — any
+        // failure from the sign-in call itself against a known account can
+        // only be an incorrect password.
+        toast.error("Incorrect password. Please try again.");
+        return;
+      }
 
-      router.push("/dashboard");
+      // Read the fresh profile directly rather than relying on the reactive
+      // subscription to have caught up. There's still a brief window right
+      // after signIn() resolves where the Convex client hasn't finished
+      // attaching the new auth token yet, in which this query would come
+      // back unauthenticated (null) — retry a few times rather than guess
+      // the wrong destination from a null profile.
+      let profile = await convex.query(api.users.getMyProfile);
+      for (let attempt = 0; !profile && attempt < 5; attempt++) {
+        await new Promise((resolve) => setTimeout(resolve, 150));
+        profile = await convex.query(api.users.getMyProfile);
+      }
+      if (profile && profile.role !== "member") {
+        router.push("/admin");
+      } else if (profile) {
+        router.push(`${buildMemberPrefix(profile.fullName, profile.tscNumber)}/dashboard`);
+      } else {
+        router.push("/dashboard");
+      }
     } catch (err: any) {
-      const raw = err?.data?.message || err?.message || "";
-      toast.error(
-        /invalid credentials/i.test(raw)
-          ? "Invalid TSC number or password."
-          : raw || "Sign in failed. Please try again."
-      );
+      // Only ever surface messages our own backend deliberately wrote
+      // (ConvexError({ message })) — anything else (network hiccups, an
+      // internal auth-provider error like "InvalidSecret", etc.) must never
+      // be shown to the user raw.
+      const friendly = err?.data?.message;
+      toast.error(friendly || "Sign in failed. Please check your connection and try again.");
     } finally {
       setIsLoading(false);
     }
@@ -73,7 +125,7 @@ export default function LoginPage() {
     <div>
       <div className="mb-6">
         <h2 className="font-serif text-[26px] font-semibold text-[var(--ink)] leading-tight">
-          Teacher Sign In
+          Sign In
         </h2>
         <p className="text-[14px] text-[var(--ink-muted)] mt-1">
           Use your TSC number and password.
@@ -155,15 +207,6 @@ export default function LoginPage() {
           className="text-[var(--union)] font-medium hover:underline"
         >
           Create an account
-        </Link>
-      </div>
-
-      <div className="mt-3 text-center">
-        <Link
-          href="/admin-login"
-          className="text-[12.5px] text-[var(--ink-muted)] hover:text-[var(--union)] hover:underline"
-        >
-          Admin &amp; Officials sign in
         </Link>
       </div>
     </div>

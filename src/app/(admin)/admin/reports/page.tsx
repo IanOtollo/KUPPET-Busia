@@ -31,9 +31,11 @@ import { toast } from "sonner";
 export default function AdminReportsPage() {
   const reports = useQuery(api.financialReports.listActive, {});
   const createReportMutation = useMutation(api.financialReports.create);
+  const generateUploadUrl = useMutation(api.financialReports.generateUploadUrl);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -44,23 +46,36 @@ export default function AdminReportsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedFile) {
+      toast.error("Select a PDF document to upload.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      // In production, upload to Convex storage first. Use dummy storage ID for scaffold build
-      const dummyStorageId = "storage_123456789" as Id<"_storage">;
+      const uploadUrl = await generateUploadUrl();
+      const uploadResult = await fetch(uploadUrl, {
+        method: "POST",
+        headers: { "Content-Type": selectedFile.type || "application/pdf" },
+        body: selectedFile,
+      });
+      const { storageId } = await uploadResult.json();
+
       await createReportMutation({
         title: formData.title,
         period: formData.period,
         category: formData.category,
         summary: formData.summary,
-        storageId: dummyStorageId,
-        fileSize: 2048576,
+        storageId: storageId as Id<"_storage">,
+        fileSize: selectedFile.size,
         visibility: "members_only",
         publishedAt: new Date().toISOString(),
       });
 
       toast.success("Financial statement published.");
       setDialogOpen(false);
+      setSelectedFile(null);
+      setFormData({ title: "", period: "FY 2025/2026", category: "Annual Accounts", summary: "" });
     } catch {
       toast.error("Failed to publish financial report.");
     } finally {
@@ -165,7 +180,13 @@ export default function AdminReportsPage() {
 
             <div>
               <Label htmlFor="pdf">Upload PDF Document</Label>
-              <Input id="pdf" type="file" accept=".pdf" />
+              <Input
+                id="pdf"
+                type="file"
+                accept=".pdf"
+                required
+                onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+              />
             </div>
 
             <DialogFooter>

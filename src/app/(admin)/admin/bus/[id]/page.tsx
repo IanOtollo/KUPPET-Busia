@@ -3,6 +3,7 @@
 import { use } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { BackLink } from "@/components/layout/BackLink";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/data/StatusBadge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,6 +23,7 @@ export default function AdminBusDetailPage({
   const bookingId = resolvedParams.id as Id<"busBookings">;
 
   const booking = useQuery(api.busBookings.getById, { id: bookingId });
+  const branchConfig = useQuery(api.settings.getBranchConfig);
 
   if (booking === undefined) {
     return (
@@ -45,6 +47,7 @@ export default function AdminBusDetailPage({
 
   return (
     <div className="max-w-[860px] mx-auto">
+      <BackLink href="/admin/bus" label="Back to Bus Queue" />
       <PageHeader
         eyebrow="BUS RESERVATION REVIEW"
         title={`${booking.destination} (${booking.reference})`}
@@ -54,13 +57,6 @@ export default function AdminBusDetailPage({
           { label: "Bus Queue", href: "/admin/bus" },
           { label: booking.reference },
         ]}
-        action={
-          <Button variant="secondary" size="sm" asChild>
-            <Link href="/admin/bus">
-              <ArrowLeft className="h-4 w-4 mr-1.5" /> Back to Bus Queue
-            </Link>
-          </Button>
-        }
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -101,7 +97,7 @@ export default function AdminBusDetailPage({
                     Passenger Count
                   </dt>
                   <dd className="font-semibold text-[var(--union)] mt-0.5">
-                    {booking.passengers} Passengers (Capacity: 62)
+                    {booking.passengers} Passengers (Capacity: {branchConfig?.busCapacitySeats ?? 62})
                   </dd>
                 </div>
 

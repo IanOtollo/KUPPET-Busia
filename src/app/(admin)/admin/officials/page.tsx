@@ -191,12 +191,6 @@ export default function AdminOfficialsPage() {
 
   const columns: Column<OfficialRow>[] = [
     {
-      key: "displayOrder",
-      header: "Order",
-      isMono: true,
-      className: "w-16",
-    },
-    {
       key: "fullName",
       header: "Official Name",
       render: (item) => (
@@ -361,36 +355,17 @@ export default function AdminOfficialsPage() {
                 <p className="mt-1 text-xs text-[var(--ink-muted)]">JPG, PNG, or WebP up to 5 MB. Leave blank to use the default profile icon.</p>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  required
-                  value={formData.fullName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, fullName: e.target.value })
-                  }
-                  placeholder="e.g. Rosemary Wandera"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="order">Display Order</Label>
-                <Input
-                  id="order"
-                  type="number"
-                  required
-                  min={1}
-                  value={formData.displayOrder}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      displayOrder: parseInt(e.target.value) || 1,
-                    })
-                  }
-                />
-              </div>
+            <div>
+              <Label htmlFor="name">Full Name</Label>
+              <Input
+                id="name"
+                required
+                value={formData.fullName}
+                onChange={(e) =>
+                  setFormData({ ...formData, fullName: e.target.value })
+                }
+                placeholder="e.g. Rosemary Wandera"
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-3">

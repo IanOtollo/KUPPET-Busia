@@ -261,7 +261,7 @@ export default function AdminMessagesPage() {
                         )}
                         <div className={`max-w-[70%] px-3.5 py-2 rounded-2xl text-sm leading-relaxed ${
                           isMe
-                            ? "bg-[var(--navy)] text-white rounded-br-sm"
+                            ? "bg-[var(--union)] text-white rounded-br-sm"
                             : "bg-[var(--canvas)] border border-[var(--line)] text-[var(--ink)] rounded-bl-sm"
                         }`}>
                           {msg.body}

@@ -13,7 +13,7 @@ export default function AuthLayout({
       <div className="bg-[var(--union)] text-white flex flex-col justify-between p-6 sm:p-8 lg:p-16 h-auto min-h-[128px] lg:min-h-screen lg:h-screen lg:sticky lg:top-0">
         {/* Top brand header */}
         <div className="flex items-center gap-3">
-          <Image src="/logo.png" alt="KUPPET Logo" width={96} height={64} className="h-16 w-auto object-contain select-none shrink-0" priority />
+          <Image src="/logo.png" alt="KUPPET Logo" width={128} height={64} className="h-16 w-auto object-contain select-none shrink-0" priority />
           <div>
             <Link
               href="/"
@@ -69,7 +69,7 @@ export default function AuthLayout({
       {/* Right Form Panel */}
       <div className="flex items-center justify-center p-4 sm:p-6 lg:p-12 overflow-y-auto relative">
         <div className="absolute top-4 left-4 sm:top-8 sm:left-8 lg:hidden">
-           <Link href="/" className="text-[13px] text-[var(--muted)] hover:text-[var(--ink)] flex items-center gap-1.5 transition-colors font-medium">
+           <Link href="/" className="text-[13px] text-[var(--ink-muted)] hover:text-[var(--ink)] flex items-center gap-1.5 transition-colors font-medium">
              <ArrowLeft className="h-4 w-4" /> Back to Home
            </Link>
         </div>

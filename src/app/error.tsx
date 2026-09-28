@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { buildMemberPrefix } from "@/lib/memberPath";
 import { Button } from "@/components/ui/button";
 import { RotateCcw, Home } from "lucide-react";
 
@@ -15,10 +18,17 @@ export default function ErrorBoundary({
 }) {
   const [refCode, setRefCode] = useState<string>("");
   const pathname = usePathname();
+  const isAdminContext = pathname?.startsWith("/admin") ?? false;
+  const profile = useQuery(api.users.getMyProfile);
+  const isMember = !!profile && profile.role === "member" && profile.status === "active";
 
   // Send them back to the correct dashboard based on where they were
-  const dashboardHref = pathname?.startsWith("/admin") ? "/admin" : "/dashboard";
-  const dashboardLabel = pathname?.startsWith("/admin") ? "Admin Dashboard" : "Member Dashboard";
+  const dashboardHref = isAdminContext
+    ? "/admin"
+    : isMember
+      ? `${buildMemberPrefix(profile!.fullName, profile!.tscNumber)}/dashboard`
+      : "/dashboard";
+  const dashboardLabel = isAdminContext ? "Admin Dashboard" : "Member Dashboard";
 
   useEffect(() => {
     const randomHex = Math.random().toString(36).substring(2, 8).toUpperCase();

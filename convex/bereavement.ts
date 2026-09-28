@@ -22,6 +22,15 @@ const LEGAL_TRANSITIONS: Record<string, string[]> = {
   declined: [],
 };
 
+/** Creates a short-lived upload URL for a bereavement claim's supporting document. */
+export const generateDocumentUploadUrl = mutation({
+  args: {},
+  handler: async (ctx: MutationCtx) => {
+    await requireUser(ctx);
+    return await ctx.storage.generateUploadUrl();
+  },
+});
+
 /**
  * Submit a bereavement case.
  * Enforces the strict four-relationship rule, 180-day occurrence limit, and snapshots member profile.
@@ -166,7 +175,14 @@ export const getById = query({
       });
     }
 
-    return caseDoc;
+    const documentUrls = await Promise.all(
+      caseDoc.documentIds.map(async (id) => ({
+        id,
+        url: await ctx.storage.getUrl(id),
+      }))
+    );
+
+    return { ...caseDoc, documentUrls };
   },
 });
 

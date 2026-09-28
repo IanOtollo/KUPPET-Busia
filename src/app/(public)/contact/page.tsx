@@ -1,9 +1,18 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, MapPin, Phone, Mail, Clock } from "lucide-react";
+import { useQuery } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
 
 export default function ContactPage() {
+  const officials = useQuery(api.officials.listActive);
+
+  const executiveSecretary = officials?.find((o) => o.position === "Executive Secretary");
+  const harassmentContact = officials?.find((o) => o.canHandleHarassment && o.phone);
+
   return (
     <div className="min-h-screen bg-[var(--canvas)] flex flex-col">
       <header className="border-b border-[var(--line)] bg-[var(--surface)]">
@@ -14,7 +23,7 @@ export default function ContactPage() {
             </Link>
           </Button>
           <Link href="/" className="flex items-center gap-3 min-w-0">
-            <Image src="/logo.png" alt="KUPPET Logo" width={84} height={56} className="h-14 w-auto object-contain shrink-0" priority />
+            <Image src="/logo.png" alt="KUPPET Logo" width={112} height={56} className="h-14 w-auto object-contain shrink-0" priority />
             <span className="text-[13px] font-semibold tracking-[0.08em] text-[var(--ink)] uppercase truncate">
               KUPPET BUSIA
             </span>
@@ -48,9 +57,19 @@ export default function ContactPage() {
               <Phone className="h-5 w-5 text-[var(--union)] mb-3" />
               <h3 className="font-serif text-[17px] font-semibold mb-1">Telephone & Hotlines</h3>
               <p className="text-[14px] text-[var(--ink-muted)] leading-relaxed">
-                Office: <a href="tel:+254722000001" className="text-[var(--union)] font-medium">+254 722 000 001</a><br />
-                Executive Secretary: <a href="tel:+254722000004" className="text-[var(--union)] font-medium">+254 722 000 004</a><br />
-                Emergency Harassment: <a href="tel:+254722000007" className="text-[var(--danger)] font-medium">+254 722 000 007</a>
+                {executiveSecretary?.phone ? (
+                  <>
+                    Executive Secretary: <a href={`tel:${executiveSecretary.phone}`} className="text-[var(--union)] font-medium">{executiveSecretary.phone}</a><br />
+                  </>
+                ) : null}
+                {harassmentContact?.phone ? (
+                  <>
+                    Emergency Harassment: <a href={`tel:${harassmentContact.phone}`} className="text-[var(--danger)] font-medium">{harassmentContact.phone}</a>
+                  </>
+                ) : null}
+                {!executiveSecretary?.phone && !harassmentContact?.phone && (
+                  <span className="text-[var(--ink-muted)]">Branch contact numbers are being updated.</span>
+                )}
               </p>
             </div>
 
@@ -58,8 +77,13 @@ export default function ContactPage() {
               <Mail className="h-5 w-5 text-[var(--union)] mb-3" />
               <h3 className="font-serif text-[17px] font-semibold mb-1">Email Enquiries</h3>
               <p className="text-[14px] text-[var(--ink-muted)] leading-relaxed">
-                General Secretariat: <a href="mailto:info@kuppetbusia.ke" className="text-[var(--union)]">info@kuppetbusia.ke</a><br />
-                Executive Desk: <a href="mailto:execsec@kuppetbusia.ke" className="text-[var(--union)]">execsec@kuppetbusia.ke</a>
+                {executiveSecretary?.email ? (
+                  <>
+                    Executive Desk: <a href={`mailto:${executiveSecretary.email}`} className="text-[var(--union)]">{executiveSecretary.email}</a>
+                  </>
+                ) : (
+                  <span className="text-[var(--ink-muted)]">Branch email contacts are being updated.</span>
+                )}
               </p>
             </div>
 
@@ -78,4 +102,3 @@ export default function ContactPage() {
     </div>
   );
 }
-

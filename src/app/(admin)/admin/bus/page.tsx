@@ -29,7 +29,7 @@ import { formatDateTime, formatShortDate, formatKES } from "@/lib/format";
 import { Bus, Calendar as CalendarIcon, CheckCircle2, ChevronRight, AlertTriangle } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
-import { BUS_BOOKING_STATUSES, BusBookingStatus } from "@/lib/constants";
+import { BUS_BOOKING_STATUSES, BUS_TRANSITIONS, BusBookingStatus } from "@/lib/constants";
 import { Doc, Id } from "../../../../../convex/_generated/dataModel";
 import { toast } from "sonner";
 
@@ -48,19 +48,20 @@ export default function AdminBusPage() {
   const [approvalModalOpen, setApprovalModalOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Doc<"busBookings"> | null>(null);
   const [actionStatus, setActionStatus] = useState<BusBookingStatus>("approved");
-  const [driverName, setDriverName] = useState("John Barasa");
-  const [driverPhone, setDriverPhone] = useState("+254722111222");
-  const [contributionKes, setContributionKes] = useState("15000");
+  const [driverName, setDriverName] = useState("");
+  const [driverPhone, setDriverPhone] = useState("");
+  const [contributionKes, setContributionKes] = useState("");
   const [adminRemarks, setAdminRemarks] = useState("");
   const [statusReason, setStatusReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleOpenAction = (booking: Doc<"busBookings">) => {
+    const legalNext = BUS_TRANSITIONS[booking.status] ?? [];
     setSelectedBooking(booking);
-    setActionStatus("approved");
-    setDriverName(booking.driverName || "John Barasa");
-    setDriverPhone(booking.driverPhone || "+254722111222");
-    setContributionKes(booking.contributionKes ? String(booking.contributionKes) : "15000");
+    setActionStatus((legalNext[0] as BusBookingStatus) || booking.status as BusBookingStatus);
+    setDriverName(booking.driverName || "");
+    setDriverPhone(booking.driverPhone || "");
+    setContributionKes(booking.contributionKes ? String(booking.contributionKes) : "");
     setAdminRemarks(booking.adminRemarks || "");
     setStatusReason(booking.statusReason || "");
     setApprovalModalOpen(true);
@@ -331,11 +332,11 @@ export default function AdminBusPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="approved">Approve Reservation</SelectItem>
-                    <SelectItem value="confirmed">Confirm & Lock Dates</SelectItem>
-                    <SelectItem value="under_review">Mark Under Review</SelectItem>
-                    <SelectItem value="completed">Mark Completed</SelectItem>
-                    <SelectItem value="declined">Decline Request</SelectItem>
+                    {(BUS_TRANSITIONS[selectedBooking.status] ?? []).map((st) => (
+                      <SelectItem key={st} value={st} className="capitalize">
+                        {st.replace(/_/g, " ")}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

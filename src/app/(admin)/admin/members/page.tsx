@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DataTable, Column } from "@/components/data/DataTable";
 import { Button } from "@/components/ui/button";
@@ -15,20 +16,40 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { formatShortDate } from "@/lib/format";
-import { CheckCircle2, Mail, Phone, School, ShieldCheck, UserRound, UserCheck } from "lucide-react";
+import { CheckCircle2, Mail, Phone, School, ShieldCheck, UserRound, UserCheck, XCircle } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { Doc, Id } from "../../../../../convex/_generated/dataModel";
 import { toast } from "sonner";
 
 export default function AdminMembersPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminMembersPageInner />
+    </Suspense>
+  );
+}
+
+function AdminMembersPageInner() {
   const members = useQuery(api.users.listMembers, {});
   const approveMemberMutation = useMutation(api.users.approveMember);
   const setMemberStatusMutation = useMutation(api.users.setMemberStatus);
+  const searchParams = useSearchParams();
 
   const [processingId, setProcessingId] = useState<string | null>(null);
-  const [selectedMember, setSelectedMember] = useState<Doc<"users"> | null>(null);
+  const [selectedMember, setSelectedMember] = useState<(Doc<"users"> & { photoUrl: string | null }) | null>(null);
   const pendingApprovalCount = members?.filter((member) => member.status === "pending_approval").length ?? 0;
+
+  // Opened via the top-bar search ("?highlight=<id>") — jump straight to that
+  // member's record once the list has loaded.
+  useEffect(() => {
+    const highlightId = searchParams.get("highlight");
+    if (highlightId && members && !selectedMember) {
+      const match = members.find((m) => m._id === highlightId);
+      if (match) setSelectedMember(match);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, members]);
 
   const handleApprove = async (userId: Id<"users">) => {
     if (!confirm("Approve this teacher's membership and grant portal access?")) return;
@@ -39,6 +60,27 @@ export default function AdminMembersPage() {
       setSelectedMember((current) => current?._id === userId ? { ...current, status: "active" } : current);
     } catch {
       toast.error("Failed to approve member.");
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleReject = async (userId: Id<"users">) => {
+    const reason = window.prompt(
+      "Reason for rejecting this membership application (shown to the applicant):"
+    );
+    if (reason === null) return;
+    if (reason.trim().length < 5) {
+      toast.error("Enter a brief reason (at least 5 characters) before rejecting.");
+      return;
+    }
+    setProcessingId(userId);
+    try {
+      await setMemberStatusMutation({ userId, newStatus: "rejected", reason: reason.trim() });
+      toast.success("Membership application rejected.");
+      setSelectedMember((current) => current?._id === userId ? { ...current, status: "rejected" } : current);
+    } catch {
+      toast.error("Failed to reject application.");
     } finally {
       setProcessingId(null);
     }
@@ -58,18 +100,27 @@ export default function AdminMembersPage() {
     }
   };
 
-  const columns: Column<Doc<"users">>[] = [
+  const columns: Column<Doc<"users"> & { photoUrl: string | null }>[] = [
     {
       key: "fullName",
       header: "Teacher Name",
       render: (item) => (
-        <div>
-          <span className="font-semibold text-[var(--ink)] block">
-            {item.fullName}
-          </span>
-          <span className="text-[12px] text-[var(--ink-muted)]">
-            {item.email}
-          </span>
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--union-soft)] text-[var(--union)]">
+            {item.photoUrl ? (
+              <img src={item.photoUrl} alt={item.fullName} className="h-full w-full object-cover" />
+            ) : (
+              <UserRound className="h-4 w-4" />
+            )}
+          </div>
+          <div>
+            <span className="font-semibold text-[var(--ink)] block">
+              {item.fullName}
+            </span>
+            <span className="text-[12px] text-[var(--ink-muted)]">
+              {item.email}
+            </span>
+          </div>
         </div>
       ),
     },
@@ -169,8 +220,12 @@ export default function AdminMembersPage() {
             <>
               <DialogHeader>
                 <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--union)] text-[var(--brass)]">
-                    <UserRound className="h-6 w-6" />
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--union)] text-[var(--brass)] overflow-hidden shrink-0">
+                    {selectedMember.photoUrl ? (
+                      <img src={selectedMember.photoUrl} alt={selectedMember.fullName} className="h-full w-full object-cover" />
+                    ) : (
+                      <UserRound className="h-6 w-6" />
+                    )}
                   </div>
                   <div>
                     <span className="eyebrow block mb-1">MEMBER ACCOUNT RECORD</span>
@@ -203,6 +258,17 @@ export default function AdminMembersPage() {
 
               <DialogFooter className="gap-2 sm:gap-0">
                 <Button type="button" variant="secondary" onClick={() => setSelectedMember(null)}>Close</Button>
+                {selectedMember.status === "pending_approval" && selectedMember.role === "member" && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="text-[var(--danger)] hover:bg-[var(--danger-soft)]"
+                    loading={processingId === selectedMember._id}
+                    onClick={() => handleReject(selectedMember._id)}
+                  >
+                    <XCircle className="mr-1.5 h-4 w-4" />Reject
+                  </Button>
+                )}
                 {selectedMember.status !== "active" && selectedMember.role === "member" && (
                   <Button type="button" loading={processingId === selectedMember._id} onClick={() => handleApprove(selectedMember._id)}>
                     <CheckCircle2 className="mr-1.5 h-4 w-4" />Approve Member

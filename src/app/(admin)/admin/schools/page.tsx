@@ -122,7 +122,7 @@ export default function AdminSchoolsPage() {
           { label: "Schools Directory" },
         ]}
         action={
-          <Button onClick={() => setIsAddOpen(true)} className="bg-[var(--navy)] text-white hover:bg-[var(--navy-light)]">
+          <Button onClick={() => setIsAddOpen(true)} className="bg-[var(--union)] text-white hover:bg-[var(--union-hover)]">
             <Plus className="h-4 w-4 mr-1.5" /> Add Secondary School
           </Button>
         }
@@ -131,32 +131,32 @@ export default function AdminSchoolsPage() {
       {/* Summary KPI Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="p-4 flex items-center space-x-4">
-          <div className="p-3 bg-[var(--surface-muted)] text-[var(--navy)] rounded-lg">
+          <div className="p-3 bg-[var(--surface-sunk)] text-[var(--union)] rounded-lg">
             <SchoolIcon className="h-6 w-6" />
           </div>
           <div>
-            <div className="text-2xl font-bold text-[var(--navy)]">{totalSchools}</div>
-            <div className="text-xs text-[var(--muted)]">Registered Secondary Schools</div>
+            <div className="text-2xl font-bold text-[var(--union)]">{totalSchools}</div>
+            <div className="text-xs text-[var(--ink-muted)]">Registered Secondary Schools</div>
           </div>
         </Card>
 
         <Card className="p-4 flex items-center space-x-4">
-          <div className="p-3 bg-[var(--surface-muted)] text-[var(--navy)] rounded-lg">
+          <div className="p-3 bg-[var(--surface-sunk)] text-[var(--union)] rounded-lg">
             <Users className="h-6 w-6" />
           </div>
           <div>
-            <div className="text-2xl font-bold text-[var(--navy)]">{totalTeachersCounty}</div>
-            <div className="text-xs text-[var(--muted)]">Total Registered Teachers</div>
+            <div className="text-2xl font-bold text-[var(--union)]">{totalTeachersCounty}</div>
+            <div className="text-xs text-[var(--ink-muted)]">Total Registered Teachers</div>
           </div>
         </Card>
 
         <Card className="p-4 flex items-center space-x-4">
-          <div className="p-3 bg-[var(--surface-muted)] text-[var(--navy)] rounded-lg">
+          <div className="p-3 bg-[var(--surface-sunk)] text-[var(--union)] rounded-lg">
             <Building2 className="h-6 w-6" />
           </div>
           <div>
-            <div className="text-2xl font-bold text-[var(--navy)]">{SUB_COUNTIES.length}</div>
-            <div className="text-xs text-[var(--muted)]">Sub-Counties Covered</div>
+            <div className="text-2xl font-bold text-[var(--union)]">{SUB_COUNTIES.length}</div>
+            <div className="text-xs text-[var(--ink-muted)]">Sub-Counties Covered</div>
           </div>
         </Card>
       </div>
@@ -164,7 +164,7 @@ export default function AdminSchoolsPage() {
       {/* Filters & Search */}
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white p-4 border border-[var(--line)] rounded-lg shadow-sm">
         <div className="relative w-full sm:w-80 shrink-0">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-[var(--muted)]" />
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-[var(--ink-muted)]" />
           <Input
             placeholder="Search school name or principal..."
             className="pl-9"
@@ -174,7 +174,7 @@ export default function AdminSchoolsPage() {
         </div>
 
         <div className="flex w-full flex-wrap items-center gap-2">
-          <span className="mr-1 text-xs font-medium text-[var(--muted)]">Sub-County:</span>
+          <span className="mr-1 text-xs font-medium text-[var(--ink-muted)]">Sub-County:</span>
           <Button
             variant={selectedSubCounty === "ALL" ? "primary" : "secondary"}
             size="sm"
@@ -204,13 +204,13 @@ export default function AdminSchoolsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {filteredSchools.map((school) => (
           <Card key={school._id} className="flex flex-col justify-between hover:shadow-md transition-shadow">
-            <CardHeader className="pb-3 border-b border-[var(--line)] bg-[var(--surface-subtle)]">
+            <CardHeader className="pb-3 border-b border-[var(--line)] bg-[var(--surface-sunk)]">
               <div className="flex items-start justify-between">
                 <div>
-                  <Badge variant="neutral" className="mb-1.5 text-xs text-[var(--navy)] bg-white border-[var(--line)]">
+                  <Badge variant="neutral" className="mb-1.5 text-xs text-[var(--union)] bg-white border-[var(--line)]">
                     {school.subCounty}
                   </Badge>
-                  <CardTitle className="text-base font-bold text-[var(--navy)] line-clamp-1">
+                  <CardTitle className="text-base font-bold text-[var(--union)] line-clamp-1">
                     {school.name}
                   </CardTitle>
                 </div>
@@ -263,8 +263,8 @@ export default function AdminSchoolsPage() {
 
               {/* Staff Count Pill */}
               <div className="flex items-center justify-between text-xs pt-1">
-                <span className="text-[var(--muted)]">Total Registered Staff:</span>
-                <Badge variant="neutral" className="font-bold text-xs bg-[var(--surface-muted)] text-[var(--navy)]">
+                <span className="text-[var(--ink-muted)]">Total Registered Staff:</span>
+                <Badge variant="neutral" className="font-bold text-xs bg-[var(--surface-sunk)] text-[var(--union)]">
                   {school.totalTeachers} {school.totalTeachers === 1 ? "Teacher" : "Teachers"}
                 </Badge>
               </div>
@@ -274,7 +274,7 @@ export default function AdminSchoolsPage() {
               <Button
                 variant="secondary"
                 size="sm"
-                className="w-full flex items-center justify-center gap-1.5 text-xs text-[var(--navy)]"
+                className="w-full flex items-center justify-center gap-1.5 text-xs text-[var(--union)]"
                 onClick={() => setSelectedSchoolRoster(school)}
               >
                 <Eye className="h-3.5 w-3.5" /> View Staff Roster ({school.totalTeachers})
@@ -293,7 +293,7 @@ export default function AdminSchoolsPage() {
       </div>
 
       {filteredSchools.length === 0 && (
-        <Card className="p-12 text-center text-[var(--muted)] space-y-3">
+        <Card className="p-12 text-center text-[var(--ink-muted)] space-y-3">
           <SchoolIcon className="h-12 w-12 mx-auto text-slate-300" />
           <div className="font-semibold text-slate-700">No schools found</div>
           <p className="text-xs max-w-sm mx-auto">
@@ -307,7 +307,7 @@ export default function AdminSchoolsPage() {
         <DialogContent className="sm:max-w-[440px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <SchoolIcon className="h-5 w-5 text-[var(--navy)]" /> Add Secondary School
+              <SchoolIcon className="h-5 w-5 text-[var(--union)]" /> Add Secondary School
             </DialogTitle>
             <DialogDescription>
               Register a new secondary school or institution under Busia County directory.
@@ -360,14 +360,14 @@ export default function AdminSchoolsPage() {
             <DialogHeader className="border-b border-[var(--line)] pb-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <Badge variant="neutral" className="mb-1 text-xs text-[var(--navy)]">
+                  <Badge variant="neutral" className="mb-1 text-xs text-[var(--union)]">
                     {selectedSchoolRoster.subCounty} Sub-County
                   </Badge>
-                  <DialogTitle className="text-xl font-bold text-[var(--navy)]">
+                  <DialogTitle className="text-xl font-bold text-[var(--union)]">
                     {selectedSchoolRoster.name} — Staff Roster
                   </DialogTitle>
                 </div>
-                <Badge variant="neutral" className="text-sm px-3 py-1 bg-[var(--surface-muted)] text-[var(--navy)]">
+                <Badge variant="neutral" className="text-sm px-3 py-1 bg-[var(--surface-sunk)] text-[var(--union)]">
                   {selectedSchoolRoster.totalTeachers} Staff Members
                 </Badge>
               </div>
@@ -381,7 +381,7 @@ export default function AdminSchoolsPage() {
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-slate-900">{teacher.fullName}</span>
-                          <Badge className="text-[11px] bg-[var(--navy)] text-white">
+                          <Badge className="text-[11px] bg-[var(--union)] text-white">
                             {teacher.schoolRole}
                           </Badge>
                           <Badge variant="neutral" className="text-[11px] border-slate-300">

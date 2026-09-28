@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { BackLink } from "@/components/layout/BackLink";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/data/StatusBadge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,11 +18,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatDate, formatDateTime } from "@/lib/format";
-import { ArrowLeft, Lock, ShieldAlert, CheckCircle, FileText, AlertCircle } from "lucide-react";
+import { ArrowLeft, Lock, ShieldAlert, CheckCircle, FileText, AlertCircle, Paperclip } from "lucide-react";
 import { useMutation } from "convex/react";
 import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
-import { HARASSMENT_STATUSES, HarassmentStatus } from "@/lib/constants";
+import { HARASSMENT_TRANSITIONS, HarassmentStatus } from "@/lib/constants";
 import { toast } from "sonner";
 
 export default function AdminHarassmentDetailPage({
@@ -121,6 +122,7 @@ export default function AdminHarassmentDetailPage({
 
   return (
     <div className="max-w-[880px] mx-auto">
+      <BackLink href="/admin/harassment" label="Back to Queue" />
       <PageHeader
         eyebrow="CONFIDENTIAL FILE"
         title={`Report ${report.reference}`}
@@ -130,13 +132,6 @@ export default function AdminHarassmentDetailPage({
           { label: "Harassment Reports", href: "/admin/harassment" },
           { label: report.reference },
         ]}
-        action={
-          <Button variant="secondary" size="sm" asChild>
-            <Link href="/admin/harassment">
-              <ArrowLeft className="h-4 w-4 mr-1.5" /> Back to Queue
-            </Link>
-          </Button>
-        }
       />
 
       {/* Audit Logged Banner */}
@@ -242,6 +237,36 @@ export default function AdminHarassmentDetailPage({
                     {report.narrative}
                   </dd>
                 </div>
+
+                <div className="sm:col-span-2 pt-3 border-t border-[var(--line)]">
+                  <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)] mb-2 flex items-center gap-1.5">
+                    <Paperclip className="h-3.5 w-3.5" /> Supporting Evidence
+                  </dt>
+                  {report.evidenceUrls && report.evidenceUrls.length > 0 ? (
+                    <ul className="space-y-2">
+                      {report.evidenceUrls.map((ev: { id: string; url: string | null }, idx: number) => (
+                        <li key={ev.id}>
+                          {ev.url ? (
+                            <a
+                              href={ev.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 text-[13.5px] text-[var(--union)] hover:underline"
+                            >
+                              <Paperclip className="h-3.5 w-3.5" /> Evidence file {idx + 1}
+                            </a>
+                          ) : (
+                            <span className="text-[13.5px] text-[var(--ink-muted)]">Evidence file {idx + 1} (unavailable)</span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-[13px] text-[var(--ink-muted)] italic">
+                      No evidence files were attached to this report.
+                    </p>
+                  )}
+                </div>
               </dl>
             </CardContent>
           </Card>
@@ -275,7 +300,7 @@ export default function AdminHarassmentDetailPage({
                       <SelectValue placeholder="Select new status" />
                     </SelectTrigger>
                     <SelectContent>
-                      {HARASSMENT_STATUSES.map((st) => (
+                      {(HARASSMENT_TRANSITIONS[report.status] ?? []).map((st) => (
                         <SelectItem key={st} value={st} className="capitalize">
                           {st.replace(/_/g, " ")}
                         </SelectItem>

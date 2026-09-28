@@ -26,6 +26,7 @@ import type * as notifications from "../notifications.js";
 import type * as officials from "../officials.js";
 import type * as schools from "../schools.js";
 import type * as seed from "../seed.js";
+import type * as settings from "../settings.js";
 import type * as users from "../users.js";
 
 import type {
@@ -53,6 +54,7 @@ declare const fullApi: ApiFromModules<{
   officials: typeof officials;
   schools: typeof schools;
   seed: typeof seed;
+  settings: typeof settings;
   users: typeof users;
 }>;
 

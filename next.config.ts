@@ -5,6 +5,11 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: process.env.BASE44_PUBLIC_HOST_SUFFIX
     ? [`3000-${process.env.BASE44_PUBLIC_HOST_SUFFIX}`]
     : [],
+  redirects: async () => [
+    // Login was consolidated into a single TSC-based /login for every role —
+    // keep old bookmarks/links to the retired admin-only sign-in working.
+    { source: "/admin-login", destination: "/login", permanent: true },
+  ],
   headers: async () => {
     // Skip restrictive security headers in dev so the preview iframe can load
     if (process.env.NODE_ENV === "development") {

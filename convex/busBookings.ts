@@ -9,6 +9,7 @@ import {
 } from "./lib/validators";
 import { ConvexError } from "convex/values";
 import { Doc } from "./_generated/dataModel";
+import { readBranchConfig } from "./settings";
 
 const LEGAL_BUS_TRANSITIONS: Record<string, string[]> = {
   requested: ["under_review", "approved", "declined", "cancelled"],
@@ -77,24 +78,26 @@ export const create = mutation({
       });
     }
 
-    // Passengers: 1 to 62
-    if (args.passengers < 1 || args.passengers > 62) {
+    const { busNoticeDays, busCapacitySeats } = await readBranchConfig(ctx);
+
+    // Passengers: 1 to admin-configured capacity (defaults to 62)
+    if (args.passengers < 1 || args.passengers > busCapacitySeats) {
       throw new ConvexError({
         code: "INVALID_PASSENGERS",
-        message: "Number of passengers must be between 1 and 62 (bus maximum capacity).",
+        message: `Number of passengers must be between 1 and ${busCapacitySeats} (bus maximum capacity).`,
       });
     }
 
-    // Departure notice period: >= 3 days
+    // Departure notice period: admin-configured minimum (defaults to 3 days)
     const depDate = new Date(args.departureAt);
     const retDate = new Date(args.returnAt);
     const now = new Date();
 
-    const minNoticeDate = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+    const minNoticeDate = new Date(now.getTime() + busNoticeDays * 24 * 60 * 60 * 1000);
     if (depDate < minNoticeDate) {
       throw new ConvexError({
         code: "NOTICE_PERIOD_VIOLATION",
-        message: "Bus requests require a minimum 3-day advance notice period.",
+        message: `Bus requests require a minimum ${busNoticeDays}-day advance notice period.`,
       });
     }
 

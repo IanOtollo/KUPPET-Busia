@@ -27,7 +27,13 @@ export const getMyProfile = query({
   args: {},
   handler: async (ctx: QueryCtx) => {
     try {
-      return await getCurrentUser(ctx);
+      const user = await getCurrentUser(ctx);
+      return {
+        ...user,
+        photoUrl: user.photoStorageId
+          ? await ctx.storage.getUrl(user.photoStorageId)
+          : null,
+      };
     } catch {
       return null;
     }
@@ -392,7 +398,13 @@ export const listMembers = query({
       members = members.filter((m) => m.subCounty === args.subCounty);
     }
 
-    return members.sort((a, b) => b.createdAt - a.createdAt);
+    const sorted = members.sort((a, b) => b.createdAt - a.createdAt);
+    return await Promise.all(
+      sorted.map(async (member) => ({
+        ...member,
+        photoUrl: member.photoStorageId ? await ctx.storage.getUrl(member.photoStorageId) : null,
+      }))
+    );
   },
 });
 
@@ -537,6 +549,7 @@ export const updateMyProfile = mutation({
     school: v.optional(v.string()),
     subCounty: v.optional(subCountyValidator),
     designation: v.optional(designationValidator),
+    photoStorageId: v.optional(v.id("_storage")),
   },
   handler: async (ctx: MutationCtx, args) => {
     const currentUser = await requireUser(ctx);
@@ -553,6 +566,13 @@ export const updateMyProfile = mutation({
     if (args.school !== undefined) updates.school = args.school.trim();
     if (args.subCounty !== undefined) updates.subCounty = args.subCounty;
     if (args.designation !== undefined) updates.designation = args.designation;
+    if (args.photoStorageId !== undefined) {
+      updates.photoStorageId = args.photoStorageId;
+      // Replacing an existing photo — remove the now-orphaned file.
+      if (currentUser.photoStorageId && currentUser.photoStorageId !== args.photoStorageId) {
+        await ctx.storage.delete(currentUser.photoStorageId);
+      }
+    }
 
     await ctx.db.patch(currentUser._id, updates);
 
@@ -563,6 +583,42 @@ export const updateMyProfile = mutation({
       actorId: currentUser._id,
       actorRole: currentUser.role,
       metadata: { updatedFields: Object.keys(args) },
+    });
+
+    return { success: true };
+  },
+});
+
+/** Creates a short-lived upload URL for the signed-in user's profile photo. */
+export const generateMyPhotoUploadUrl = mutation({
+  args: {},
+  handler: async (ctx: MutationCtx) => {
+    await requireUser(ctx);
+    return await ctx.storage.generateUploadUrl();
+  },
+});
+
+/** Removes the signed-in user's profile photo, deleting the stored file. */
+export const removeMyPhoto = mutation({
+  args: {},
+  handler: async (ctx: MutationCtx) => {
+    const currentUser = await requireUser(ctx);
+    if (!currentUser.photoStorageId) {
+      return { success: true };
+    }
+
+    await ctx.storage.delete(currentUser.photoStorageId);
+    await ctx.db.patch(currentUser._id, {
+      photoStorageId: undefined,
+      updatedAt: Date.now(),
+    });
+
+    await writeAudit(ctx, {
+      action: "user.remove_profile_photo",
+      entityType: "users",
+      entityId: currentUser._id,
+      actorId: currentUser._id,
+      actorRole: currentUser.role,
     });
 
     return { success: true };

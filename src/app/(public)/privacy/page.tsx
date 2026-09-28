@@ -14,7 +14,7 @@ export default function PrivacyPage() {
             </Link>
           </Button>
           <Link href="/" className="flex items-center gap-3 min-w-0">
-            <Image src="/logo.png" alt="KUPPET Logo" width={84} height={56} className="h-14 w-auto object-contain shrink-0" priority />
+            <Image src="/logo.png" alt="KUPPET Logo" width={112} height={56} className="h-14 w-auto object-contain shrink-0" priority />
             <span className="text-[13px] font-semibold tracking-[0.08em] text-[var(--ink)] uppercase truncate">
               KUPPET BUSIA
             </span>

@@ -25,9 +25,25 @@ import { formatShortDate } from "@/lib/format";
 import { Plus, Megaphone } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
-import { ANNOUNCEMENT_PRIORITIES, AnnouncementPriority } from "@/lib/constants";
+import {
+  ANNOUNCEMENT_PRIORITIES,
+  AnnouncementPriority,
+  SUB_COUNTIES,
+  DESIGNATIONS,
+} from "@/lib/constants";
 import { Doc } from "../../../../../convex/_generated/dataModel";
 import { toast } from "sonner";
+
+const ANNOUNCEMENT_CATEGORIES = [
+  "General Notice",
+  "AGM & Governance",
+  "Welfare & Benefits",
+  "Fleet & Bus Operations",
+  "Financial & Transparency",
+  "Training & Development",
+];
+
+type AudienceType = "all" | "sub_county" | "designation";
 
 export default function AdminAnnouncementsPage() {
   const announcements = useQuery(api.announcements.listActive, {});
@@ -41,10 +57,18 @@ export default function AdminAnnouncementsPage() {
     body: "",
     category: "General Notice",
     priority: "normal" as AnnouncementPriority,
+    audienceType: "all" as AudienceType,
+    audienceValue: "",
+    expiresAt: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (formData.audienceType !== "all" && !formData.audienceValue) {
+      toast.error("Select who this announcement is targeted to.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await createAnnouncement({
@@ -52,11 +76,22 @@ export default function AdminAnnouncementsPage() {
         body: formData.body,
         category: formData.category,
         priority: formData.priority,
-        audienceType: "all",
+        audienceType: formData.audienceType,
+        audienceValue: formData.audienceType === "all" ? undefined : formData.audienceValue,
+        expiresAt: formData.expiresAt || undefined,
       });
 
       toast.success("Announcement broadcast published.");
       setDialogOpen(false);
+      setFormData({
+        title: "",
+        body: "",
+        category: "General Notice",
+        priority: "normal",
+        audienceType: "all",
+        audienceValue: "",
+        expiresAt: "",
+      });
     } catch {
       toast.error("Failed to publish announcement.");
     } finally {
@@ -126,23 +161,44 @@ export default function AdminAnnouncementsPage() {
               />
             </div>
 
-            <div>
-              <Label htmlFor="priority">Priority Level</Label>
-              <Select
-                value={formData.priority}
-                onValueChange={(val: AnnouncementPriority) =>
-                  setFormData({ ...formData, priority: val })
-                }
-              >
-                <SelectTrigger id="priority">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="normal">Normal Notice</SelectItem>
-                  <SelectItem value="important">Important Bulletin</SelectItem>
-                  <SelectItem value="urgent">Urgent Dashboard Banner</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="priority">Priority Level</Label>
+                <Select
+                  value={formData.priority}
+                  onValueChange={(val: AnnouncementPriority) =>
+                    setFormData({ ...formData, priority: val })
+                  }
+                >
+                  <SelectTrigger id="priority">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="normal">Normal Notice</SelectItem>
+                    <SelectItem value="important">Important Bulletin</SelectItem>
+                    <SelectItem value="urgent">Urgent Dashboard Banner</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="category">Category</Label>
+                <Select
+                  value={formData.category}
+                  onValueChange={(val: string) => setFormData({ ...formData, category: val })}
+                >
+                  <SelectTrigger id="category">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ANNOUNCEMENT_CATEGORIES.map((cat) => (
+                      <SelectItem key={cat} value={cat}>
+                        {cat}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div>
@@ -154,6 +210,60 @@ export default function AdminAnnouncementsPage() {
                 placeholder="Write the full announcement text…"
                 value={formData.body}
                 onChange={(e) => setFormData({ ...formData, body: e.target.value })}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="audienceType">Audience</Label>
+                <Select
+                  value={formData.audienceType}
+                  onValueChange={(val: AudienceType) =>
+                    setFormData({ ...formData, audienceType: val, audienceValue: "" })
+                  }
+                >
+                  <SelectTrigger id="audienceType">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Members</SelectItem>
+                    <SelectItem value="sub_county">By Sub-County</SelectItem>
+                    <SelectItem value="designation">By Designation</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {formData.audienceType !== "all" && (
+                <div>
+                  <Label htmlFor="audienceValue">
+                    {formData.audienceType === "sub_county" ? "Sub-County" : "Designation"}
+                  </Label>
+                  <Select
+                    value={formData.audienceValue}
+                    onValueChange={(val: string) => setFormData({ ...formData, audienceValue: val })}
+                  >
+                    <SelectTrigger id="audienceValue">
+                      <SelectValue placeholder="Select…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(formData.audienceType === "sub_county" ? SUB_COUNTIES : DESIGNATIONS).map((v) => (
+                        <SelectItem key={v} value={v}>
+                          {v}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="expiresAt" optional>Expires On</Label>
+              <Input
+                id="expiresAt"
+                type="date"
+                value={formData.expiresAt}
+                onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
               />
             </div>
 

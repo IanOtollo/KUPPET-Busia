@@ -204,22 +204,22 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-[var(--canvas)] py-12 px-4 sm:px-6 lg:px-8 relative">
       <div className="absolute top-4 left-4 sm:top-8 sm:left-8">
-        <Link href="/" className="text-[13px] text-[var(--muted)] hover:text-[var(--navy)] flex items-center gap-1.5 transition-colors font-medium">
+        <Link href="/" className="text-[13px] text-[var(--ink-muted)] hover:text-[var(--union)] flex items-center gap-1.5 transition-colors font-medium">
           <ArrowLeft className="h-4 w-4" /> Back to Home
         </Link>
       </div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-xl">
         <Link href="/" className="flex items-center justify-center gap-2 mb-6">
-          <Image src="/logo.png" alt="KUPPET Logo" width={96} height={64} className="h-16 w-auto object-contain select-none" priority />
-          <span className="font-serif font-bold text-xl text-[var(--navy)] tracking-tight">
+          <Image src="/logo.png" alt="KUPPET Logo" width={128} height={64} className="h-16 w-auto object-contain select-none" priority />
+          <span className="font-serif font-bold text-xl text-[var(--union)] tracking-tight">
             KUPPET BUSIA
           </span>
         </Link>
-        <h2 className="text-center text-2xl sm:text-3xl font-bold tracking-tight text-[var(--navy)] font-serif">
+        <h2 className="text-center text-2xl sm:text-3xl font-bold tracking-tight text-[var(--union)] font-serif">
           Teacher Membership Registration
         </h2>
-        <p className="mt-2 text-center text-xs sm:text-sm text-[var(--muted)]">
+        <p className="mt-2 text-center text-xs sm:text-sm text-[var(--ink-muted)]">
           Join Busia County Post-Primary Teachers Union. Step {step} of 2.
         </p>
       </div>
@@ -232,13 +232,13 @@ export default function RegisterPage() {
               <span
                 className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
                   step === 1
-                    ? "bg-[var(--navy)] text-white"
+                    ? "bg-[var(--union)] text-white"
                     : "bg-emerald-100 text-emerald-800"
                 }`}
               >
                 1
               </span>
-              <span className="text-xs font-semibold text-[var(--navy)]">
+              <span className="text-xs font-semibold text-[var(--union)]">
                 Personal & School Details
               </span>
             </div>
@@ -249,7 +249,7 @@ export default function RegisterPage() {
               <span
                 className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
                   step === 2
-                    ? "bg-[var(--navy)] text-white"
+                    ? "bg-[var(--union)] text-white"
                     : "bg-slate-100 text-slate-400"
                 }`}
               >
@@ -435,7 +435,7 @@ export default function RegisterPage() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-[11.5px] text-[var(--muted)] mt-1">
+                  <p className="text-[11.5px] text-[var(--ink-muted)] mt-1">
                     e.g. Games Master, HOD, Deputy Principal
                   </p>
                 </div>
@@ -443,9 +443,9 @@ export default function RegisterPage() {
                 {/* Teaching Subjects */}
                 <div>
                   <Label className="flex items-center gap-1.5 mb-1">
-                    <BookOpen className="h-4 w-4 text-[var(--navy)]" /> Teaching Subject(s)
+                    <BookOpen className="h-4 w-4 text-[var(--union)]" /> Teaching Subject(s)
                   </Label>
-                  <p className="text-[11.5px] text-[var(--muted)] mb-2">
+                  <p className="text-[11.5px] text-[var(--ink-muted)] mb-2">
                     Select all that apply
                   </p>
                   <div className="flex flex-wrap gap-2 p-3 bg-slate-50 border border-slate-200 rounded-lg">
@@ -490,7 +490,7 @@ export default function RegisterPage() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="text-[12px] text-[var(--navy)] hover:underline flex items-center gap-1 cursor-pointer"
+                      className="text-[12px] text-[var(--union)] hover:underline flex items-center gap-1 cursor-pointer"
                     >
                       {showPassword ? (
                         <>
@@ -524,7 +524,7 @@ export default function RegisterPage() {
                       />
                     ))}
                   </div>
-                  <p className="text-[11.5px] text-[var(--muted)] mt-1.5">
+                  <p className="text-[11.5px] text-[var(--ink-muted)] mt-1.5">
                     Must contain at least 8 characters, including uppercase, lowercase, and a digit.
                   </p>
                   {errors.password && (
@@ -561,7 +561,7 @@ export default function RegisterPage() {
                     <div className="grid gap-1.5 leading-none">
                       <label
                         htmlFor="consent"
-                        className="text-xs text-[var(--navy)] font-medium leading-normal cursor-pointer"
+                        className="text-xs text-[var(--union)] font-medium leading-normal cursor-pointer"
                       >
                         I confirm my TSC and National ID details are accurate.
                       </label>
@@ -598,9 +598,9 @@ export default function RegisterPage() {
         </div>
         
         <div className="mt-6 text-center">
-          <p className="text-[13px] text-[var(--muted)]">
+          <p className="text-[13px] text-[var(--ink-muted)]">
             Already have an account?{" "}
-            <Link href="/login" className="font-medium text-[var(--navy)] hover:underline">
+            <Link href="/login" className="font-medium text-[var(--union)] hover:underline">
               Sign in here
             </Link>
           </p>

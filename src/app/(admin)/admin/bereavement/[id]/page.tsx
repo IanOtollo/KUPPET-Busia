@@ -3,6 +3,7 @@
 import { useState, use } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { BackLink } from "@/components/layout/BackLink";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/data/StatusBadge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,11 +19,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatDate, formatShortDate, formatDateTime, formatKES } from "@/lib/format";
-import { ArrowLeft, Send, CheckCircle, ShieldAlert, MessageSquare, AlertCircle } from "lucide-react";
+import { ArrowLeft, Send, CheckCircle, ShieldAlert, MessageSquare, AlertCircle, Paperclip } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
-import { BEREAVEMENT_STATUSES, BereavementStatus } from "@/lib/constants";
+import { BEREAVEMENT_TRANSITIONS, BereavementStatus } from "@/lib/constants";
 import { toast } from "sonner";
 
 export default function AdminBereavementDetailPage({
@@ -121,6 +122,7 @@ export default function AdminBereavementDetailPage({
 
   return (
     <div>
+      <BackLink href="/admin/bereavement" label="Back to Queue" />
       <PageHeader
         eyebrow="WELFARE CASE REVIEW"
         title={`Review: ${caseDoc.deceasedName} (${caseDoc.reference})`}
@@ -130,13 +132,6 @@ export default function AdminBereavementDetailPage({
           { label: "Bereavement Queue", href: "/admin/bereavement" },
           { label: caseDoc.reference },
         ]}
-        action={
-          <Button variant="secondary" size="sm" asChild>
-            <Link href="/admin/bereavement">
-              <ArrowLeft className="h-4 w-4 mr-1.5" /> Back to Queue
-            </Link>
-          </Button>
-        }
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -259,6 +254,42 @@ export default function AdminBereavementDetailPage({
             </CardContent>
           </Card>
 
+          {/* Supporting Documents */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Paperclip className="h-4 w-4 text-[var(--union)]" />
+                <CardTitle>Supporting Documents</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {caseDoc.documentUrls && caseDoc.documentUrls.length > 0 ? (
+                <ul className="space-y-2">
+                  {caseDoc.documentUrls.map((doc: { id: string; url: string | null }, idx: number) => (
+                    <li key={doc.id}>
+                      {doc.url ? (
+                        <a
+                          href={doc.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 text-[13.5px] text-[var(--union)] hover:underline"
+                        >
+                          <Paperclip className="h-3.5 w-3.5" /> Document {idx + 1}
+                        </a>
+                      ) : (
+                        <span className="text-[13.5px] text-[var(--ink-muted)]">Document {idx + 1} (unavailable)</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-[13px] text-[var(--ink-muted)] italic">
+                  No supporting documents were attached to this claim.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Internal Notes Thread (Admin-only) */}
           <Card>
             <CardHeader>
@@ -361,7 +392,7 @@ export default function AdminBereavementDetailPage({
                       <SelectValue placeholder="Select new status" />
                     </SelectTrigger>
                     <SelectContent>
-                      {BEREAVEMENT_STATUSES.map((st) => (
+                      {(BEREAVEMENT_TRANSITIONS[caseDoc.status] ?? []).map((st) => (
                         <SelectItem key={st} value={st} className="capitalize">
                           {st.replace(/_/g, " ")}
                         </SelectItem>
