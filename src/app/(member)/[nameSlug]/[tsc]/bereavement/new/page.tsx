@@ -11,13 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { NativeSelect } from "@/components/ui/native-select";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   SUB_COUNTIES,
@@ -304,25 +298,22 @@ export default function NewBereavementPage() {
 
                 <div>
                   <Label htmlFor="subCounty">Sub-County</Label>
-                  <Select
+                  <NativeSelect
+                    id="subCounty"
+                    error={!!errors.subCounty}
                     defaultValue={userProfile?.subCounty || "Matayos"}
-                    onValueChange={(val) =>
-                      setValue("subCounty", val as SubCounty, {
+                    onChange={(e) =>
+                      setValue("subCounty", e.target.value as SubCounty, {
                         shouldValidate: true,
                       })
                     }
                   >
-                    <SelectTrigger id="subCounty" error={!!errors.subCounty}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SUB_COUNTIES.map((sc) => (
-                        <SelectItem key={sc} value={sc}>
-                          {sc}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    {SUB_COUNTIES.map((sc) => (
+                      <option key={sc} value={sc}>
+                        {sc}
+                      </option>
+                    ))}
+                  </NativeSelect>
                   {errors.subCounty && (
                     <p className="text-[13px] text-[var(--danger)] mt-1">
                       {errors.subCounty.message}
@@ -360,28 +351,22 @@ export default function NewBereavementPage() {
                   <Label htmlFor="relationship">
                     Relationship to Deceased <span className="text-[var(--danger)]">*</span>
                   </Label>
-                  <Select
+                  <NativeSelect
+                    id="relationship"
+                    error={!!errors.relationship}
                     defaultValue="mother"
-                    onValueChange={(val) =>
-                      setValue("relationship", val as BereavementRelationship, {
+                    onChange={(e) =>
+                      setValue("relationship", e.target.value as BereavementRelationship, {
                         shouldValidate: true,
                       })
                     }
                   >
-                    <SelectTrigger id="relationship" error={!!errors.relationship}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {BEREAVEMENT_RELATIONSHIPS.map((rel) => (
-                        <SelectItem key={rel.value} value={rel.value}>
-                          <span>{rel.label}</span>
-                          <span className="text-[12px] text-[var(--ink-muted)] ml-1">
-                            ({rel.swahili})
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    {BEREAVEMENT_RELATIONSHIPS.map((rel) => (
+                      <option key={rel.value} value={rel.value}>
+                        {rel.label} ({rel.swahili})
+                      </option>
+                    ))}
+                  </NativeSelect>
                   <p className="text-[11.5px] text-[var(--ink-muted)] mt-1">
                     Uhusiano wako na marehemu — mama, baba, mke/mume, au mtoto wako pekee.
                   </p>
@@ -398,7 +383,7 @@ export default function NewBereavementPage() {
                   </Label>
                   <Input
                     id="deceasedName"
-                    placeholder="e.g. Mary Auma Wandera"
+                    placeholder="First name Last name"
                     error={!!errors.deceasedName}
                     {...register("deceasedName")}
                   />
@@ -441,10 +426,10 @@ export default function NewBereavementPage() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <Label htmlFor="burialPlace" optional>Place of Burial / Funeral Home</Label>
+                  <Label htmlFor="burialPlace" optional>Place of Burial (Village &amp; Sub-County)</Label>
                   <Input
                     id="burialPlace"
-                    placeholder="e.g. Bumutiru Village, Butula Sub-County"
+                    placeholder="Village, Sub-County"
                     {...register("burialPlace")}
                   />
                 </div>
