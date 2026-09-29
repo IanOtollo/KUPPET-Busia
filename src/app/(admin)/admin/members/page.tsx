@@ -1,9 +1,9 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { DataTable, Column } from "@/components/data/DataTable";
 import { useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { DataTable, Column } from "@/components/data/DataTable";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/data/StatusBadge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,11 +16,19 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { formatShortDate } from "@/lib/format";
-import { CheckCircle2, Mail, Phone, School, ShieldCheck, UserRound, UserCheck, XCircle } from "lucide-react";
+import { ArrowRightLeft, Search, X, CheckCircle2, Mail, Phone, School, ShieldCheck, UserRound, UserCheck, XCircle } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { Doc, Id } from "../../../../../convex/_generated/dataModel";
 import { toast } from "sonner";
+
+type StatusTab = "all" | "pending_approval" | "active" | "inactive";
+const STATUS_TABS: { value: StatusTab; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "pending_approval", label: "Pending approval" },
+  { value: "active", label: "Active" },
+  { value: "inactive", label: "Suspended / Rejected" },
+];
 
 export default function AdminMembersPage() {
   return (
@@ -35,6 +43,18 @@ function AdminMembersPageInner() {
   const approveMemberMutation = useMutation(api.users.approveMember);
   const setMemberStatusMutation = useMutation(api.users.setMemberStatus);
   const searchParams = useSearchParams();
+  const transfers = useQuery(api.transfers.listAll, {});
+  const acknowledgeTransfer = useMutation(api.transfers.acknowledge);
+  const pendingTransfers = transfers?.filter((t) => !t.acknowledgedAt) ?? [];
+
+  const handleAcknowledge = async (id: Id<"transfers">) => {
+    try {
+      await acknowledgeTransfer({ id });
+      toast.success("Marked as reviewed.");
+    } catch {
+      toast.error("Failed to update.");
+    }
+  };
 
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [selectedMember, setSelectedMember] = useState<(Doc<"users"> & { photoUrl: string | null }) | null>(null);
@@ -100,6 +120,34 @@ function AdminMembersPageInner() {
     }
   };
 
+  const [query, setQuery] = useState("");
+  const [statusTab, setStatusTab] = useState<StatusTab>("all");
+
+  const q = query.trim().toLowerCase();
+
+  const tabCounts = useMemo(() => {
+    const list = members ?? [];
+    return {
+      all: list.length,
+      pending_approval: list.filter((m) => m.status === "pending_approval").length,
+      active: list.filter((m) => m.status === "active").length,
+      inactive: list.filter((m) => m.status === "suspended" || m.status === "rejected").length,
+    } as Record<StatusTab, number>;
+  }, [members]);
+
+  // Filtered by status tab + search (name, school, TSC, ID, phone), sorted A-Z by name.
+  const visibleMembers = useMemo(() => {
+    return (members ?? [])
+      .filter((m) => {
+        if (statusTab === "pending_approval" && m.status !== "pending_approval") return false;
+        if (statusTab === "active" && m.status !== "active") return false;
+        if (statusTab === "inactive" && m.status !== "suspended" && m.status !== "rejected") return false;
+        if (!q) return true;
+        return [m.fullName, m.school, m.tscNumber, m.idNumber, m.phone].some((v) => v?.toLowerCase().includes(q));
+      })
+      .sort((a, b) => a.fullName.localeCompare(b.fullName, undefined, { sensitivity: "base" }));
+  }, [members, statusTab, q]);
+
   const columns: Column<Doc<"users"> & { photoUrl: string | null }>[] = [
     {
       key: "fullName",
@@ -114,12 +162,8 @@ function AdminMembersPageInner() {
             )}
           </div>
           <div>
-            <span className="font-semibold text-[var(--ink)] block">
-              {item.fullName}
-            </span>
-            <span className="text-[12px] text-[var(--ink-muted)]">
-              {item.email}
-            </span>
+            <span className="font-semibold text-[var(--ink)] block">{item.fullName}</span>
+            <span className="text-[12px] text-[var(--ink-muted)]">{item.email}</span>
           </div>
         </div>
       ),
@@ -130,12 +174,8 @@ function AdminMembersPageInner() {
       isMono: true,
       render: (item) => (
         <div>
-          <span className="mono-ref text-[13px] font-bold text-[var(--union)] block">
-            {item.tscNumber}
-          </span>
-          <span className="mono-ref text-[12px] text-[var(--ink-muted)]">
-            ID: {item.idNumber}
-          </span>
+          <span className="mono-ref text-[13px] font-bold text-[var(--union)] block">{item.tscNumber}</span>
+          <span className="mono-ref text-[12px] text-[var(--ink-muted)]">ID: {item.idNumber}</span>
         </div>
       ),
     },
@@ -153,9 +193,7 @@ function AdminMembersPageInner() {
       key: "role",
       header: "Role",
       render: (item) => (
-        <span className="capitalize text-[12.5px] font-semibold text-[var(--ink)]">
-          {item.role}
-        </span>
+        <span className="capitalize text-[12.5px] font-semibold text-[var(--ink)]">{item.role}</span>
       ),
     },
     {
@@ -199,6 +237,40 @@ function AdminMembersPageInner() {
         </button>
       )}
 
+      {pendingTransfers.length > 0 && (
+        <div className="mb-6 rounded-[var(--r-md)] border border-[var(--line)] bg-[var(--surface)]">
+          <div className="flex items-center gap-2 border-b border-[var(--line)] px-4 py-3 text-[13.5px] font-semibold text-[var(--ink)]">
+            <ArrowRightLeft className="h-4 w-4 text-[var(--union)]" />
+            Transfers & promotions reported by teachers ({pendingTransfers.length})
+          </div>
+          <ul className="divide-y divide-[var(--line)]">
+            {pendingTransfers.map((t) => (
+              <li key={t._id} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="text-[13.5px] text-[var(--ink-body)]">
+                  <span className="font-semibold text-[var(--ink)]">{t.memberName}</span>{" "}
+                  <span className="mono-ref text-[12px] text-[var(--ink-muted)]">TSC {t.tscNumber}</span>
+                  {t.fromSchool.trim().toLowerCase() !== t.toSchool.trim().toLowerCase() || t.fromSubCounty !== t.toSubCounty ? (
+                    <div>{t.fromSchool} ({t.fromSubCounty}) → <strong>{t.toSchool} ({t.toSubCounty})</strong></div>
+                  ) : null}
+                  {t.fromDesignation !== t.toDesignation && (
+                    <div>{t.fromDesignation} → <strong>{t.toDesignation}</strong></div>
+                  )}
+                  {(t.effectiveDate || t.reason) && (
+                    <div className="text-[12px] text-[var(--ink-muted)]">
+                      {[t.effectiveDate && `Effective ${t.effectiveDate}`, t.reason].filter(Boolean).join(" • ")}
+                    </div>
+                  )}
+                  <div className="text-[11px] text-[var(--ink-muted)]">{formatShortDate(t.createdAt)}</div>
+                </div>
+                <Button variant="secondary" size="sm" onClick={() => handleAcknowledge(t._id)}>
+                  <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Mark reviewed
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {members === undefined ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
@@ -206,12 +278,69 @@ function AdminMembersPageInner() {
           ))}
         </div>
       ) : (
-        <DataTable
-          columns={columns}
-          data={members || []}
-          keyExtractor={(item) => item._id}
-          onRowClick={setSelectedMember}
-        />
+        <>
+          <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="relative w-full lg:max-w-[420px]">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ink-muted)]" />
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search by teacher name, school, TSC or ID…"
+                aria-label="Search members"
+                className="h-[40px] w-full rounded-[var(--r-md)] border border-[var(--line-strong)] bg-[var(--surface)] pl-9 pr-9 text-[13.5px] placeholder:text-[var(--ink-muted)] focus:border-[var(--union)] focus:outline-none focus:ring-2 focus:ring-[rgba(31,61,92,0.12)]"
+              />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => setQuery("")}
+                  aria-label="Clear search"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--ink-muted)] hover:text-[var(--ink)] cursor-pointer"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+
+            <div role="tablist" className="flex flex-wrap gap-1.5">
+              {STATUS_TABS.map((t) => (
+                <button
+                  key={t.value}
+                  role="tab"
+                  aria-selected={statusTab === t.value}
+                  onClick={() => setStatusTab(t.value)}
+                  className={`inline-flex items-center gap-1.5 rounded-[var(--r-full)] border px-3 py-1.5 text-[13px] font-medium transition-colors cursor-pointer ${
+                    statusTab === t.value
+                      ? "border-[var(--union)] bg-[var(--union)] text-white"
+                      : "border-[var(--line)] bg-[var(--surface)] text-[var(--ink-body)] hover:bg-[var(--surface-sunk)]"
+                  }`}
+                >
+                  {t.label}
+                  <span className={`text-[11px] ${statusTab === t.value ? "text-white/80" : "text-[var(--ink-muted)]"}`}>
+                    {tabCounts[t.value]}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <p className="mb-3 text-[12.5px] text-[var(--ink-muted)]">
+            {visibleMembers.length} teacher{visibleMembers.length === 1 ? "" : "s"} · sorted A–Z by name
+          </p>
+
+          {visibleMembers.length === 0 ? (
+            <div className="rounded-[var(--r-md)] border border-dashed border-[var(--line-strong)] bg-[var(--surface)] p-10 text-center text-[13.5px] text-[var(--ink-muted)]">
+              {q ? `No teachers match "${query.trim()}".` : "No members in this view yet."}
+            </div>
+          ) : (
+            <DataTable
+              columns={columns}
+              data={visibleMembers}
+              keyExtractor={(item) => item._id}
+              onRowClick={setSelectedMember}
+            />
+          )}
+        </>
       )}
 
       <Dialog open={!!selectedMember} onOpenChange={(open) => !open && setSelectedMember(null)}>

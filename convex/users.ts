@@ -546,9 +546,6 @@ export const updateMyProfile = mutation({
     phone: v.optional(v.string()),
     email: v.optional(v.string()),
     gender: v.optional(v.string()),
-    school: v.optional(v.string()),
-    subCounty: v.optional(subCountyValidator),
-    designation: v.optional(designationValidator),
     photoStorageId: v.optional(v.id("_storage")),
   },
   handler: async (ctx: MutationCtx, args) => {
@@ -563,9 +560,6 @@ export const updateMyProfile = mutation({
     if (args.phone !== undefined) updates.phone = args.phone.trim();
     if (args.email !== undefined) updates.email = args.email.toLowerCase().trim();
     if (args.gender !== undefined) updates.gender = args.gender;
-    if (args.school !== undefined) updates.school = args.school.trim();
-    if (args.subCounty !== undefined) updates.subCounty = args.subCounty;
-    if (args.designation !== undefined) updates.designation = args.designation;
     if (args.photoStorageId !== undefined) {
       updates.photoStorageId = args.photoStorageId;
       // Replacing an existing photo — remove the now-orphaned file.

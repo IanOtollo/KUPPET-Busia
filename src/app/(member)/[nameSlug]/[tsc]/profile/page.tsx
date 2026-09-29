@@ -23,11 +23,18 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { SCHOOL_ROLES, TEACHING_SUBJECTS } from "@/lib/constants";
+import {
+  SCHOOL_ROLES,
+  TEACHING_SUBJECTS,
+  SUB_COUNTIES,
+  DESIGNATIONS,
+  type SubCounty,
+  type Designation,
+} from "@/lib/constants";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../../convex/_generated/api";
 import { toast } from "sonner";
-import { User, Phone, Mail, School, Briefcase, BookOpen, Edit, Check, Save } from "lucide-react";
+import { User, Phone, Mail, School, Briefcase, BookOpen, Edit, Check, Save, ArrowRightLeft } from "lucide-react";
 import { ProfilePhotoUpload } from "@/components/modules/ProfilePhotoUpload";
 import { useMemberBasePath } from "@/lib/memberPath";
 
@@ -43,6 +50,15 @@ export default function MemberProfilePage() {
   const [editSubjects, setEditSubjects] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
+  const reportTransfer = useMutation(api.transfers.report);
+  const [isTransferOpen, setIsTransferOpen] = useState(false);
+  const [trSchool, setTrSchool] = useState("");
+  const [trSubCounty, setTrSubCounty] = useState("");
+  const [trDesignation, setTrDesignation] = useState("");
+  const [trDate, setTrDate] = useState("");
+  const [trReason, setTrReason] = useState("");
+  const [isReporting, setIsReporting] = useState(false);
+
   useEffect(() => {
     if (profile) {
       setEditSchoolRole(profile.schoolRole || profile.designation || "Teacher");
@@ -51,6 +67,35 @@ export default function MemberProfilePage() {
       setEditSubjects(profile.subjects || []);
     }
   }, [profile]);
+
+  const openTransfer = () => {
+    setTrSchool(profile?.school || "");
+    setTrSubCounty(profile?.subCounty || "");
+    setTrDesignation(profile?.designation || "");
+    setTrDate("");
+    setTrReason("");
+    setIsTransferOpen(true);
+  };
+
+  const handleReportTransfer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsReporting(true);
+    try {
+      await reportTransfer({
+        school: trSchool,
+        subCounty: trSubCounty as SubCounty,
+        designation: trDesignation as Designation,
+        effectiveDate: trDate || undefined,
+        reason: trReason || undefined,
+      });
+      toast.success("Recorded. The branch office has been notified.");
+      setIsTransferOpen(false);
+    } catch (err: any) {
+      toast.error(err.data?.message || err.message || "Failed to report transfer.");
+    } finally {
+      setIsReporting(false);
+    }
+  };
 
   const toggleSubject = (sub: string) => {
     if (editSubjects.includes(sub)) {
@@ -200,14 +245,107 @@ export default function MemberProfilePage() {
             </div>
           </div>
 
-          <div className="pt-4 border-t border-[var(--line)] text-xs text-[var(--ink-muted)] flex items-center justify-between">
-            <span>To request updates to National ID or TSC number, contact the branch secretariat.</span>
+          <div className="p-4 rounded-lg border border-[var(--line)] bg-[var(--union-soft)]/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="text-[13px] text-[var(--ink-body)]">
+              <strong className="block text-[var(--ink)]">Transferred or promoted?</strong>
+              Update your school, sub-county or designation. The branch office is notified automatically.
+            </div>
+            <Button onClick={openTransfer} className="bg-[var(--union)] text-white hover:bg-[var(--union-hover)] shrink-0">
+              <ArrowRightLeft className="h-4 w-4 mr-1.5" /> Report Transfer / Promotion
+            </Button>
+          </div>
+
+          <div className="pt-4 border-t border-[var(--line)] text-xs text-[var(--ink-muted)] flex items-center justify-between gap-3">
+            <span>To request updates to your name, National ID or TSC number, contact the branch secretariat.</span>
             <Button variant="secondary" size="sm" onClick={() => setIsEditOpen(true)}>
               <Edit className="h-3.5 w-3.5 mr-1" /> Update Profile
             </Button>
           </div>
         </CardContent>
       </Card>
+
+      {/* Transfer / Promotion Modal */}
+      <Dialog open={isTransferOpen} onOpenChange={setIsTransferOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ArrowRightLeft className="h-5 w-5 text-[var(--union)]" /> Report Transfer / Promotion
+            </DialogTitle>
+            <DialogDescription>
+              Enter your new posting. It takes effect on your record immediately and the branch office is notified.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleReportTransfer} className="space-y-4 pt-2">
+            <div>
+              <Label htmlFor="trSchool">New School / Institution</Label>
+              <Input id="trSchool" value={trSchool} onChange={(e) => setTrSchool(e.target.value)} required />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="trSubCounty">Sub-County</Label>
+                <Select value={trSubCounty} onValueChange={setTrSubCounty}>
+                  <SelectTrigger id="trSubCounty">
+                    <SelectValue placeholder="Select sub-county" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SUB_COUNTIES.map((sc) => (
+                      <SelectItem key={sc} value={sc}>
+                        {sc}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="trDesignation">TSC Designation</Label>
+                <Select value={trDesignation} onValueChange={setTrDesignation}>
+                  <SelectTrigger id="trDesignation">
+                    <SelectValue placeholder="Select designation" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DESIGNATIONS.map((d) => (
+                      <SelectItem key={d} value={d}>
+                        {d}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="trDate">Effective date (optional)</Label>
+              <Input id="trDate" type="date" value={trDate} onChange={(e) => setTrDate(e.target.value)} />
+            </div>
+
+            <div>
+              <Label htmlFor="trReason">Note to the branch office (optional)</Label>
+              <Input
+                id="trReason"
+                value={trReason}
+                onChange={(e) => setTrReason(e.target.value)}
+                placeholder="e.g. TSC posting letter, promoted to Deputy Principal"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-3">
+              <Button type="button" variant="secondary" onClick={() => setIsTransferOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isReporting || !trSubCounty || !trDesignation}
+                className="bg-[var(--union)] text-white hover:bg-[var(--union-hover)]"
+              >
+                <Save className="h-4 w-4 mr-1.5" /> {isReporting ? "Submitting..." : "Submit"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Profile Modal */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>

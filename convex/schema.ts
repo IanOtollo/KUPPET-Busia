@@ -56,6 +56,27 @@ export default defineSchema({
     .index("by_subCounty", ["subCounty"])
     .index("by_authId", ["authId"]),
 
+  // Teacher-reported school transfers / promotions. The change is applied to the
+  // member's record immediately; this row is the admin-facing notice + history.
+  transfers: defineTable({
+    memberId: v.id("users"),
+    memberName: v.string(),
+    tscNumber: v.string(),
+    fromSchool: v.string(),
+    toSchool: v.string(),
+    fromSubCounty: subCountyValidator,
+    toSubCounty: subCountyValidator,
+    fromDesignation: designationValidator,
+    toDesignation: designationValidator,
+    effectiveDate: v.optional(v.string()),
+    reason: v.optional(v.string()),
+    acknowledgedBy: v.optional(v.id("users")),
+    acknowledgedAt: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index("by_member", ["memberId"])
+    .index("by_createdAt", ["createdAt"]),
+
   bereavementCases: defineTable({
     reference: v.string(),
     memberId: v.id("users"),

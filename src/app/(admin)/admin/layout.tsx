@@ -31,8 +31,8 @@ import { api } from "../../../../convex/_generated/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatRelativeTime } from "@/lib/format";
 
-type CountKey = "members" | "bereavement" | "harassment" | "bus";
-const NOTIF_DOMAINS: CountKey[] = ["members", "bereavement", "harassment", "bus"];
+type CountKey = "members" | "bereavement" | "harassment" | "bus" | "transfers";
+const NOTIF_DOMAINS: CountKey[] = ["members", "bereavement", "harassment", "bus", "transfers"];
 
 const ADMIN_NAV_ITEMS: {
   href: string;
@@ -82,6 +82,7 @@ export default function AdminLayout({
     bereavement: 0,
     harassment: 0,
     bus: 0,
+    transfers: 0,
   });
 
   const { signOut } = useAuthActions();
@@ -97,6 +98,7 @@ export default function AdminLayout({
   // guaranteed access, so restrict the live count to them.
   const harassmentReports = useQuery(api.harassment.listAllAdmin, isFullAdmin ? {} : "skip");
   const busBookings = useQuery(api.busBookings.listAllAdmin, isQueueHandler ? {} : "skip");
+  const transfers = useQuery(api.transfers.listAll, isFullAdmin ? {} : "skip");
 
   const adminName = profile?.fullName ?? "Executive Secretary";
   const adminRoleLabel = profile?.role ?? "";
@@ -118,7 +120,13 @@ export default function AdminLayout({
     [busBookings]
   );
 
+  const pendingTransfers = useMemo(
+    () => transfers?.filter((t) => !t.acknowledgedAt) ?? [],
+    [transfers]
+  );
+
   const counts: Record<CountKey, number> = {
+    transfers: pendingTransfers.length,
     members: pendingMembers.length,
     bereavement: pendingBereavement.length,
     harassment: pendingHarassment.length,
@@ -133,6 +141,7 @@ export default function AdminLayout({
       bereavement: readLastSeen(profile._id, "bereavement"),
       harassment: readLastSeen(profile._id, "harassment"),
       bus: readLastSeen(profile._id, "bus"),
+      transfers: readLastSeen(profile._id, "transfers"),
     });
   }, [profile?._id]);
 
@@ -157,8 +166,9 @@ export default function AdminLayout({
             : null;
     if (domain) {
       const now = Date.now();
-      writeLastSeen(profile._id, domain, now);
-      setLastSeen((prev) => ({ ...prev, [domain]: now }));
+      const seen: CountKey[] = domain === "members" ? ["members", "transfers"] : [domain];
+      for (const d of seen) writeLastSeen(profile._id, d, now);
+      setLastSeen((prev) => ({ ...prev, ...Object.fromEntries(seen.map((d) => [d, now])) }));
     }
   }, [pathname, profile?._id]);
 
@@ -171,6 +181,13 @@ export default function AdminLayout({
         subtitle: `Membership approval • TSC ${m.tscNumber}`,
         href: "/admin/members",
         createdAt: m.createdAt,
+      })),
+      ...pendingTransfers.map((t) => ({
+        id: `transfer-${t._id}`,
+        title: `Transfer/promotion: ${t.memberName}`,
+        subtitle: `TSC ${t.tscNumber} • ${t.fromSchool} → ${t.toSchool}`,
+        href: "/admin/members",
+        createdAt: t.createdAt,
       })),
       ...pendingBereavement.map((c) => ({
         id: `bereavement-${c._id}`,
@@ -195,7 +212,7 @@ export default function AdminLayout({
       })),
     ];
     return items.sort((a, b) => b.createdAt - a.createdAt);
-  }, [pendingMembers, pendingBereavement, pendingHarassment, pendingBus]);
+  }, [pendingMembers, pendingTransfers, pendingBereavement, pendingHarassment, pendingBus]);
 
   const unseenCount = NOTIF_DOMAINS.reduce((sum, domain) => {
     const domainCreatedAts =
@@ -205,7 +222,9 @@ export default function AdminLayout({
           ? pendingBereavement.map((c) => c.createdAt)
           : domain === "harassment"
             ? pendingHarassment.map((r) => r.createdAt)
-            : pendingBus.map((b) => b.createdAt);
+            : domain === "transfers"
+              ? pendingTransfers.map((t) => t.createdAt)
+              : pendingBus.map((b) => b.createdAt);
     return sum + domainCreatedAts.filter((ts) => ts > (lastSeen[domain] ?? 0)).length;
   }, 0);
 
@@ -385,7 +404,7 @@ export default function AdminLayout({
               const isActive = item.exact
                 ? pathname === item.href
                 : pathname.startsWith(item.href);
-              const count = item.countKey ? counts[item.countKey] : 0;
+              const count = item.countKey ? counts[item.countKey] + (item.countKey === "members" ? counts.transfers : 0) : 0;
 
               return (
                 <Link
