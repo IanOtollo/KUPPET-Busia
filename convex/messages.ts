@@ -28,12 +28,6 @@ export const send = mutation({
     if (!recipient || recipient.status !== "active") {
       throw new Error("That person can't receive messages right now");
     }
-    // Members can only write to branch staff, matching the compose picker.
-    const meIsStaff = ["official", "admin", "superadmin"].includes(me.role);
-    if (!meIsStaff && recipient.role === "member") {
-      throw new Error("You can only message branch officials");
-    }
-
     const threadId = makeThreadId(me._id, args.recipientId);
 
     await ctx.db.insert("messages", {
@@ -170,28 +164,15 @@ export const listUsers = query({
   handler: async (ctx) => {
     const me = await requireUser(ctx);
 
-    // Members may only message branch staff, and never see anyone's phone
-    // number; staff see everyone. This stops the compose picker doubling as a
-    // directory of every teacher's contact details.
+    // Everyone can message any active colleague or the branch office. Phone
+    // numbers are only shown to staff, so the picker isn't a directory of
+    // teachers' contact details.
     const isStaff = ["official", "admin", "superadmin"].includes(me.role);
 
-    // Staff accounts are few, so members' picker reads just those by role;
-    // staff get the (bounded) active roster via the status index.
-    const users = isStaff
-      ? await ctx.db
-          .query("users")
-          .withIndex("by_status", (q) => q.eq("status", "active"))
-          .take(3000)
-      : (
-          await Promise.all(
-            (["official", "admin", "superadmin"] as const).map((role) =>
-              ctx.db
-                .query("users")
-                .withIndex("by_role", (q) => q.eq("role", role))
-                .take(200)
-            )
-          )
-        ).flat();
+    const users = await ctx.db
+      .query("users")
+      .withIndex("by_status", (q) => q.eq("status", "active"))
+      .take(3000);
 
     return users
       .filter((u) => u._id !== me._id && u.status === "active")

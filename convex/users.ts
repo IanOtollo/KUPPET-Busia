@@ -3,6 +3,7 @@ import {
   mutation,
   action,
   internalQuery,
+  internalMutation,
   QueryCtx,
   MutationCtx,
   ActionCtx,
@@ -12,6 +13,8 @@ import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { getCurrentUser, requireRole, requireUser } from "./lib/auth";
 import { writeAudit } from "./lib/audit";
+import { loginAliasForTsc } from "./lib/loginAlias";
+import { consumeRateLimit } from "./lib/rateLimit";
 import {
   userRoleValidator,
   userStatusValidator,
@@ -122,6 +125,14 @@ export function assertStrongPassword(password: string) {
   }
 }
 
+/** Global throttle on sign-ups so the public endpoint can't be used to flood the system. */
+export const consumeRegistrationSlot = internalMutation({
+  args: {},
+  handler: async (ctx: MutationCtx) => {
+    await consumeRateLimit(ctx, "register:global", 60, 60 * 60 * 1000);
+  },
+});
+
 export const registerMember = action({
   args: {
     email: v.string(),
@@ -142,6 +153,8 @@ export const registerMember = action({
     const idNumber = args.idNumber.trim();
     const tscNumber = args.tscNumber.toUpperCase().trim();
     const phone = args.phone.trim();
+
+    await ctx.runMutation(internal.users.consumeRegistrationSlot, {});
 
     assertStrongPassword(args.password);
     if (args.password.toUpperCase() === tscNumber) {
@@ -169,7 +182,7 @@ export const registerMember = action({
 
     await createAccount(ctx as any, {
       provider: "password",
-      account: { id: email, secret: args.password },
+      account: { id: loginAliasForTsc(tscNumber), secret: args.password },
       profile: {
         email,
         fullName: args.fullName.trim(),
@@ -231,9 +244,10 @@ export const checkDuplicates = internalQuery({
 });
 
 /**
- * Resolves the account email for a teacher signing in with a TSC number.
- * The client deliberately presents a generic sign-in error for either an
- * unknown TSC number or an incorrect password.
+ * DEPRECATED — delete right after `migrations:aliasLogins` has been run on the
+ * live deployment. Only here so the previously deployed login page keeps working
+ * during the rollout; the new login page derives the account id from the TSC and
+ * never calls this.
  */
 export const getEmailByTsc = query({
   args: { tscNumber: v.string() },

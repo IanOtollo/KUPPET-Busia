@@ -7,13 +7,26 @@ import { announcementPriorityValidator, audienceTypeValidator } from "./lib/vali
 export const listActive = query({
   args: {},
   handler: async (ctx: QueryCtx) => {
-    await requireUser(ctx);
+    const user = await requireUser(ctx);
     const list = await ctx.db
       .query("announcements")
       .withIndex("by_active", (q) => q.eq("isActive", true))
-      .collect();
+      .take(200);
 
-    return list.sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+    // Staff manage announcements, so they see everything. Members only get
+    // announcements that are still current and addressed to them.
+    const isStaff = ["official", "admin", "superadmin"].includes(user.role);
+    const today = new Date().toISOString().slice(0, 10);
+    const visible = isStaff
+      ? list
+      : list.filter((a) => {
+          if (a.expiresAt && a.expiresAt.slice(0, 10) < today) return false;
+          if (a.audienceType === "sub_county") return a.audienceValue === user.subCounty;
+          if (a.audienceType === "designation") return a.audienceValue === user.designation;
+          return true;
+        });
+
+    return visible.sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
   },
 });
 

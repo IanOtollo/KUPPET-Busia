@@ -21,6 +21,7 @@ import { requireRole } from "./lib/auth";
 import { writeAudit } from "./lib/audit";
 import { assertStrongPassword } from "./users";
 import { Id } from "./_generated/dataModel";
+import { loginAliasForTsc } from "./lib/loginAlias";
 
 /** How long an admin-approved temporary password stays usable. */
 const TEMP_PASSWORD_TTL_MS = 48 * 60 * 60 * 1000;
@@ -242,7 +243,7 @@ export const approve = action({
     try {
       await modifyAccountCredentials(ctx, {
         provider: "password",
-        account: { id: target.email, secret: target.tscNumber },
+        account: { id: loginAliasForTsc(target.tscNumber), secret: target.tscNumber },
       });
       await invalidateSessions(ctx, { userId: target.userId });
     } catch {
@@ -364,7 +365,7 @@ export const changeMyPassword = action({
     try {
       await retrieveAccount(ctx, {
         provider: "password",
-        account: { id: me.email, secret: args.currentPassword },
+        account: { id: loginAliasForTsc(me.tscNumber), secret: args.currentPassword },
       });
     } catch {
       throw new ConvexError({
@@ -375,7 +376,7 @@ export const changeMyPassword = action({
 
     await modifyAccountCredentials(ctx, {
       provider: "password",
-      account: { id: me.email, secret: args.newPassword },
+      account: { id: loginAliasForTsc(me.tscNumber), secret: args.newPassword },
     });
 
     // End every other session (e.g. anyone else who had the old password) but

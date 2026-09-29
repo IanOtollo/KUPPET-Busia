@@ -7,27 +7,56 @@ import { StatusBadge } from "@/components/data/StatusBadge";
 import { formatRelativeTime } from "@/lib/format";
 import {
   HeartHandshake,
-  Shield,
   Bus,
   Users,
   AlertTriangle,
   ArrowRight,
   Phone,
-  FileText,
-  Clock,
   Sparkles,
+  MessageSquare,
+  Bell,
+  CheckCircle2,
+  Megaphone,
+  ArrowRightLeft,
 } from "lucide-react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../../../convex/_generated/api";
 import { useMemberBasePath } from "@/lib/memberPath";
 
+type AttentionItem = {
+  id: string;
+  icon: typeof Bell;
+  title: string;
+  detail: string;
+  href: string;
+  status?: string;
+  time?: number;
+};
+
+// What the teacher is waiting for, in plain words, per stage.
+const BEREAVEMENT_NEXT: Record<string, string> = {
+  submitted: "Received — waiting for the branch office to start review.",
+  under_review: "The branch office is reviewing your claim.",
+  verified: "Your claim is verified — support approval is next.",
+  support_approved: "Support approved — payment is being arranged.",
+  disbursed: "Support has been paid out.",
+};
+
+const BUS_NEXT: Record<string, string> = {
+  requested: "Waiting for the branch office to review your request.",
+  under_review: "The branch office is reviewing your request.",
+  approved: "Approved — awaiting final confirmation.",
+  confirmed: "Confirmed. Check the date and pick-up details.",
+};
+
 export default function MemberDashboardPage() {
   const basePath = useMemberBasePath();
   const profile = useQuery(api.users.getMyProfile);
   const bereavementCases = useQuery(api.bereavement.listMine);
-  const harassmentReports = useQuery(api.harassment.listMine);
   const busBookings = useQuery(api.busBookings.listMine);
   const announcements = useQuery(api.announcements.listActive);
+  const notifications = useQuery(api.notifications.listMine);
+  const unreadMessages = useQuery(api.messages.unreadCount);
   const officials = useQuery(api.officials.listActive);
   const leadershipContacts = officials
     ?.filter((o: { tier: string }) => o.tier === "executive")
@@ -42,30 +71,88 @@ export default function MemberDashboardPage() {
   };
 
   const name = profile?.fullName || "Teacher";
-  const isPendingApproval = profile?.status === "pending_approval" || profile?.status === "pending_verification";
-
-  const openBereavementCount =
-    bereavementCases?.filter((c: { status: string }) => !["closed", "declined"].includes(c.status)).length || 0;
-  const openHarassmentCount =
-    harassmentReports?.filter((r: { status: string }) => !["resolved", "closed_no_action"].includes(r.status)).length || 0;
-  const upcomingBusCount =
-    busBookings?.filter((b: { status: string }) => !["completed", "cancelled", "declined"].includes(b.status)).length || 0;
+  const isPendingApproval =
+    profile?.status === "pending_approval" || profile?.status === "pending_verification";
 
   const urgentAnnouncement = announcements?.find((a: { priority: string }) => a.priority === "urgent");
+  const latestAnnouncements = (announcements ?? [])
+    .filter((a: { _id: string }) => a._id !== (urgentAnnouncement as { _id?: string } | undefined)?._id)
+    .slice(0, 3);
+
+  // Everything the teacher is waiting on or should act on. Deliberately built
+  // only from bereavement, bus, messages and notifications — harassment reports
+  // are confidential and never surface on the home screen.
+  const attention: AttentionItem[] = [];
+
+  for (const c of bereavementCases ?? []) {
+    if (["closed", "declined"].includes(c.status)) continue;
+    attention.push({
+      id: `brv-${c._id}`,
+      icon: HeartHandshake,
+      title: `Bereavement claim — ${c.deceasedName}`,
+      detail: BEREAVEMENT_NEXT[c.status] ?? "In progress.",
+      href: `${basePath}/bereavement/${c._id}`,
+      status: c.status,
+      time: c.createdAt,
+    });
+  }
+
+  for (const b of busBookings ?? []) {
+    if (["completed", "cancelled", "declined"].includes(b.status)) continue;
+    attention.push({
+      id: `bus-${b._id}`,
+      icon: Bus,
+      title: `Bus request — ${b.destination}`,
+      detail: BUS_NEXT[b.status] ?? "In progress.",
+      href: `${basePath}/bus/${b._id}`,
+      status: b.status,
+      time: b.createdAt,
+    });
+  }
+
+  if ((unreadMessages ?? 0) > 0) {
+    attention.push({
+      id: "messages",
+      icon: MessageSquare,
+      title: `${unreadMessages} unread ${unreadMessages === 1 ? "message" : "messages"}`,
+      detail: "Open your inbox to read and reply.",
+      href: `${basePath}/messages`,
+    });
+  }
+
+  const unreadNotifications = (notifications ?? []).filter((n: { isRead: boolean }) => !n.isRead);
+  if (unreadNotifications.length > 0) {
+    const latest = unreadNotifications[0];
+    attention.push({
+      id: "notifications",
+      icon: Bell,
+      title:
+        unreadNotifications.length === 1
+          ? latest.title
+          : `${unreadNotifications.length} new notifications`,
+      detail: unreadNotifications.length === 1 ? latest.body : `Latest: ${latest.title}`,
+      href: `${basePath}/notifications`,
+      time: latest.createdAt,
+    });
+  }
+
+  const dataReady =
+    bereavementCases !== undefined &&
+    busBookings !== undefined &&
+    notifications !== undefined &&
+    unreadMessages !== undefined;
 
   return (
     <div className="space-y-8">
-      {/* 1. Time-aware Greeting Header */}
+      {/* 1. Greeting */}
       <div>
-        <div>
-          <span className="eyebrow block mb-1">MEMBER PORTAL</span>
-          <h1 className="font-serif text-[30px] sm:text-[38px] font-bold text-[var(--ink)] leading-tight">
-            {getGreeting()}, {name}.
-          </h1>
-        </div>
+        <span className="eyebrow block mb-1">MEMBER PORTAL</span>
+        <h1 className="font-serif text-[30px] sm:text-[38px] font-bold text-[var(--ink)] leading-tight">
+          {getGreeting()}, {name}.
+        </h1>
       </div>
 
-      {/* 2. Account Status Warning Banner (if awaiting verification) */}
+      {/* 2. Account status warning (if awaiting verification) */}
       {isPendingApproval && (
         <div className="p-4 rounded-[var(--r-md)] bg-[var(--warning-soft)] border border-[var(--warning)] flex items-start gap-3.5">
           <AlertTriangle className="h-5 w-5 text-[var(--warning)] shrink-0 mt-0.5" />
@@ -78,7 +165,7 @@ export default function MemberDashboardPage() {
         </div>
       )}
 
-      {/* 3. Urgent Announcement Banner */}
+      {/* 3. Urgent announcement */}
       {urgentAnnouncement && (
         <div className="p-4 rounded-[var(--r-md)] bg-[var(--warning-soft)] border border-[var(--warning)] flex items-start gap-3.5">
           <Sparkles className="h-5 w-5 text-[var(--brass)] shrink-0 mt-0.5" />
@@ -94,86 +181,99 @@ export default function MemberDashboardPage() {
         </div>
       )}
 
-      {/* 4. 3-Card Summary Row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <Card interactive>
-          <Link href={`${basePath}/bereavement`}>
-            <CardContent className="pt-6 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-[12.5px] font-semibold uppercase tracking-wider text-[var(--ink-muted)]">
-                  Bereavement Cases
-                </span>
-                <HeartHandshake className="h-5 w-5 text-[var(--union)]" />
-              </div>
-              <div className="mono-ref text-[32px] font-bold text-[var(--ink)]">
-                {openBereavementCount}
-              </div>
-              <div className="text-[13px] text-[var(--union)] font-medium flex items-center justify-between">
-                <span>View claims history</span>
-                <ArrowRight className="h-3.5 w-3.5" />
-              </div>
-            </CardContent>
-          </Link>
-        </Card>
+      {/* 4. Needs your attention */}
+      <section>
+        <h2 className="font-serif text-[20px] font-semibold text-[var(--ink)] mb-4">
+          Needs your attention
+        </h2>
 
-        <Card interactive>
-          <Link href={`${basePath}/harassment`}>
-            <CardContent className="pt-6 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-[12.5px] font-semibold uppercase tracking-wider text-[var(--ink-muted)]">
-                  Harassment Protection
-                </span>
-                <Shield className="h-5 w-5 text-[var(--union)]" />
-              </div>
-              <div className="mono-ref text-[32px] font-bold text-[var(--ink)]">
-                {openHarassmentCount}
-              </div>
-              <div className="text-[13px] text-[var(--union)] font-medium flex items-center justify-between">
-                <span>Track confidential reports</span>
-                <ArrowRight className="h-3.5 w-3.5" />
-              </div>
+        {!dataReady ? (
+          <Card>
+            <CardContent className="pt-6 text-[14px] text-[var(--ink-muted)]">Checking your account…</CardContent>
+          </Card>
+        ) : attention.length === 0 ? (
+          <Card>
+            <CardContent className="pt-6 flex items-center gap-3 text-[14px] text-[var(--ink-body)]">
+              <CheckCircle2 className="h-5 w-5 text-[var(--union)] shrink-0" />
+              <span>
+                <strong className="font-semibold text-[var(--ink)]">You&apos;re all caught up.</strong>{" "}
+                Nothing is waiting on you or on the branch office right now.
+              </span>
             </CardContent>
-          </Link>
-        </Card>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {attention.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Card interactive key={item.id}>
+                  <Link href={item.href}>
+                    <CardContent className="pt-5 pb-5 flex items-center gap-4">
+                      <span className="h-10 w-10 rounded-full bg-[var(--surface-sunk)] grid place-items-center shrink-0">
+                        <Icon className="h-5 w-5 text-[var(--union)]" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <span className="font-semibold text-[var(--ink)] block text-[15px] truncate">
+                          {item.title}
+                        </span>
+                        <span className="text-[13.5px] text-[var(--ink-muted)] block">
+                          {item.detail}
+                        </span>
+                        {item.time && (
+                          <span className="text-[12px] text-[var(--ink-muted)] block mt-0.5">
+                            {formatRelativeTime(item.time)}
+                          </span>
+                        )}
+                      </div>
+                      {item.status && <StatusBadge status={item.status} />}
+                      <ArrowRight className="h-4 w-4 text-[var(--ink-muted)] shrink-0" />
+                    </CardContent>
+                  </Link>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </section>
 
-        <Card interactive>
-          <Link href={`${basePath}/bus`}>
-            <CardContent className="pt-6 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-[12.5px] font-semibold uppercase tracking-wider text-[var(--ink-muted)]">
-                  Bus Reservations
-                </span>
-                <Bus className="h-5 w-5 text-[var(--union)]" />
-              </div>
-              <div className="mono-ref text-[32px] font-bold text-[var(--ink)]">
-                {upcomingBusCount}
-              </div>
-              <div className="text-[13px] text-[var(--union)] font-medium flex items-center justify-between">
-                <span>Check bus calendar</span>
-                <ArrowRight className="h-3.5 w-3.5" />
-              </div>
+      {/* 5. Branch announcements */}
+      {latestAnnouncements.length > 0 && (
+        <section>
+          <h2 className="font-serif text-[20px] font-semibold text-[var(--ink)] mb-4">
+            From the branch
+          </h2>
+          <Card>
+            <CardContent className="pt-2 pb-2 divide-y divide-[var(--line)]">
+              {latestAnnouncements.map(
+                (a: { _id: string; title: string; body: string; publishedAt: string }) => (
+                  <div key={a._id} className="py-4 flex items-start gap-3.5">
+                    <Megaphone className="h-4 w-4 text-[var(--brass)] shrink-0 mt-1" />
+                    <div className="min-w-0">
+                      <strong className="font-semibold text-[var(--ink)] block text-[14.5px]">
+                        {a.title}
+                      </strong>
+                      <p className="text-[13.5px] text-[var(--ink-muted)] mt-0.5 line-clamp-2">
+                        {a.body}
+                      </p>
+                    </div>
+                  </div>
+                )
+              )}
             </CardContent>
-          </Link>
-        </Card>
-      </div>
+          </Card>
+        </section>
+      )}
 
-      {/* 5. Quick Actions Row */}
-      <div>
-        <h3 className="font-serif text-[20px] font-semibold text-[var(--ink)] mb-4">
+      {/* 6. Quick actions */}
+      <section>
+        <h2 className="font-serif text-[20px] font-semibold text-[var(--ink)] mb-4">
           Quick Actions
-        </h3>
+        </h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <Button variant="secondary" className="h-[48px] justify-start px-4 text-left" asChild>
             <Link href={`${basePath}/bereavement/new`}>
               <HeartHandshake className="h-4 w-4 text-[var(--union)] shrink-0" />
               <span className="truncate">Report Bereavement</span>
-            </Link>
-          </Button>
-
-          <Button variant="secondary" className="h-[48px] justify-start px-4 text-left" asChild>
-            <Link href={`${basePath}/harassment/new`}>
-              <Shield className="h-4 w-4 text-[var(--union)] shrink-0" />
-              <span className="truncate">Safe Harassment Report</span>
             </Link>
           </Button>
 
@@ -185,66 +285,22 @@ export default function MemberDashboardPage() {
           </Button>
 
           <Button variant="secondary" className="h-[48px] justify-start px-4 text-left" asChild>
+            <Link href={`${basePath}/profile`}>
+              <ArrowRightLeft className="h-4 w-4 text-[var(--union)] shrink-0" />
+              <span className="truncate">Report Transfer</span>
+            </Link>
+          </Button>
+
+          <Button variant="secondary" className="h-[48px] justify-start px-4 text-left" asChild>
             <Link href={`${basePath}/branch/officials`}>
               <Users className="h-4 w-4 text-[var(--union)] shrink-0" />
               <span className="truncate">Branch Directory</span>
             </Link>
           </Button>
         </div>
-      </div>
+      </section>
 
-      {/* 6. Recent Activity Timeline */}
-      <Card>
-        <CardContent className="pt-6">
-          <h3 className="font-serif text-[18px] font-semibold text-[var(--ink)] mb-4">
-            Recent Activity Timeline
-          </h3>
-
-          {bereavementCases?.length === 0 && harassmentReports?.length === 0 && busBookings?.length === 0 ? (
-            <p className="text-[14px] text-[var(--ink-muted)] py-4">
-              No recent welfare activity on your account.
-            </p>
-          ) : (
-            <div className="space-y-4">
-              {bereavementCases?.slice(0, 3).map((c: any) => (
-                <div key={c._id} className="flex items-center justify-between text-[14px] pb-3 border-b border-[var(--line)] last:border-0 last:pb-0">
-                  <div className="flex items-center gap-3">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[var(--union)] shrink-0" />
-                    <div>
-                      <span className="font-semibold text-[var(--ink)] block">
-                        Bereavement Claim: {c.deceasedName}
-                      </span>
-                      <span className="mono-ref text-[12px] text-[var(--ink-muted)]">
-                        {c.reference} • {formatRelativeTime(c.createdAt)}
-                      </span>
-                    </div>
-                  </div>
-                  <StatusBadge status={c.status} />
-                </div>
-              ))}
-
-              {busBookings?.slice(0, 2).map((b: any) => (
-                <div key={b._id} className="flex items-center justify-between text-[14px] pb-3 border-b border-[var(--line)] last:border-0 last:pb-0">
-                  <div className="flex items-center gap-3">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[var(--brass)] shrink-0" />
-                    <div>
-                      <span className="font-semibold text-[var(--ink)] block">
-                        Bus Reservation: {b.destination}
-                      </span>
-                      <span className="mono-ref text-[12px] text-[var(--ink-muted)]">
-                        {b.reference} • {formatRelativeTime(b.createdAt)}
-                      </span>
-                    </div>
-                  </div>
-                  <StatusBadge status={b.status} />
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* 7. Branch Leadership Executive Contacts Strip */}
+      {/* 7. Branch leadership contacts */}
       <div className="p-5 rounded-[var(--r-lg)] border border-[var(--line)] bg-[var(--surface)]">
         <h4 className="font-serif text-[17px] font-semibold text-[var(--ink)] mb-3">
           Your Branch Leadership Contacts
@@ -281,4 +337,3 @@ export default function MemberDashboardPage() {
     </div>
   );
 }
-

@@ -2,6 +2,7 @@ import { query, mutation, QueryCtx, MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { getCurrentUser, requireRole, requireUser } from "./lib/auth";
 import { validateUploads } from "./lib/uploads";
+import { consumeRateLimit } from "./lib/rateLimit";
 import { writeAudit } from "./lib/audit";
 import { generateReference } from "./lib/refs";
 import {
@@ -87,6 +88,21 @@ export const create = mutation({
     evidenceIds: v.array(v.id("_storage")),
   },
   handler: async (ctx: MutationCtx, args) => {
+    // Filing can be anonymous, so the endpoint is throttled: globally for
+    // anonymous reports, and per person for signed-in reporters.
+    let limiterUser: string | null = null;
+    try {
+      limiterUser = (await getCurrentUser(ctx))._id;
+    } catch {
+      // not signed in
+    }
+    await consumeRateLimit(
+      ctx,
+      limiterUser ? `harassment:user:${limiterUser}` : "harassment:anonymous",
+      limiterUser ? 10 : 60,
+      60 * 60 * 1000
+    );
+
     // This can be filed without signing in, so every free-text field is capped
     // and evidence is validated server-side.
     const tooLong = (value: string | undefined, max: number) => !!value && value.length > max;

@@ -112,12 +112,12 @@ export default function HarassmentListPage() {
           Track Anonymous Report by Reference Code
         </h3>
         <p className="text-[13.5px] text-[var(--ink-muted)] mb-4">
-          If you submitted an anonymous report, enter your reference code (e.g. <code>HAR-2026-0012</code>) to check the investigation status.
+          If you submitted an anonymous report, enter your reference code (e.g. <code>HAR-2026-0012-K7QX3M</code>) to check the investigation status.
         </p>
 
         <form onSubmit={handleLookup} className="flex gap-3 max-w-[500px]">
           <Input
-            placeholder="HAR-YYYY-NNNN"
+            placeholder="HAR-YYYY-NNNN-XXXXXX"
             value={lookupRef}
             onChange={(e) => setLookupRef(e.target.value)}
             className="mono-ref"

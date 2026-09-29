@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useConvex } from "convex/react";
+import { loginAliasForTsc } from "../../../../convex/lib/loginAlias";
 import { api } from "../../../../convex/_generated/api";
 import { buildMemberPrefix } from "@/lib/memberPath";
 import { Eye, EyeOff, LogIn } from "lucide-react";
@@ -70,17 +71,6 @@ function LoginForm() {
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     try {
-      const account = await convex.query(api.users.getEmailByTsc, {
-        tscNumber: data.tscNumber,
-      });
-
-      if (!account) {
-        // Same wording as a wrong password so this screen can't be used to
-        // discover which TSC numbers are registered.
-        toast.error(INVALID_CREDENTIALS);
-        return;
-      }
-
       // Never let a previous session (e.g. an admin who signed in earlier in
       // this browser) linger — its token could answer the profile query below
       // and send this user to the wrong portal.
@@ -92,7 +82,7 @@ function LoginForm() {
 
       try {
         await signIn("password", {
-          email: account.email,
+          email: loginAliasForTsc(data.tscNumber.toUpperCase().trim()),
           password: data.password,
           flow: "signIn",
         });

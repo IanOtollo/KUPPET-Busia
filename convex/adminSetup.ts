@@ -2,6 +2,7 @@ import { internalAction, ActionCtx, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 import { createAccount } from "@convex-dev/auth/server";
 import { internal } from "./_generated/api";
+import { loginAliasForTsc } from "./lib/loginAlias";
 
 const DEFAULT_ADMIN_TSC = "000000";
 const DEFAULT_ADMIN_EMAIL = "admin@kuppetbusia.local";
@@ -46,7 +47,7 @@ export const createDefaultAdmin = internalAction({
     const now = Date.now();
     await createAccount(ctx as any, {
       provider: "password",
-      account: { id: DEFAULT_ADMIN_EMAIL, secret: password },
+      account: { id: loginAliasForTsc(DEFAULT_ADMIN_TSC), secret: password },
       profile: {
         email: DEFAULT_ADMIN_EMAIL,
         fullName: "Executive Secretary",

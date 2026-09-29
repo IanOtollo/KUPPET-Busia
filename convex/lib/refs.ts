@@ -31,5 +31,16 @@ export async function generateReference(
   }
 
   const paddedSequence = String(nextValue).padStart(4, "0");
+
+  // Harassment reports can be tracked without signing in, so their reference is
+  // the only key to the status page. A random suffix makes it impossible to
+  // walk HAR-2026-0001, 0002, … and read other people's report status.
+  if (prefix === "HAR") {
+    const alphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; // no look-alikes (I/O/0/1/L)
+    const bytes = crypto.getRandomValues(new Uint8Array(6));
+    const suffix = Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
+    return `${prefix}-${currentYear}-${paddedSequence}-${suffix}`;
+  }
+
   return `${prefix}-${currentYear}-${paddedSequence}`;
 }

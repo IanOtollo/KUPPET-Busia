@@ -63,6 +63,13 @@ export default defineSchema({
     .index("by_subCounty", ["subCounty"])
     .index("by_authId", ["authId"]),
 
+  // Fixed-window counters used to throttle anonymous / high-abuse endpoints.
+  rateLimits: defineTable({
+    key: v.string(),
+    windowStart: v.number(),
+    count: v.number(),
+  }).index("by_key", ["key"]),
+
   // Password-reset requests raised by teachers and actioned by an admin.
   passwordResets: defineTable({
     userId: v.id("users"),
