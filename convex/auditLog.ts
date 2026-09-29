@@ -6,9 +6,12 @@ export const listRecentAdmin = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx: QueryCtx, args) => {
     await requireRole(ctx, ["admin", "superadmin"]);
-    const limit = args.limit || 50;
+    const limit = Math.min(Math.max(Math.floor(args.limit || 50), 1), 200);
 
-    const logs = await ctx.db.query("auditLog").collect();
-    return logs.sort((a, b) => b.createdAt - a.createdAt).slice(0, limit);
+    return await ctx.db
+      .query("auditLog")
+      .withIndex("by_createdAt")
+      .order("desc")
+      .take(limit);
   },
 });

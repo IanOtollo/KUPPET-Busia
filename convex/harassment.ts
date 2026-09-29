@@ -1,6 +1,7 @@
 import { query, mutation, QueryCtx, MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { getCurrentUser, requireRole, requireUser } from "./lib/auth";
+import { validateUploads } from "./lib/uploads";
 import { writeAudit } from "./lib/audit";
 import { generateReference } from "./lib/refs";
 import {
@@ -86,6 +87,31 @@ export const create = mutation({
     evidenceIds: v.array(v.id("_storage")),
   },
   handler: async (ctx: MutationCtx, args) => {
+    // This can be filed without signing in, so every free-text field is capped
+    // and evidence is validated server-side.
+    const tooLong = (value: string | undefined, max: number) => !!value && value.length > max;
+    if (
+      tooLong(args.reporterName, 100) ||
+      tooLong(args.reporterContact, 100) ||
+      tooLong(args.school, 150) ||
+      tooLong(args.involvedName, 100) ||
+      tooLong(args.categoryOther, 200) ||
+      tooLong(args.reportedElsewhereDetail, 500) ||
+      args.supportNeeded.length > 10 ||
+      args.supportNeeded.some((s) => s.length > 100)
+    ) {
+      throw new ConvexError({
+        code: "INVALID_INPUT",
+        message: "One of the fields is too long. Please shorten it and try again.",
+      });
+    }
+    await validateUploads(ctx, args.evidenceIds, {
+      maxFiles: 5,
+      maxBytes: 15 * 1024 * 1024,
+      allowedTypes: /^(image\/|audio\/|application\/pdf$)/,
+      label: "evidence",
+    });
+
     // Narrative 50 to 2500 chars
     const cleanNarrative = args.narrative.trim();
     if (cleanNarrative.length < 50 || cleanNarrative.length > 2500) {
@@ -199,13 +225,23 @@ export const getByReference = query({
       throw new ConvexError({ code: "NOT_FOUND", message: "Report not found." });
     }
 
-    // Return redacted tracking info ONLY for non-handlers
+    // Return redacted tracking info ONLY for non-handlers. References are
+    // sequential, so the free-text status reason (which can carry sensitive
+    // detail) is shown only to the member who filed the report.
+    let isOwner = false;
+    try {
+      const me = await getCurrentUser(ctx);
+      isOwner = !!report.memberId && report.memberId === me._id;
+    } catch {
+      // Anonymous / not signed in.
+    }
+
     return {
       reference: report.reference,
       category: report.category,
       subCounty: report.subCounty,
       status: report.status,
-      statusReason: report.statusReason,
+      statusReason: isOwner ? report.statusReason : undefined,
       occurredAt: report.occurredAt,
       createdAt: report.createdAt,
       updatedAt: report.updatedAt,
@@ -224,11 +260,18 @@ export const listAllAdmin = query({
   handler: async (ctx: QueryCtx, args) => {
     await requireHarassmentHandler(ctx);
 
-    let reports = await ctx.db.query("harassmentReports").collect();
+    const status = args.status;
+    let reports = status
+      ? await ctx.db
+          .query("harassmentReports")
+          .withIndex("by_status", (q) => q.eq("status", status))
+          .take(1000)
+      : await ctx.db
+          .query("harassmentReports")
+          .withIndex("by_createdAt")
+          .order("desc")
+          .take(1000);
 
-    if (args.status) {
-      reports = reports.filter((r) => r.status === args.status);
-    }
     if (args.category) {
       reports = reports.filter((r) => r.category === args.category);
     }

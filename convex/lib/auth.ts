@@ -74,6 +74,16 @@ export async function requireUser(ctx: Context): Promise<Doc<"users">> {
     });
   }
 
+  // After an admin-approved reset the account is on a temporary password and
+  // may do nothing except change it (users.changeMyPassword uses
+  // getCurrentUser, not this guard).
+  if (user.mustChangePassword) {
+    throw new ConvexError({
+      code: "MUST_CHANGE_PASSWORD",
+      message: "You must set a new password before continuing.",
+    });
+  }
+
   return user;
 }
 

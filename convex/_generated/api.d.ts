@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as adminInbox from "../adminInbox.js";
 import type * as adminSetup from "../adminSetup.js";
 import type * as announcements from "../announcements.js";
 import type * as auditLog from "../auditLog.js";
@@ -20,10 +21,12 @@ import type * as http from "../http.js";
 import type * as lib_audit from "../lib/audit.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_refs from "../lib/refs.js";
+import type * as lib_uploads from "../lib/uploads.js";
 import type * as lib_validators from "../lib/validators.js";
 import type * as messages from "../messages.js";
 import type * as notifications from "../notifications.js";
 import type * as officials from "../officials.js";
+import type * as passwordResets from "../passwordResets.js";
 import type * as schools from "../schools.js";
 import type * as seed from "../seed.js";
 import type * as settings from "../settings.js";
@@ -37,6 +40,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  adminInbox: typeof adminInbox;
   adminSetup: typeof adminSetup;
   announcements: typeof announcements;
   auditLog: typeof auditLog;
@@ -49,10 +53,12 @@ declare const fullApi: ApiFromModules<{
   "lib/audit": typeof lib_audit;
   "lib/auth": typeof lib_auth;
   "lib/refs": typeof lib_refs;
+  "lib/uploads": typeof lib_uploads;
   "lib/validators": typeof lib_validators;
   messages: typeof messages;
   notifications: typeof notifications;
   officials: typeof officials;
+  passwordResets: typeof passwordResets;
   schools: typeof schools;
   seed: typeof seed;
   settings: typeof settings;

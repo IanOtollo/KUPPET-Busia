@@ -21,6 +21,7 @@ export const list = query({
 export const listWithRosters = query({
   args: {},
   handler: async (ctx: QueryCtx) => {
+    await requireRole(ctx, ["official", "admin", "superadmin"]);
     const schools = await ctx.db.query("schools").collect();
     const allUsers = await ctx.db.query("users").collect();
 

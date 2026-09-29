@@ -1,10 +1,9 @@
-import { action, ActionCtx, internalQuery } from "./_generated/server";
+import { internalAction, ActionCtx, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 import { createAccount } from "@convex-dev/auth/server";
 import { internal } from "./_generated/api";
 
 const DEFAULT_ADMIN_TSC = "000000";
-const DEFAULT_ADMIN_PASSWORD = "bsa2026";
 const DEFAULT_ADMIN_EMAIL = "admin@kuppetbusia.local";
 
 export const findByTsc = internalQuery({
@@ -20,10 +19,13 @@ export const findByTsc = internalQuery({
 /**
  * Idempotent bootstrap for the branch's first administrator account.
  * Run once after deploy: `npx convex run adminSetup:createDefaultAdmin '{}'`
- * Signs in with TSC 000000 / the branch-issued default password, same as any
- * other account — there is no separate email-based admin login.
+ * Signs in with TSC 000000 and the password held in the Convex environment
+ * variable DEFAULT_ADMIN_PASSWORD (set it with
+ * `npx convex env set DEFAULT_ADMIN_PASSWORD <password>`). The password is
+ * never stored in source; Convex Auth hashes it (Scrypt) before saving.
+ * This is an internal action, so it cannot be called from the internet.
  */
-export const createDefaultAdmin = action({
+export const createDefaultAdmin = internalAction({
   args: {},
   handler: async (ctx: ActionCtx) => {
     const existing = await ctx.runQuery(internal.adminSetup.findByTsc, {
@@ -34,10 +36,17 @@ export const createDefaultAdmin = action({
       return { created: false, message: "Default admin account already exists." };
     }
 
+    const password = process.env.DEFAULT_ADMIN_PASSWORD;
+    if (!password || password.length < 8) {
+      throw new Error(
+        "Set DEFAULT_ADMIN_PASSWORD (8+ characters) on the Convex deployment first."
+      );
+    }
+
     const now = Date.now();
     await createAccount(ctx as any, {
       provider: "password",
-      account: { id: DEFAULT_ADMIN_EMAIL, secret: DEFAULT_ADMIN_PASSWORD },
+      account: { id: DEFAULT_ADMIN_EMAIL, secret: password },
       profile: {
         email: DEFAULT_ADMIN_EMAIL,
         fullName: "Executive Secretary",

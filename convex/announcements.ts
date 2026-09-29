@@ -7,6 +7,7 @@ import { announcementPriorityValidator, audienceTypeValidator } from "./lib/vali
 export const listActive = query({
   args: {},
   handler: async (ctx: QueryCtx) => {
+    await requireUser(ctx);
     const list = await ctx.db
       .query("announcements")
       .withIndex("by_active", (q) => q.eq("isActive", true))

@@ -1,4 +1,4 @@
-import { mutation, MutationCtx } from "./_generated/server";
+import { internalMutation, MutationCtx } from "./_generated/server";
 import { SUB_COUNTIES, OFFICIAL_POSITIONS } from "../src/lib/constants";
 
 /**
@@ -10,7 +10,7 @@ import { SUB_COUNTIES, OFFICIAL_POSITIONS } from "../src/lib/constants";
  * `adminSetup:createDefaultAdmin` — that flow goes through an action so it can
  * create a real sign-in credential, which a plain mutation like this cannot do.
  */
-export const seedDatabase = mutation({
+export const seedDatabase = internalMutation({
   args: {},
   handler: async (ctx: MutationCtx) => {
     // 1. Seed Schools if table empty

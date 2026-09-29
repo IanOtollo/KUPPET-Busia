@@ -97,7 +97,12 @@ export default function MemberLayout({
 
   const { isLoading: authLoading, isAuthenticated } = useConvexAuth();
   const profile = useQuery(api.users.getMyProfile);
-  const notifications = useQuery(api.notifications.listMine);
+  // Skipped while the profile is loading or locked to a forced password change —
+  // every other query would be refused server-side until the password is set.
+  const notifications = useQuery(
+    api.notifications.listMine,
+    profile && !profile.mustChangePassword ? {} : "skip"
+  );
   const unreadCount = notifications?.filter((n) => !n.isRead).length ?? 0;
 
   const memberName = profile?.fullName ?? "Member";
@@ -150,11 +155,15 @@ export default function MemberLayout({
     }
     if (profile.status !== "active") {
       void signOut().finally(() => router.replace(`/login?blocked=${profile.status}`));
+      return;
+    }
+    if (profile.mustChangePassword) {
+      router.replace("/change-password");
     }
   }, [authLoading, isAuthenticated, profile, router, signOut]);
 
   // Hold protected member pages until the authenticated profile is available.
-  if (!isAuthenticated || !profile || profile.role !== "member" || profile.status !== "active") {
+  if (!isAuthenticated || !profile || profile.role !== "member" || profile.status !== "active" || profile.mustChangePassword) {
     return <SecureAccessLoader label="Checking your member access" />;
   }
 

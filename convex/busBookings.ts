@@ -33,11 +33,14 @@ async function hasBookingConflict(
   const dep = new Date(departureIso).getTime();
   const ret = new Date(returnIso).getTime();
 
-  const allBookings = await ctx.db.query("busBookings").collect();
+  // Only approved/confirmed bookings can block a slot — read just those.
+  const blocking = [
+    ...(await ctx.db.query("busBookings").withIndex("by_status", (q) => q.eq("status", "approved")).take(500)),
+    ...(await ctx.db.query("busBookings").withIndex("by_status", (q) => q.eq("status", "confirmed")).take(500)),
+  ];
 
-  return allBookings.some((b) => {
+  return blocking.some((b) => {
     if (excludeId && b._id === excludeId) return false;
-    if (!["approved", "confirmed"].includes(b.status)) return false;
 
     const bDep = new Date(b.departureAt).getTime();
     const bRet = new Date(b.returnAt).getTime();
@@ -218,17 +221,34 @@ export const getById = query({
 export const getAvailabilityCalendar = query({
   args: {},
   handler: async (ctx: QueryCtx) => {
-    const bookings = await ctx.db.query("busBookings").collect();
+    const user = await requireUser(ctx);
+    const isStaff = ["official", "admin", "superadmin"].includes(user.role);
+    const activeStatuses = ["requested", "under_review", "approved", "confirmed"] as const;
+    const today = new Date().toISOString();
+    const bookings = (
+      await Promise.all(
+        activeStatuses.map((status) =>
+          ctx.db
+            .query("busBookings")
+            .withIndex("by_status", (q) => q.eq("status", status))
+            .take(300)
+        )
+      )
+    )
+      .flat()
+      // Past trips no longer affect availability.
+      .filter((b) => b.returnAt >= today);
 
-    // Map booked date ranges
+    // Map booked date ranges. Members only need to know which dates are taken,
+    // so booking references and destinations are staff-only.
     return bookings
       .filter((b) => ["requested", "under_review", "approved", "confirmed"].includes(b.status))
       .map((b) => ({
         id: b._id,
-        reference: b.reference,
+        reference: isStaff ? b.reference : "",
         departureAt: b.departureAt,
         returnAt: b.returnAt,
-        destination: b.destination,
+        destination: isStaff ? b.destination : "",
         status: b.status,
       }));
   },
@@ -243,11 +263,13 @@ export const listAllAdmin = query({
   },
   handler: async (ctx: QueryCtx, args) => {
     await requireRole(ctx, ["official", "admin", "superadmin"]);
-    let bookings = await ctx.db.query("busBookings").collect();
-
-    if (args.status) {
-      bookings = bookings.filter((b) => b.status === args.status);
-    }
+    const status = args.status;
+    const bookings = status
+      ? await ctx.db
+          .query("busBookings")
+          .withIndex("by_status", (q) => q.eq("status", status))
+          .take(1000)
+      : await ctx.db.query("busBookings").order("desc").take(1000);
 
     return bookings.sort((a, b) => b.createdAt - a.createdAt);
   },

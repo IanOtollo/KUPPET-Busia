@@ -13,6 +13,9 @@ export const listActive = query({
     category: v.optional(financialCategoryValidator),
   },
   handler: async (ctx: QueryCtx, args) => {
+    // Statements are for signed-in, active accounts only — storage URLs are
+    // permanent and unauthenticated, so they must never reach an anonymous caller.
+    await requireUser(ctx);
     let reports = await ctx.db
       .query("financialReports")
       .withIndex("by_active", (q) => q.eq("isActive", true))

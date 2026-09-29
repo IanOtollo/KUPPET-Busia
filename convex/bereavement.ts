@@ -1,6 +1,7 @@
 import { query, mutation, QueryCtx, MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { getCurrentUser, requireRole, requireUser } from "./lib/auth";
+import { validateUploads } from "./lib/uploads";
 import { writeAudit } from "./lib/audit";
 import { generateReference } from "./lib/refs";
 import {
@@ -51,6 +52,13 @@ export const create = mutation({
   handler: async (ctx: MutationCtx, args) => {
     // Requires active verified member
     const user = await requireUser(ctx);
+
+    await validateUploads(ctx, args.documentIds, {
+      maxFiles: 5,
+      maxBytes: 10 * 1024 * 1024,
+      allowedTypes: /^(image\/|application\/pdf$)/,
+      label: "supporting document",
+    });
 
     // Verify 180 days limit
     const caseDate = new Date(args.dateOfBereavement);
@@ -142,7 +150,9 @@ export const listMine = query({
         .withIndex("by_member", (q) => q.eq("memberId", user._id))
         .collect();
 
-      return cases.sort((a, b) => b.createdAt - a.createdAt);
+      return cases
+        .sort((a, b) => b.createdAt - a.createdAt)
+        .map(({ internalNotes: _internalNotes, ...c }) => c);
     } catch {
       return [];
     }
@@ -182,7 +192,14 @@ export const getById = query({
       }))
     );
 
-    return { ...caseDoc, documentUrls };
+    // Internal notes are admin-only working notes — never shown to the member.
+    const canSeeNotes = ["admin", "superadmin"].includes(user.role);
+    const { internalNotes, ...safeCase } = caseDoc;
+    return {
+      ...safeCase,
+      internalNotes: canSeeNotes ? internalNotes : undefined,
+      documentUrls,
+    };
   },
 });
 
@@ -197,11 +214,18 @@ export const listAllAdmin = query({
   handler: async (ctx: QueryCtx, args) => {
     await requireRole(ctx, ["official", "admin", "superadmin"]);
 
-    let cases = await ctx.db.query("bereavementCases").collect();
+    const status = args.status;
+    let cases = status
+      ? await ctx.db
+          .query("bereavementCases")
+          .withIndex("by_status", (q) => q.eq("status", status))
+          .take(1000)
+      : await ctx.db
+          .query("bereavementCases")
+          .withIndex("by_createdAt")
+          .order("desc")
+          .take(1000);
 
-    if (args.status) {
-      cases = cases.filter((c) => c.status === args.status);
-    }
     if (args.subCounty) {
       cases = cases.filter((c) => c.subCounty === args.subCounty);
     }

@@ -30,7 +30,7 @@ export const listActive = query({
     return await Promise.all(
       officials
         .sort((a, b) => a.displayOrder - b.displayOrder)
-        .map(async (official) => ({
+        .map(async ({ linkedUserId: _linkedUserId, ...official }) => ({
           ...official,
           photoUrl: official.photoStorageId
             ? await ctx.storage.getUrl(official.photoStorageId)

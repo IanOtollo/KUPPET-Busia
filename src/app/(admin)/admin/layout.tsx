@@ -22,6 +22,7 @@ import {
   LogOut,
   Bell,
   MessageSquare,
+  KeyRound,
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
@@ -31,8 +32,8 @@ import { api } from "../../../../convex/_generated/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatRelativeTime } from "@/lib/format";
 
-type CountKey = "members" | "bereavement" | "harassment" | "bus" | "transfers";
-const NOTIF_DOMAINS: CountKey[] = ["members", "bereavement", "harassment", "bus", "transfers"];
+type CountKey = "members" | "bereavement" | "harassment" | "bus" | "transfers" | "resets";
+const NOTIF_DOMAINS: CountKey[] = ["members", "bereavement", "harassment", "bus", "transfers", "resets"];
 
 const ADMIN_NAV_ITEMS: {
   href: string;
@@ -47,6 +48,7 @@ const ADMIN_NAV_ITEMS: {
   { href: "/admin/bereavement", label: "Bereavement Queue", icon: HeartHandshake, countKey: "bereavement" },
   { href: "/admin/harassment", label: "Harassment Reports", icon: ShieldAlert, countKey: "harassment" },
   { href: "/admin/bus", label: "Bus Booking & Fleet", icon: Bus, countKey: "bus" },
+  { href: "/admin/password-resets", label: "Password Resets", icon: KeyRound, countKey: "resets" },
   { href: "/admin/officials", label: "Officials Directory", icon: Users },
   { href: "/admin/reports", label: "Financial Reports", icon: FileSpreadsheet },
   { href: "/admin/announcements", label: "Announcements", icon: Megaphone },
@@ -83,6 +85,7 @@ export default function AdminLayout({
     harassment: 0,
     bus: 0,
     transfers: 0,
+    resets: 0,
   });
 
   const { signOut } = useAuthActions();
@@ -91,41 +94,41 @@ export default function AdminLayout({
   const isFullAdmin = !!profile && ["admin", "superadmin"].includes(profile.role);
   const isQueueHandler = !!profile && ["official", "admin", "superadmin"].includes(profile.role);
 
-  const members = useQuery(api.users.listMembers, isFullAdmin ? {} : "skip");
-  const bereavementCases = useQuery(api.bereavement.listAllAdmin, isQueueHandler ? {} : "skip");
+  // Badges and the notification bell read a small, indexed "pending" feed. The
+  // full lists are only subscribed to while the global search box is in use,
+  // so large tables aren't streamed to every open admin tab.
+  const pending = useQuery(api.adminInbox.pending, isQueueHandler ? {} : "skip");
+  const searching = searchQuery.trim().length > 0;
+  const members = useQuery(api.users.listMembers, isFullAdmin && searching ? {} : "skip");
+  const bereavementCases = useQuery(api.bereavement.listAllAdmin, isQueueHandler && searching ? {} : "skip");
   // Harassment access depends on a per-official flag the client can't cheaply
   // pre-check, and an unauthorized call throws — only admins/superadmins are
   // guaranteed access, so restrict the live count to them.
-  const harassmentReports = useQuery(api.harassment.listAllAdmin, isFullAdmin ? {} : "skip");
-  const busBookings = useQuery(api.busBookings.listAllAdmin, isQueueHandler ? {} : "skip");
+  const harassmentReports = useQuery(api.harassment.listAllAdmin, isFullAdmin && searching ? {} : "skip");
+  const busBookings = useQuery(api.busBookings.listAllAdmin, isQueueHandler && searching ? {} : "skip");
   const transfers = useQuery(api.transfers.listAll, isFullAdmin ? {} : "skip");
+  const resetRequests = useQuery(api.passwordResets.listOpen, isFullAdmin ? {} : "skip");
 
   const adminName = profile?.fullName ?? "Executive Secretary";
   const adminRoleLabel = profile?.role ?? "";
 
-  const pendingMembers = useMemo(
-    () => members?.filter((m) => m.status === "pending_approval") ?? [],
-    [members]
-  );
-  const pendingBereavement = useMemo(
-    () => bereavementCases?.filter((c) => ["submitted", "under_review"].includes(c.status)) ?? [],
-    [bereavementCases]
-  );
-  const pendingHarassment = useMemo(
-    () => harassmentReports?.filter((r) => ["submitted", "acknowledged"].includes(r.status)) ?? [],
-    [harassmentReports]
-  );
-  const pendingBus = useMemo(
-    () => busBookings?.filter((b) => ["requested", "under_review"].includes(b.status)) ?? [],
-    [busBookings]
-  );
+  const pendingMembers = useMemo(() => pending?.members ?? [], [pending]);
+  const pendingBereavement = useMemo(() => pending?.bereavement ?? [], [pending]);
+  const pendingHarassment = useMemo(() => pending?.harassment ?? [], [pending]);
+  const pendingBus = useMemo(() => pending?.bus ?? [], [pending]);
 
   const pendingTransfers = useMemo(
     () => transfers?.filter((t) => !t.acknowledgedAt) ?? [],
     [transfers]
   );
 
+  const pendingResets = useMemo(
+    () => resetRequests?.filter((r) => r.status === "requested") ?? [],
+    [resetRequests]
+  );
+
   const counts: Record<CountKey, number> = {
+    resets: pendingResets.length,
     transfers: pendingTransfers.length,
     members: pendingMembers.length,
     bereavement: pendingBereavement.length,
@@ -142,6 +145,7 @@ export default function AdminLayout({
       harassment: readLastSeen(profile._id, "harassment"),
       bus: readLastSeen(profile._id, "bus"),
       transfers: readLastSeen(profile._id, "transfers"),
+      resets: readLastSeen(profile._id, "resets"),
     });
   }, [profile?._id]);
 
@@ -163,7 +167,9 @@ export default function AdminLayout({
           ? "harassment"
           : pathname.startsWith("/admin/bus")
             ? "bus"
-            : null;
+            : pathname.startsWith("/admin/password-resets")
+              ? "resets"
+              : null;
     if (domain) {
       const now = Date.now();
       const seen: CountKey[] = domain === "members" ? ["members", "transfers"] : [domain];
@@ -189,6 +195,13 @@ export default function AdminLayout({
         href: "/admin/members",
         createdAt: t.createdAt,
       })),
+      ...pendingResets.map((r) => ({
+        id: `reset-${r._id}`,
+        title: `Password reset: ${r.memberName}`,
+        subtitle: `TSC ${r.tscNumber} • awaiting your approval`,
+        href: "/admin/password-resets",
+        createdAt: r.requestedAt,
+      })),
       ...pendingBereavement.map((c) => ({
         id: `bereavement-${c._id}`,
         title: `Bereavement: ${c.deceasedName}`,
@@ -212,7 +225,7 @@ export default function AdminLayout({
       })),
     ];
     return items.sort((a, b) => b.createdAt - a.createdAt);
-  }, [pendingMembers, pendingTransfers, pendingBereavement, pendingHarassment, pendingBus]);
+  }, [pendingMembers, pendingTransfers, pendingResets, pendingBereavement, pendingHarassment, pendingBus]);
 
   const unseenCount = NOTIF_DOMAINS.reduce((sum, domain) => {
     const domainCreatedAts =
@@ -224,7 +237,9 @@ export default function AdminLayout({
             ? pendingHarassment.map((r) => r.createdAt)
             : domain === "transfers"
               ? pendingTransfers.map((t) => t.createdAt)
-              : pendingBus.map((b) => b.createdAt);
+              : domain === "resets"
+                ? pendingResets.map((r) => r.requestedAt)
+                : pendingBus.map((b) => b.createdAt);
     return sum + domainCreatedAts.filter((ts) => ts > (lastSeen[domain] ?? 0)).length;
   }, 0);
 
@@ -335,6 +350,10 @@ export default function AdminLayout({
       router.replace("/dashboard");
       return;
     }
+    if (profile.mustChangePassword) {
+      router.replace("/change-password");
+      return;
+    }
     // A role check alone isn't enough — a suspended/rejected admin or
     // official must lose access the moment their status changes, not keep
     // riding out their existing session.
@@ -347,7 +366,8 @@ export default function AdminLayout({
     isAuthenticated &&
     profile &&
     ["official", "admin", "superadmin"].includes(profile.role) &&
-    profile.status === "active";
+    profile.status === "active" &&
+    !profile.mustChangePassword;
 
   // Do not mount admin pages until the authoritative Convex role check completes.
   if (!isAdmin) return <SecureAccessLoader label="Preparing the administration workspace" />;

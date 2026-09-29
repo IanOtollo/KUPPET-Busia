@@ -10,7 +10,8 @@ export const listMine = query({
       const list = await ctx.db
         .query("notifications")
         .withIndex("by_user", (q) => q.eq("userId", user._id))
-        .collect();
+        .order("desc")
+        .take(100);
 
       return list.sort((a, b) => b.createdAt - a.createdAt);
     } catch {

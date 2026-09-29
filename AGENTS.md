@@ -88,8 +88,10 @@ Placeholders live in `.env.base44-defaults` (listed FIRST in `env_file`); `/run/
    npx convex run seed:seedDatabase
    ```
 3. Create the first superadmin — idempotent, no arguments needed. Signs in with
-   **TSC `000000`** and the branch-issued default password set in `convex/adminSetup.ts`:
+   **TSC `000000`** and the password held in the Convex env var `DEFAULT_ADMIN_PASSWORD`
+   (never in source; it is an internal action, so it can only be run from the CLI):
    ```bash
+   npx convex env set DEFAULT_ADMIN_PASSWORD <password>
    npx convex run adminSetup:createDefaultAdmin '{}'
    ```
 

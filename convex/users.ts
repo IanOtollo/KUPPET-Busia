@@ -102,6 +102,26 @@ async function findDuplicate(
  * Uniqueness of National ID, TSC number, phone and email is enforced here,
  * server-side, before any account is written.
  */
+/**
+ * Server-side password policy (the browser checks are only a convenience).
+ * 8+ characters with upper, lower and a digit.
+ */
+export function assertStrongPassword(password: string) {
+  if (
+    password.length < 8 ||
+    password.length > 128 ||
+    !/[a-z]/.test(password) ||
+    !/[A-Z]/.test(password) ||
+    !/[0-9]/.test(password)
+  ) {
+    throw new ConvexError({
+      code: "WEAK_PASSWORD",
+      message:
+        "Password must be 8–128 characters and include an uppercase letter, a lowercase letter and a number.",
+    });
+  }
+}
+
 export const registerMember = action({
   args: {
     email: v.string(),
@@ -122,6 +142,14 @@ export const registerMember = action({
     const idNumber = args.idNumber.trim();
     const tscNumber = args.tscNumber.toUpperCase().trim();
     const phone = args.phone.trim();
+
+    assertStrongPassword(args.password);
+    if (args.password.toUpperCase() === tscNumber) {
+      throw new ConvexError({
+        code: "WEAK_PASSWORD",
+        message: "Your password cannot be the same as your TSC number.",
+      });
+    }
 
     const duplicate = await ctx.runQuery(internal.users.checkDuplicates, {
       idNumber,
@@ -223,154 +251,6 @@ export const getEmailByTsc = query({
 });
 
 /**
- * Register a new member account with pending_verification status.
- * Enforces uniqueness of national ID, TSC number, email, and phone.
- */
-export const register = mutation({
-  args: {
-    fullName: v.string(),
-    idNumber: v.string(),
-    tscNumber: v.string(),
-    phone: v.string(),
-    email: v.string(),
-    school: v.string(),
-    subCounty: subCountyValidator,
-    designation: designationValidator,
-    schoolRole: v.optional(v.string()),
-    subjects: v.optional(v.array(v.string())),
-    gender: v.optional(v.string()),
-    authId: v.optional(v.string()),
-  },
-  handler: async (ctx: MutationCtx, args) => {
-    const cleanEmail = args.email.toLowerCase().trim();
-    const cleanIdNumber = args.idNumber.trim();
-    const cleanTscNumber = args.tscNumber.toUpperCase().trim();
-    const cleanPhone = args.phone.trim();
-
-    // Check unique national ID
-    const existingId = await ctx.db
-      .query("users")
-      .withIndex("by_idNumber", (q) => q.eq("idNumber", cleanIdNumber))
-      .first();
-    if (existingId) {
-      throw new ConvexError({
-        code: "DUPLICATE_ID",
-        message: "National ID number is already registered with another account.",
-      });
-    }
-
-    // Check unique TSC number
-    const existingTsc = await ctx.db
-      .query("users")
-      .withIndex("by_tsc", (q) => q.eq("tscNumber", cleanTscNumber))
-      .first();
-    if (existingTsc) {
-      throw new ConvexError({
-        code: "DUPLICATE_TSC",
-        message: "TSC number is already registered with another account.",
-      });
-    }
-
-    // Check unique Email
-    const existingEmail = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", cleanEmail))
-      .first();
-    if (existingEmail) {
-      throw new ConvexError({
-        code: "DUPLICATE_EMAIL",
-        message: "Email address is already in use.",
-      });
-    }
-
-    // Check unique Phone
-    const existingPhone = await ctx.db
-      .query("users")
-      .withIndex("by_phone", (q) => q.eq("phone", cleanPhone))
-      .first();
-    if (existingPhone) {
-      throw new ConvexError({
-        code: "DUPLICATE_PHONE",
-        message: "Phone number is already associated with another account.",
-      });
-    }
-
-    const now = Date.now();
-    const newUserId = await ctx.db.insert("users", {
-      authId: args.authId,
-      fullName: args.fullName.trim(),
-      idNumber: cleanIdNumber,
-      tscNumber: cleanTscNumber,
-      phone: cleanPhone,
-      email: cleanEmail,
-      school: args.school.trim(),
-      subCounty: args.subCounty,
-      designation: args.designation,
-      schoolRole: args.schoolRole,
-      subjects: args.subjects,
-      gender: args.gender,
-      role: "member",
-      status: "pending_approval",
-      failedLoginCount: 0,
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    await writeAudit(ctx, {
-      action: "user.register",
-      entityType: "users",
-      entityId: newUserId,
-      actorRole: "member",
-      metadata: {
-        email: cleanEmail,
-        tscNumber: cleanTscNumber,
-        subCounty: args.subCounty,
-      },
-    });
-
-    return { userId: newUserId };
-  },
-});
-
-/**
- * Marks an account as verified after email confirmation.
- * Moves status from pending_verification to pending_approval.
- */
-export const verifyEmail = mutation({
-  args: {
-    userId: v.id("users"),
-  },
-  handler: async (ctx: MutationCtx, args) => {
-    const user = await ctx.db.get(args.userId);
-    if (!user) {
-      throw new ConvexError({
-        code: "USER_NOT_FOUND",
-        message: "User account record not found.",
-      });
-    }
-
-    if (user.status !== "pending_verification") {
-      return { status: user.status };
-    }
-
-    await ctx.db.patch(user._id, {
-      status: "pending_approval",
-      updatedAt: Date.now(),
-    });
-
-    await writeAudit(ctx, {
-      action: "user.email_verified",
-      entityType: "users",
-      entityId: user._id,
-      actorId: user._id,
-      actorRole: user.role,
-    });
-
-    return { status: "pending_approval" };
-  },
-});
-
-/**
  * Admin query to list all members with filtering by status or subCounty.
  */
 export const listMembers = query({
@@ -387,13 +267,18 @@ export const listMembers = query({
     // This is the teacher-membership workspace. Administrative and official
     // accounts are managed through their respective role workflows and must
     // not be mixed into TSC verification records.
-    let members = (await ctx.db.query("users").collect()).filter(
-      (user) => user.role === "member"
-    );
+    // Read through indexes and cap the result — never the whole table.
+    const status = args.status;
+    let members = status
+      ? await ctx.db
+          .query("users")
+          .withIndex("by_role_status", (q) => q.eq("role", "member").eq("status", status))
+          .take(3000)
+      : await ctx.db
+          .query("users")
+          .withIndex("by_role", (q) => q.eq("role", "member"))
+          .take(3000);
 
-    if (args.status) {
-      members = members.filter((m) => m.status === args.status);
-    }
     if (args.subCounty) {
       members = members.filter((m) => m.subCounty === args.subCounty);
     }
@@ -424,6 +309,15 @@ export const approveMember = mutation({
         code: "USER_NOT_FOUND",
         message: "Target member not found.",
       });
+    }
+    if (targetUser.role !== "member") {
+      throw new ConvexError({
+        code: "INVALID_TARGET",
+        message: "Only teacher-member registrations are approved here.",
+      });
+    }
+    if (targetUser.status === "active") {
+      return { success: true };
     }
 
     const now = Date.now();
@@ -480,6 +374,14 @@ export const setMemberStatus = mutation({
         message: "Target member not found.",
       });
     }
+    // Staff accounts are never suspended/rejected through the member workflow,
+    // and nobody can change their own status.
+    if (targetUser.role !== "member" || targetUser._id === admin._id) {
+      throw new ConvexError({
+        code: "INVALID_TARGET",
+        message: "You can't change the status of this account.",
+      });
+    }
 
     await ctx.db.patch(targetUser._id, {
       status: args.newStatus,
@@ -515,6 +417,13 @@ export const assignRole = mutation({
       throw new ConvexError({
         code: "USER_NOT_FOUND",
         message: "User not found.",
+      });
+    }
+    // Prevents a superadmin demoting themselves and locking everyone out.
+    if (targetUser._id === superadmin._id) {
+      throw new ConvexError({
+        code: "INVALID_TARGET",
+        message: "You can't change your own role.",
       });
     }
 
@@ -557,10 +466,43 @@ export const updateMyProfile = mutation({
 
     if (args.schoolRole !== undefined) updates.schoolRole = args.schoolRole;
     if (args.subjects !== undefined) updates.subjects = args.subjects;
-    if (args.phone !== undefined) updates.phone = args.phone.trim();
-    if (args.email !== undefined) updates.email = args.email.toLowerCase().trim();
+    if (args.phone !== undefined) {
+      const phone = args.phone.trim();
+      const owner = await ctx.db
+        .query("users")
+        .withIndex("by_phone", (q) => q.eq("phone", phone))
+        .first();
+      if (owner && owner._id !== currentUser._id) {
+        throw new ConvexError({
+          code: "DUPLICATE_PHONE",
+          message: "Phone number is already associated with another account.",
+        });
+      }
+      updates.phone = phone;
+    }
+    // The email doubles as the sign-in account identifier, so it can't be
+    // edited here — changing it would lock the teacher out. Admins handle
+    // email corrections.
+    if (args.email !== undefined && args.email.toLowerCase().trim() !== currentUser.email) {
+      throw new ConvexError({
+        code: "EMAIL_LOCKED",
+        message: "Email can't be changed here. Please contact the branch office.",
+      });
+    }
     if (args.gender !== undefined) updates.gender = args.gender;
     if (args.photoStorageId !== undefined) {
+      const file = await ctx.db.system.get(args.photoStorageId);
+      if (
+        !file ||
+        !file.contentType?.startsWith("image/") ||
+        file.size > 5 * 1024 * 1024
+      ) {
+        await ctx.storage.delete(args.photoStorageId);
+        throw new ConvexError({
+          code: "INVALID_PHOTO",
+          message: "Profile photo must be an image under 5 MB.",
+        });
+      }
       updates.photoStorageId = args.photoStorageId;
       // Replacing an existing photo — remove the now-orphaned file.
       if (currentUser.photoStorageId && currentUser.photoStorageId !== args.photoStorageId) {

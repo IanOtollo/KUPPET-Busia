@@ -44,6 +44,12 @@ export default defineSchema({
     lastLoginAt: v.optional(v.number()),
     failedLoginCount: v.number(),
     lockedUntil: v.optional(v.number()),
+    // Set when an admin approves a password reset: the account then uses the
+    // teacher's TSC number as a one-time password and must be changed on first
+    // login (enforced server-side in requireUser). Expires so an unused
+    // temporary password can't be picked up later by someone else.
+    mustChangePassword: v.optional(v.boolean()),
+    tempPasswordExpiresAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -52,9 +58,28 @@ export default defineSchema({
     .index("by_idNumber", ["idNumber"])
     .index("by_phone", ["phone"])
     .index("by_role", ["role"])
+    .index("by_role_status", ["role", "status"])
     .index("by_status", ["status"])
     .index("by_subCounty", ["subCounty"])
     .index("by_authId", ["authId"]),
+
+  // Password-reset requests raised by teachers and actioned by an admin.
+  passwordResets: defineTable({
+    userId: v.id("users"),
+    tscNumber: v.string(),
+    memberName: v.string(),
+    status: v.union(
+      v.literal("requested"),
+      v.literal("approved"),
+      v.literal("completed"),
+      v.literal("declined")
+    ),
+    requestedAt: v.number(),
+    handledBy: v.optional(v.id("users")),
+    handledAt: v.optional(v.number()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_status", ["status"]),
 
   // Teacher-reported school transfers / promotions. The change is applied to the
   // member's record immediately; this row is the admin-facing notice + history.
@@ -301,5 +326,7 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_thread", ["threadId", "createdAt"])
+    .index("by_sender", ["senderId", "createdAt"])
+    .index("by_recipient", ["recipientId", "createdAt"])
     .index("by_recipient_unread", ["recipientId", "isRead"]),
 });
