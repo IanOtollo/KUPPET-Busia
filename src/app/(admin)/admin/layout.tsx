@@ -32,6 +32,7 @@ import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from "../../../../convex/_generated/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatRelativeTime } from "@/lib/format";
+import { ConfirmProvider } from "@/components/ui/confirm-dialog";
 
 type CountKey = "members" | "bereavement" | "harassment" | "bus" | "transfers" | "resets" | "issues";
 const NOTIF_DOMAINS: CountKey[] = ["members", "bereavement", "harassment", "bus", "transfers", "resets", "issues"];
@@ -671,7 +672,9 @@ export default function AdminLayout({
 
         {/* Content Area */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8">
-          <div className="max-w-[1300px] mx-auto">{children}</div>
+          <ConfirmProvider>
+            <div className="max-w-[1300px] mx-auto">{children}</div>
+          </ConfirmProvider>
         </main>
       </div>
     </div>

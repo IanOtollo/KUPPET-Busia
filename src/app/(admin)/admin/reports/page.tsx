@@ -27,11 +27,13 @@ import { api } from "../../../../../convex/_generated/api";
 import { FINANCIAL_REPORT_CATEGORIES, FinancialReportCategory } from "@/lib/constants";
 import { Doc, Id } from "../../../../../convex/_generated/dataModel";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 export default function AdminReportsPage() {
   const reports = useQuery(api.financialReports.listActive, {});
   const createReportMutation = useMutation(api.financialReports.create);
   const generateUploadUrl = useMutation(api.financialReports.generateUploadUrl);
+  const confirm = useConfirm();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,6 +52,13 @@ export default function AdminReportsPage() {
       toast.error("Select a PDF document to upload.");
       return;
     }
+
+    const ok = await confirm({
+      title: "Publish this financial statement?",
+      description: <p>Every member will be able to open and download &quot;{formData.title}&quot; straight away.</p>,
+      confirmLabel: "Yes, publish",
+    });
+    if (!ok) return;
 
     setIsSubmitting(true);
     try {

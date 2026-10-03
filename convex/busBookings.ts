@@ -251,6 +251,8 @@ export const getAvailabilityCalendar = query({
       "payment_submitted",
       "approved",
       "confirmed",
+      // Staff also see finished trips on the schedule; members only need open slots.
+      ...(isStaff ? (["completed"] as const) : []),
     ] as const;
     const today = new Date().toISOString();
     const bookings = (
@@ -259,13 +261,13 @@ export const getAvailabilityCalendar = query({
           ctx.db
             .query("busBookings")
             .withIndex("by_status", (q) => q.eq("status", status))
-            .take(300)
+            .take(500)
         )
       )
     )
       .flat()
-      // Past trips no longer affect availability.
-      .filter((b) => b.returnAt >= today);
+      // Past trips no longer affect availability, but staff keep them for the history view.
+      .filter((b) => isStaff || b.returnAt >= today);
 
     // Map booked date ranges. Members only need to know which dates are taken,
     // so booking references and destinations are staff-only.
@@ -273,6 +275,7 @@ export const getAvailabilityCalendar = query({
       .map((b) => ({
         id: b._id,
         reference: isStaff ? b.reference : "",
+        requesterName: isStaff ? b.requesterName : "",
         departureAt: b.departureAt,
         returnAt: b.returnAt,
         destination: isStaff ? b.destination : "",

@@ -25,6 +25,7 @@ import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
 import { BEREAVEMENT_TRANSITIONS, BereavementStatus } from "@/lib/constants";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 export default function AdminBereavementDetailPage({
   params,
@@ -37,6 +38,7 @@ export default function AdminBereavementDetailPage({
   const caseDoc = useQuery(api.bereavement.getById, { id: caseId });
   const updateStatusMutation = useMutation(api.bereavement.updateStatus);
   const addNoteMutation = useMutation(api.bereavement.addInternalNote);
+  const confirm = useConfirm();
 
   const [newStatus, setNewStatus] = useState<string>("");
   const [statusReason, setStatusReason] = useState<string>("");
@@ -80,6 +82,46 @@ export default function AdminBereavementDetailPage({
       toast.error("Please give a reason for declining this case.");
       return;
     }
+
+    const label = newStatus.replace(/_/g, " ");
+    const confirmed = await confirm(
+      newStatus === "declined"
+        ? {
+            title: "Decline this bereavement claim?",
+            description: (
+              <p>
+                {caseDoc.memberNameSnapshot} will be told their claim is declined, with your reason. This is final: the
+                case cannot be reopened (they would have to file a new claim).
+              </p>
+            ),
+            confirmLabel: "Yes, decline claim",
+            tone: "danger",
+          }
+        : newStatus === "verified" && caseDoc.contributionMethod && !caseDoc.contributionBroadcastAt
+          ? {
+              title: "Approve this claim and notify all members?",
+              description: (
+                <p>
+                  Approving sends <strong>every member and official</strong> a notification about {caseDoc.deceasedName}
+                  &apos;s passing and how to contribute ({caseDoc.contributionMethod}: {caseDoc.contributionNumber}). It goes
+                  out once and cannot be recalled, so check the contribution details first.
+                </p>
+              ),
+              confirmLabel: "Yes, approve and notify",
+            }
+          : {
+              title: `Change status to "${label}"?`,
+              description: (
+                <p>
+                  {caseDoc.memberNameSnapshot} will be notified of this change.
+                  {supportAmount ? ` Approved relief amount: KES ${supportAmount}.` : ""} Statuses only move forward, so
+                  this cannot be undone.
+                </p>
+              ),
+              confirmLabel: "Yes, apply change",
+            }
+    );
+    if (!confirmed) return;
 
     setIsUpdatingStatus(true);
     try {
@@ -430,6 +472,19 @@ export default function AdminBereavementDetailPage({
                 </div>
               )}
 
+              {(BEREAVEMENT_TRANSITIONS[caseDoc.status] ?? []).length === 0 ? (
+                <div className="pt-4 border-t border-[var(--line)] text-[13.5px] text-[var(--ink-muted)] space-y-2">
+                  <p>
+                    This case is <strong className="text-[var(--ink)]">{caseDoc.status.replace(/_/g, " ")}</strong> and
+                    can no longer be changed.
+                  </p>
+                  {caseDoc.statusReason && (
+                    <p className="p-3 rounded-[var(--r-md)] bg-[var(--surface-sunk)] border border-[var(--line)] text-[var(--ink-body)]">
+                      <strong>Reason:</strong> {caseDoc.statusReason}
+                    </p>
+                  )}
+                </div>
+              ) : (
               <form onSubmit={handleUpdateStatus} className="space-y-4 pt-4 border-t border-[var(--line)]">
                 <div>
                   <Label htmlFor="status">Transition Status</Label>
@@ -491,6 +546,7 @@ export default function AdminBereavementDetailPage({
                   <CheckCircle className="h-4 w-4 mr-1.5" /> Apply Status Change
                 </Button>
               </form>
+              )}
             </CardContent>
           </Card>
         </div>

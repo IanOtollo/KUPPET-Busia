@@ -230,12 +230,30 @@ export default function MemberProfilePage() {
             </div>
 
             <div>
-              <Label htmlFor="school">Current School / Institution</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="school">Current School / Institution</Label>
+                <button
+                  type="button"
+                  onClick={openTransfer}
+                  className="text-[12.5px] font-medium text-[var(--union)] hover:underline inline-flex items-center gap-1 cursor-pointer"
+                >
+                  <Edit className="h-3 w-3" /> Change
+                </button>
+              </div>
               <Input id="school" disabled value={profile?.school || ""} className="bg-slate-100" />
             </div>
 
             <div>
-              <Label htmlFor="subCounty">Sub-County</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="subCounty">Sub-County</Label>
+                <button
+                  type="button"
+                  onClick={openTransfer}
+                  className="text-[12.5px] font-medium text-[var(--union)] hover:underline inline-flex items-center gap-1 cursor-pointer"
+                >
+                  <Edit className="h-3 w-3" /> Change
+                </button>
+              </div>
               <Input id="subCounty" disabled value={profile?.subCounty || ""} className="bg-slate-100" />
             </div>
 

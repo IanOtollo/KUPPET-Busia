@@ -24,6 +24,7 @@ import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
 import { HARASSMENT_TRANSITIONS, HarassmentStatus } from "@/lib/constants";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 export default function AdminHarassmentDetailPage({
   params,
@@ -39,6 +40,7 @@ export default function AdminHarassmentDetailPage({
 
   const fetchAndAuditReport = useMutation(api.harassment.getByIdAdmin);
   const updateStatusMutation = useMutation(api.harassment.updateStatus);
+  const confirm = useConfirm();
 
   const [newStatus, setNewStatus] = useState<string>("");
   const [statusReason, setStatusReason] = useState<string>("");
@@ -79,6 +81,33 @@ export default function AdminHarassmentDetailPage({
       toast.error("Please give a reason for closing this report with no action.");
       return;
     }
+
+    const label = newStatus.replace(/_/g, " ");
+    const confirmed = await confirm(
+      newStatus === "closed_no_action"
+        ? {
+            title: "Close this report with no action?",
+            description: (
+              <p>
+                This closes the report without any action and cannot be reopened. Only do this after you have reviewed it
+                carefully, as the reporter may be relying on the branch to act.
+              </p>
+            ),
+            confirmLabel: "Yes, close with no action",
+            tone: "danger",
+          }
+        : {
+            title: `Change status to "${label}"?`,
+            description: (
+              <p>
+                This updates the confidential case file and is recorded in the audit log. Statuses only move forward, so
+                it cannot be undone.
+              </p>
+            ),
+            confirmLabel: "Yes, apply change",
+          }
+    );
+    if (!confirmed) return;
 
     setIsUpdatingStatus(true);
     try {
@@ -292,6 +321,12 @@ export default function AdminHarassmentDetailPage({
                 </div>
               )}
 
+              {(HARASSMENT_TRANSITIONS[report.status] ?? []).length === 0 ? (
+                <p className="pt-4 border-t border-[var(--line)] text-[13.5px] text-[var(--ink-muted)]">
+                  This report is <strong className="text-[var(--ink)]">{report.status.replace(/_/g, " ")}</strong> and
+                  can no longer be changed.
+                </p>
+              ) : (
               <form onSubmit={handleUpdateStatus} className="space-y-4 pt-4 border-t border-[var(--line)]">
                 <div>
                   <Label htmlFor="status">Transition Status</Label>
@@ -342,6 +377,7 @@ export default function AdminHarassmentDetailPage({
                   <CheckCircle className="h-4 w-4 mr-1.5" /> Apply Status Mutation
                 </Button>
               </form>
+              )}
             </CardContent>
           </Card>
         </div>

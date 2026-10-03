@@ -32,6 +32,8 @@ import { api } from "../../../../../convex/_generated/api";
 import { BUS_BOOKING_STATUSES, BUS_TRANSITIONS, BUS_STATUS_LABELS, BusBookingStatus } from "@/lib/constants";
 import { Doc, Id } from "../../../../../convex/_generated/dataModel";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/ui/confirm-dialog";
+import { BusCalendar } from "./BusCalendar";
 
 export default function AdminBusPage() {
   const router = useRouter();
@@ -43,6 +45,7 @@ export default function AdminBusPage() {
   const bookings = useQuery(api.busBookings.listAllAdmin, { status: queryStatus });
   const calendarSlots = useQuery(api.busBookings.getAvailabilityCalendar);
   const updateStatusMutation = useMutation(api.busBookings.updateStatus);
+  const confirm = useConfirm();
 
   // Approval Modal State
   const [approvalModalOpen, setApprovalModalOpen] = useState(false);
@@ -56,6 +59,11 @@ export default function AdminBusPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleOpenAction = (booking: Doc<"busBookings">) => {
+    // Completed, declined and cancelled bookings are final: nothing to action.
+    if ((BUS_TRANSITIONS[booking.status] ?? []).length === 0) {
+      router.push(`/admin/bus/${booking._id}`);
+      return;
+    }
     const legalNext = BUS_TRANSITIONS[booking.status] ?? [];
     setSelectedBooking(booking);
     setActionStatus((legalNext[0] as BusBookingStatus) || booking.status as BusBookingStatus);
@@ -85,6 +93,50 @@ export default function AdminBusPage() {
         return;
       }
     }
+
+    const who = selectedBooking.requesterName;
+    const confirmed = await confirm(
+      actionStatus === "awaiting_payment"
+        ? {
+            title: "Approve and ask for payment?",
+            description: (
+              <p>
+                {who} will be told to pay <strong>{formatKES(parseFloat(contributionKes) || 0)}</strong> for the bus to{" "}
+                {selectedBooking.destination}. The dates are held for them until you confirm their payment.
+              </p>
+            ),
+            confirmLabel: "Yes, approve",
+          }
+        : actionStatus === "confirmed"
+          ? {
+              title: "Confirm payment and release the bus?",
+              description: (
+                <p>
+                  Only continue if you have checked that {who}&apos;s payment
+                  {selectedBooking.paymentReference ? ` (ref ${selectedBooking.paymentReference})` : ""} was actually
+                  received. The bus will be released to them.
+                </p>
+              ),
+              confirmLabel: "Yes, payment received",
+            }
+          : actionStatus === "declined" || actionStatus === "cancelled"
+            ? {
+                title: `${actionStatus === "declined" ? "Decline" : "Cancel"} this booking?`,
+                description: (
+                  <p>
+                    {who} will be notified and the dates become free for other bookings. This cannot be undone.
+                  </p>
+                ),
+                confirmLabel: actionStatus === "declined" ? "Yes, decline" : "Yes, cancel booking",
+                tone: "danger",
+              }
+            : {
+                title: `Change status to "${actionStatus.replace(/_/g, " ")}"?`,
+                description: <p>{who} will be notified of this change.</p>,
+                confirmLabel: "Yes, apply",
+              }
+    );
+    if (!confirmed) return;
 
     setIsSubmitting(true);
     try {
@@ -262,61 +314,7 @@ export default function AdminBusPage() {
       )}
 
       {activeTab === "calendar" && (
-        <div className="p-6 rounded-[var(--r-lg)] border border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow-panel)]">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="font-serif text-[20px] font-semibold text-[var(--ink)]">
-              Fleet Occupation Calendar
-            </h3>
-            <div className="flex items-center gap-4 text-[13px]">
-              <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-[var(--warning-soft)] border border-[var(--warning)]" />
-                Requested
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-[var(--success-soft)] border border-[var(--success)]" />
-                Confirmed / Approved
-              </span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {calendarSlots?.map(
-              (slot: {
-                id: string;
-                reference: string;
-                departureAt: string;
-                returnAt: string;
-                destination: string;
-                status: string;
-              }) => (
-                <div
-                key={slot.id}
-                onClick={() => router.push(`/admin/bus/${slot.id}`)}
-                className={`p-4 rounded-[var(--r-md)] border cursor-pointer transition-colors ${
-                  ["approved", "confirmed"].includes(slot.status)
-                    ? "bg-[var(--success-soft)] border-[var(--success)]/40 hover:border-[var(--success)]"
-                    : "bg-[var(--warning-soft)] border-[var(--warning)]/40 hover:border-[var(--warning)]"
-                }`}
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="mono-ref text-[12px] font-semibold text-[var(--ink)]">
-                    {slot.reference}
-                  </span>
-                  <StatusBadge status={slot.status} />
-                </div>
-                <h4 className="font-semibold text-[15px] text-[var(--ink)]">
-                  {slot.destination}
-                </h4>
-                <div className="text-[12.5px] text-[var(--ink-body)] mt-2">
-                  Departure: {formatShortDate(slot.departureAt)}
-                </div>
-                <div className="text-[12.5px] text-[var(--ink-body)]">
-                  Return: {formatShortDate(slot.returnAt)}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <BusCalendar slots={calendarSlots} onOpen={(id) => router.push(`/admin/bus/${id}`)} />
       )}
 
       {/* Adjudication / Approval Modal */}

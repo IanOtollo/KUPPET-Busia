@@ -17,6 +17,7 @@ import { SUB_COUNTIES } from "@/lib/constants";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { Settings, Save, Plus, School, Building2, CheckCircle2, XCircle, UserCircle } from "lucide-react";
 import { ProfilePhotoUpload } from "@/components/modules/ProfilePhotoUpload";
 
@@ -32,6 +33,7 @@ export default function AdminSettingsPage() {
 
   const branchConfig = useQuery(api.settings.getBranchConfig);
   const saveBranchConfig = useMutation(api.settings.setBranchConfig);
+  const confirm = useConfirm();
 
   const [configForm, setConfigForm] = useState({
     branchName: "",
@@ -55,6 +57,17 @@ export default function AdminSettingsPage() {
 
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
+    const ok = await confirm({
+      title: "Save branch settings?",
+      description: (
+        <p>
+          The bus capacity ({configForm.busCapacitySeats} seats) and notice period ({configForm.busNoticeDays} days) apply
+          to all new bus bookings straight away.
+        </p>
+      ),
+      confirmLabel: "Yes, save settings",
+    });
+    if (!ok) return;
     setIsSavingConfig(true);
     try {
       await saveBranchConfig({
@@ -100,6 +113,11 @@ export default function AdminSettingsPage() {
   };
 
   const handleToggle = async (id: any, name: string) => {
+    const ok = await confirm({
+      title: `Change the status of ${name}?`,
+      description: <p>This switches the school between active and inactive in the directory.</p>,
+    });
+    if (!ok) return;
     try {
       const active = await toggleSchoolActive({ id });
       toast.success(`${name} marked as ${active ? "Active" : "Inactive"}.`);

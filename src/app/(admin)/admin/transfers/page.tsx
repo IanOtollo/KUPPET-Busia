@@ -8,6 +8,7 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { formatShortDate, formatRelativeTime, formatStay } from "@/lib/format";
 import { SUB_COUNTIES } from "@/lib/constants";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { Id } from "../../../../../convex/_generated/dataModel";
@@ -126,6 +127,7 @@ function Cases() {
 function Swaps() {
   const swaps = useQuery(api.swaps.listOpen);
   const close = useMutation(api.swaps.close);
+  const confirm = useConfirm();
   const [filter, setFilter] = useState("all");
 
   if (swaps === undefined) return <Skeleton className="h-64 w-full" />;
@@ -187,6 +189,12 @@ function Swaps() {
                       size="sm"
                       variant="secondary"
                       onClick={async () => {
+                        const ok = await confirm({
+                          title: "Close this swap request?",
+                          description: <p>{s.memberName} will no longer appear on the swap board.</p>,
+                          confirmLabel: "Yes, close request",
+                        });
+                        if (!ok) return;
                         try {
                           await close({ id: s._id as Id<"swapRequests"> });
                           toast.success("Swap request closed.");

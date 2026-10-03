@@ -21,6 +21,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { Doc, Id } from "../../../../../convex/_generated/dataModel";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 type StatusTab = "all" | "pending_approval" | "active" | "inactive";
 const STATUS_TABS: { value: StatusTab; label: string }[] = [
@@ -45,6 +46,7 @@ function AdminMembersPageInner() {
   const searchParams = useSearchParams();
   const transfers = useQuery(api.transfers.listAll, {});
   const acknowledgeTransfer = useMutation(api.transfers.acknowledge);
+  const confirm = useConfirm();
   const pendingTransfers = transfers?.filter((t) => !t.acknowledgedAt) ?? [];
 
   const handleAcknowledge = async (id: Id<"transfers">) => {
@@ -72,7 +74,17 @@ function AdminMembersPageInner() {
   }, [searchParams, members]);
 
   const handleApprove = async (userId: Id<"users">) => {
-    if (!confirm("Approve this teacher's membership and grant portal access?")) return;
+    const ok = await confirm({
+      title: "Approve this membership?",
+      description: (
+        <p>
+          The teacher gets full portal access straight away. Check their TSC number and National ID against your records
+          first.
+        </p>
+      ),
+      confirmLabel: "Yes, approve member",
+    });
+    if (!ok) return;
     setProcessingId(userId);
     try {
       await approveMemberMutation({ userId });
@@ -94,6 +106,13 @@ function AdminMembersPageInner() {
       toast.error("Enter a reason before rejecting.");
       return;
     }
+    const ok = await confirm({
+      title: "Reject this application?",
+      description: <p>The applicant will not be able to sign in and will see your reason. Rejection cannot be undone from here.</p>,
+      confirmLabel: "Yes, reject",
+      tone: "danger",
+    });
+    if (!ok) return;
     setProcessingId(userId);
     try {
       await setMemberStatusMutation({ userId, newStatus: "rejected", reason: reason.trim() });
@@ -107,7 +126,13 @@ function AdminMembersPageInner() {
   };
 
   const handleSuspend = async (userId: Id<"users">) => {
-    if (!confirm("Are you sure you want to suspend this member account?")) return;
+    const ok = await confirm({
+      title: "Suspend this member?",
+      description: <p>They are signed out of the portal and cannot use any service until the account is reactivated.</p>,
+      confirmLabel: "Yes, suspend",
+      tone: "danger",
+    });
+    if (!ok) return;
     setProcessingId(userId);
     try {
       await setMemberStatusMutation({ userId, newStatus: "suspended", reason: "Admin action" });

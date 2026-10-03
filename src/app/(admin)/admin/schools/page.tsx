@@ -25,6 +25,7 @@ import { SUB_COUNTIES, SubCounty } from "@/lib/constants";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import {
   School as SchoolIcon,
   Plus,
@@ -59,6 +60,7 @@ export default function AdminSchoolsPage() {
   const schools = useQuery(api.schools.listWithRosters);
   const addSchool = useMutation(api.schools.create);
   const toggleSchoolActive = useMutation(api.schools.toggleActive);
+  const confirm = useConfirm();
 
   const handleAddSchool = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,6 +91,11 @@ export default function AdminSchoolsPage() {
   };
 
   const handleToggleStatus = async (id: any, name: string) => {
+    const ok = await confirm({
+      title: `Change the status of ${name}?`,
+      description: <p>This switches the school between active and inactive in the directory.</p>,
+    });
+    if (!ok) return;
     try {
       const active = await toggleSchoolActive({ id });
       toast.success(`${name} is now ${active ? "Active" : "Inactive"}.`);

@@ -29,6 +29,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { Id } from "../../../../../convex/_generated/dataModel";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { OFFICIAL_POSITIONS } from "@/lib/constants";
 
 interface OfficialRow {
@@ -53,9 +54,21 @@ export default function AdminOfficialsPage() {
   const updateOfficial = useMutation(api.officials.update);
   const archiveOfficial = useMutation(api.officials.archive);
   const syncRoster = useMutation(api.officials.syncCurrentRoster);
+  const confirm = useConfirm();
   const [syncing, setSyncing] = useState(false);
 
   const handleSyncRoster = async () => {
+    const ok = await confirm({
+      title: "Reset the officials list to the approved roster?",
+      description: (
+        <p>
+          This updates every office holder to the approved list and archives anyone not on it. Photos and contacts of
+          people who stay on the list are kept.
+        </p>
+      ),
+      confirmLabel: "Yes, apply roster",
+    });
+    if (!ok) return;
     setSyncing(true);
     try {
       const res = await syncRoster({});
@@ -136,10 +149,6 @@ export default function AdminOfficialsPage() {
       toast.error("Profile photos must be 5 MB or smaller.");
       return;
     }
-    if (!confirm(`Upload ${file.name} as this official's profile photograph?`)) {
-      return;
-    }
-
     setIsUploadingPhoto(true);
     try {
       const uploadUrl = await generatePhotoUploadUrl({});
@@ -163,9 +172,12 @@ export default function AdminOfficialsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const action = isEditing ? "save these changes" : "create this official";
-    if (!confirm(`Please confirm you want to ${action}. This change will be recorded in the audit log.`)) {
-      return;
-    }
+    const ok = await confirm({
+      title: `Are you sure you want to ${action}?`,
+      description: <p>This is visible to all members straight away and is recorded in the audit log.</p>,
+      confirmLabel: isEditing ? "Yes, save changes" : "Yes, create official",
+    });
+    if (!ok) return;
     setIsSubmitting(true);
 
     try {
@@ -192,9 +204,13 @@ export default function AdminOfficialsPage() {
   };
 
   const handleArchive = async (id: Id<"officials">) => {
-    if (!confirm("Are you sure you want to archive this official? They will be hidden from members but preserved for historical audit.")) {
-      return;
-    }
+    const ok = await confirm({
+      title: "Archive this official?",
+      description: <p>They will be hidden from members straight away. The record is kept for the audit trail.</p>,
+      confirmLabel: "Yes, archive",
+      tone: "danger",
+    });
+    if (!ok) return;
     try {
       await archiveOfficial({ id });
       toast.success("Official archived (soft deleted).");

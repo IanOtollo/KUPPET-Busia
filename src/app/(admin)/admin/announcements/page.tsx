@@ -33,6 +33,7 @@ import {
 } from "@/lib/constants";
 import { Doc } from "../../../../../convex/_generated/dataModel";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 const ANNOUNCEMENT_CATEGORIES = [
   "General Notice",
@@ -48,6 +49,7 @@ type AudienceType = "all" | "sub_county" | "designation";
 export default function AdminAnnouncementsPage() {
   const announcements = useQuery(api.announcements.listActive, {});
   const createAnnouncement = useMutation(api.announcements.create);
+  const confirm = useConfirm();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -68,6 +70,19 @@ export default function AdminAnnouncementsPage() {
       toast.error("Select who this announcement is targeted to.");
       return;
     }
+
+    const ok = await confirm({
+      title: "Publish this announcement?",
+      description: (
+        <p>
+          It appears at the top of{" "}
+          {formData.audienceType === "all" ? "every member's" : "the targeted members'"} dashboard straight away.
+          Re-read the title and message for mistakes.
+        </p>
+      ),
+      confirmLabel: "Yes, publish",
+    });
+    if (!ok) return;
 
     setIsSubmitting(true);
     try {
