@@ -215,7 +215,7 @@ export const BUS_TRANSITIONS: Record<string, BusBookingStatus[]> = {
 };
 
 export const BUS_STATUS_LABELS: Record<string, string> = {
-  awaiting_payment: "Approve — member must pay",
+  awaiting_payment: "Approve â€” member must pay",
   payment_submitted: "Payment received",
   confirmed: "Confirm payment & release bus",
 };
