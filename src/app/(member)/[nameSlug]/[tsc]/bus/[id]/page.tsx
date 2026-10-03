@@ -28,6 +28,7 @@ export default function BusBookingDetailPage({
   const booking = useQuery(api.busBookings.getById, {
     id: resolvedParams.id as Id<"busBookings">,
   });
+  const branchConfig = useQuery(api.settings.getBranchConfig);
   const submitPayment = useMutation(api.busBookings.submitPayment);
   const [paymentRef, setPaymentRef] = useState("");
   const [paying, setPaying] = useState(false);
@@ -121,7 +122,7 @@ export default function BusBookingDetailPage({
                     Passenger Count
                   </dt>
                   <dd className="font-semibold text-[var(--union)] mt-0.5">
-                    {booking.passengers} Passengers (Max Capacity 62)
+                    {booking.passengers} Passengers{branchConfig ? ` (Max Capacity ${branchConfig.busCapacitySeats})` : ""}
                   </dd>
                 </div>
 
