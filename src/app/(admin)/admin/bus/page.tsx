@@ -29,7 +29,7 @@ import { formatDateTime, formatShortDate, formatKES } from "@/lib/format";
 import { Bus, Calendar as CalendarIcon, CheckCircle2, ChevronRight, AlertTriangle } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
-import { BUS_BOOKING_STATUSES, BUS_TRANSITIONS, BusBookingStatus } from "@/lib/constants";
+import { BUS_BOOKING_STATUSES, BUS_TRANSITIONS, BUS_STATUS_LABELS, BusBookingStatus } from "@/lib/constants";
 import { Doc, Id } from "../../../../../convex/_generated/dataModel";
 import { toast } from "sonner";
 
@@ -71,9 +71,19 @@ export default function AdminBusPage() {
     e.preventDefault();
     if (!selectedBooking) return;
 
-    if (actionStatus === "declined" && statusReason.trim().length < 15) {
-      toast.error("Declining a bus booking requires a reason (minimum 15 characters).");
+    if (actionStatus === "declined" && !statusReason.trim()) {
+      toast.error("Please give a reason for declining this booking.");
       return;
+    }
+    if (actionStatus === "awaiting_payment") {
+      if (!(parseFloat(contributionKes) > 0)) {
+        toast.error("Enter the amount the member must pay.");
+        return;
+      }
+      if (selectedBooking.status === "payment_submitted" && !statusReason.trim()) {
+        toast.error("Say why the payment was not accepted.");
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -88,7 +98,13 @@ export default function AdminBusPage() {
         adminRemarks: adminRemarks.trim() || undefined,
       });
 
-      toast.success(`Booking ${actionStatus.toUpperCase()} successfully.`);
+      toast.success(
+        actionStatus === "awaiting_payment"
+          ? "Approved. The member has been told how much to pay."
+          : actionStatus === "confirmed"
+            ? "Payment confirmed. The bus is released to the member."
+            : `Booking ${actionStatus.replace(/_/g, " ")} successfully.`
+      );
       setApprovalModalOpen(false);
     } catch (err: unknown) {
       const error = err as { message?: string; data?: { message?: string } };
@@ -320,6 +336,12 @@ export default function AdminBusPage() {
                 <div><strong>Passengers:</strong> {selectedBooking.passengers} seats</div>
                 <div><strong>Trip Dates:</strong> {formatDateTime(selectedBooking.departureAt)} to {formatDateTime(selectedBooking.returnAt)}</div>
                 <div><strong>Reason:</strong> {selectedBooking.reason}</div>
+                {selectedBooking.status === "payment_submitted" && (
+                  <div className="pt-1 mt-1 border-t border-[var(--line)]">
+                    <strong>Member reports paying:</strong> {formatKES(selectedBooking.contributionKes ?? 0)} — ref{" "}
+                    <span className="mono-ref">{selectedBooking.paymentReference}</span>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -334,12 +356,53 @@ export default function AdminBusPage() {
                   <SelectContent>
                     {(BUS_TRANSITIONS[selectedBooking.status] ?? []).map((st) => (
                       <SelectItem key={st} value={st} className="capitalize">
-                        {st.replace(/_/g, " ")}
+                        {BUS_STATUS_LABELS[st] ?? st.replace(/_/g, " ")}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
+
+              {actionStatus === "awaiting_payment" && (
+                <>
+                  <div>
+                    <Label htmlFor="kes">
+                      Amount the member must pay (KES) <span className="text-[var(--danger)]">*</span>
+                    </Label>
+                    <Input
+                      id="kes"
+                      type="number"
+                      min={1}
+                      value={contributionKes}
+                      onChange={(e) => setContributionKes(e.target.value)}
+                      placeholder="15000"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="remarks" optional>Payment instructions</Label>
+                    <Input
+                      id="remarks"
+                      value={adminRemarks}
+                      onChange={(e) => setAdminRemarks(e.target.value)}
+                      placeholder="e.g. M-Pesa Paybill 123456, account: your TSC number"
+                    />
+                  </div>
+                  {selectedBooking.status === "payment_submitted" && (
+                    <div>
+                      <Label htmlFor="rejectReason">
+                        Why was the payment not accepted? <span className="text-[var(--danger)]">*</span>
+                      </Label>
+                      <Textarea
+                        id="rejectReason"
+                        rows={2}
+                        value={statusReason}
+                        onChange={(e) => setStatusReason(e.target.value)}
+                        placeholder="e.g. Amount received was less than required"
+                      />
+                    </div>
+                  )}
+                </>
+              )}
 
               {["approved", "confirmed"].includes(actionStatus) && (
                 <>
@@ -365,17 +428,6 @@ export default function AdminBusPage() {
                   </div>
 
                   <div>
-                    <Label htmlFor="kes" optional>Fuel & Service Contribution (KES)</Label>
-                    <Input
-                      id="kes"
-                      type="number"
-                      value={contributionKes}
-                      onChange={(e) => setContributionKes(e.target.value)}
-                      placeholder="15000"
-                    />
-                  </div>
-
-                  <div>
                     <Label htmlFor="remarks" optional>Admin Remarks / Boarding Notes</Label>
                     <Input
                       id="remarks"
@@ -398,7 +450,7 @@ export default function AdminBusPage() {
                     required
                     value={statusReason}
                     onChange={(e) => setStatusReason(e.target.value)}
-                    placeholder="Mandatory (minimum 15 characters) explaining why request cannot be accommodated…"
+                    placeholder="Required: tell the member why the request cannot be accommodated…"
                   />
                 </div>
               )}
@@ -416,7 +468,11 @@ export default function AdminBusPage() {
                   loading={isSubmitting}
                   loadingText="Processing…"
                 >
-                  Apply Status Mutation
+                  {actionStatus === "awaiting_payment"
+                    ? "Approve & request payment"
+                    : actionStatus === "confirmed"
+                      ? "Confirm payment & release bus"
+                      : "Apply"}
                 </Button>
               </DialogFooter>
             </form>

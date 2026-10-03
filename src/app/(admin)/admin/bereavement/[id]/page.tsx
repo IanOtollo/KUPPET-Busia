@@ -76,8 +76,8 @@ export default function AdminBereavementDetailPage({
       return;
     }
 
-    if (newStatus === "declined" && statusReason.trim().length < 20) {
-      toast.error("Declining a case requires an explanation of at least 20 characters.");
+    if (newStatus === "declined" && !statusReason.trim()) {
+      toast.error("Please give a reason for declining this case.");
       return;
     }
 
@@ -254,6 +254,29 @@ export default function AdminBereavementDetailPage({
             </CardContent>
           </Card>
 
+          {caseDoc.contributionMethod && (
+            <Card>
+              <CardContent className="pt-6 space-y-2">
+                <h3 className="font-serif text-[18px] font-semibold text-[var(--ink)] border-b border-[var(--line)] pb-3">
+                  Contribution Details
+                </h3>
+                <p className="text-[14px] text-[var(--ink-body)]">
+                  <strong>{caseDoc.contributionMethod}:</strong>{" "}
+                  <span className="mono-ref">{caseDoc.contributionNumber}</span>
+                  {caseDoc.contributionAccount ? ` (${caseDoc.contributionAccount})` : ""}
+                </p>
+                {caseDoc.contributionNote && (
+                  <p className="text-[13.5px] text-[var(--ink-muted)]">{caseDoc.contributionNote}</p>
+                )}
+                <p className="text-[12.5px] text-[var(--ink-muted)]">
+                  {caseDoc.contributionBroadcastAt
+                    ? "All members have been notified of this bereavement and how to contribute."
+                    : "Members are notified of these details once the branch office approves the claim."}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Supporting Documents */}
           <Card>
             <CardHeader>
@@ -263,6 +286,29 @@ export default function AdminBereavementDetailPage({
               </div>
             </CardHeader>
             <CardContent>
+              <ul className="space-y-2 mb-3">
+                {[
+                  { label: "Burial Permit", url: caseDoc.burialPermitUrl, present: !!caseDoc.burialPermitId },
+                  { label: "Payslip", url: caseDoc.payslipUrl, present: !!caseDoc.payslipId },
+                ]
+                  .filter((d) => d.present)
+                  .map((d) => (
+                    <li key={d.label}>
+                      {d.url ? (
+                        <a
+                          href={d.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 text-[13.5px] font-medium text-[var(--union)] hover:underline"
+                        >
+                          <Paperclip className="h-3.5 w-3.5" /> {d.label}
+                        </a>
+                      ) : (
+                        <span className="text-[13.5px] text-[var(--ink-muted)]">{d.label} (unavailable)</span>
+                      )}
+                    </li>
+                  ))}
+              </ul>
               {caseDoc.documentUrls && caseDoc.documentUrls.length > 0 ? (
                 <ul className="space-y-2">
                   {caseDoc.documentUrls.map((doc: { id: string; url: string | null }, idx: number) => (
@@ -274,7 +320,7 @@ export default function AdminBereavementDetailPage({
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-2 text-[13.5px] text-[var(--union)] hover:underline"
                         >
-                          <Paperclip className="h-3.5 w-3.5" /> Document {idx + 1}
+                          <Paperclip className="h-3.5 w-3.5" /> Other document {idx + 1}
                         </a>
                       ) : (
                         <span className="text-[13.5px] text-[var(--ink-muted)]">Document {idx + 1} (unavailable)</span>
@@ -282,11 +328,11 @@ export default function AdminBereavementDetailPage({
                     </li>
                   ))}
                 </ul>
-              ) : (
+              ) : !caseDoc.burialPermitId && !caseDoc.payslipId ? (
                 <p className="text-[13px] text-[var(--ink-muted)] italic">
                   No supporting documents were attached to this claim.
                 </p>
-              )}
+              ) : null}
             </CardContent>
           </Card>
 
@@ -423,14 +469,14 @@ export default function AdminBereavementDetailPage({
                     onChange={(e) => setStatusReason(e.target.value)}
                     placeholder={
                       newStatus === "declined"
-                        ? "Mandatory: minimum 20 characters explaining decline…"
+                        ? "Required: tell the member why this is declined…"
                         : "Optional note sent to member in notification…"
                     }
                   />
                   {newStatus === "declined" && (
                     <p className="text-[11.5px] text-[var(--danger)] mt-1 flex items-center gap-1">
                       <AlertCircle className="h-3.5 w-3.5" />
-                      Decline reason is mandatory (minimum 20 characters).
+                      A decline reason is required.
                     </p>
                   )}
                 </div>

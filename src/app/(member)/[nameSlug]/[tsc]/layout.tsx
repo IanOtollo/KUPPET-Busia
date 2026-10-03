@@ -24,6 +24,7 @@ import {
   MessageSquare,
   PanelLeftClose,
   PanelLeftOpen,
+  ArrowRightLeft,
 } from "lucide-react";
 import { useQuery, useConvexAuth } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
@@ -54,6 +55,7 @@ const NAV_GROUPS = [
     title: "Services",
     items: [
       { href: "/bus", label: "Union Bus", icon: Bus },
+      { href: "/transfers", label: "Transfers & Swaps", icon: ArrowRightLeft },
       { href: "/reports", label: "Financial Reports", icon: FileText },
     ],
   },
@@ -592,6 +594,13 @@ export default function MemberLayout({
             <DialogTitle>Additional Services</DialogTitle>
           </DialogHeader>
           <div className="space-y-2 py-2">
+            <Link
+              href={`${basePath}/transfers`}
+              onClick={() => setMoreSheetOpen(false)}
+              className="flex items-center gap-3 p-3 rounded-[var(--r-md)] hover:bg-[var(--surface-sunk)] text-[14.5px] text-[var(--ink)] font-medium"
+            >
+              <ArrowRightLeft className="h-4 w-4 text-[var(--ink-muted)]" /> Transfers &amp; Swaps
+            </Link>
             <Link
               href={`${basePath}/reports`}
               onClick={() => setMoreSheetOpen(false)}

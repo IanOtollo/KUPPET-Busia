@@ -25,6 +25,7 @@ import {
   KeyRound,
   PanelLeftClose,
   PanelLeftOpen,
+  ArrowRightLeft,
 } from "lucide-react";
 import { useQuery, useConvexAuth } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
@@ -32,8 +33,8 @@ import { api } from "../../../../convex/_generated/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatRelativeTime } from "@/lib/format";
 
-type CountKey = "members" | "bereavement" | "harassment" | "bus" | "transfers" | "resets";
-const NOTIF_DOMAINS: CountKey[] = ["members", "bereavement", "harassment", "bus", "transfers", "resets"];
+type CountKey = "members" | "bereavement" | "harassment" | "bus" | "transfers" | "resets" | "issues";
+const NOTIF_DOMAINS: CountKey[] = ["members", "bereavement", "harassment", "bus", "transfers", "resets", "issues"];
 
 const ADMIN_NAV_ITEMS: {
   href: string;
@@ -52,7 +53,8 @@ const ADMIN_NAV_ITEMS: {
   { href: "/admin/officials", label: "Officials Directory", icon: Users },
   { href: "/admin/reports", label: "Financial Reports", icon: FileSpreadsheet },
   { href: "/admin/announcements", label: "Announcements", icon: Megaphone },
-  { href: "/admin/messages", label: "Messages", icon: MessageSquare },
+  { href: "/admin/transfers", label: "Transfers & Swaps", icon: ArrowRightLeft },
+  { href: "/admin/messages", label: "Messages", icon: MessageSquare, countKey: "issues" },
   { href: "/admin/settings", label: "Branch Settings", icon: Settings },
 ];
 
@@ -86,6 +88,7 @@ export default function AdminLayout({
     bus: 0,
     transfers: 0,
     resets: 0,
+    issues: 0,
   });
 
   const { signOut } = useAuthActions();
@@ -116,6 +119,7 @@ export default function AdminLayout({
   const pendingBereavement = useMemo(() => pending?.bereavement ?? [], [pending]);
   const pendingHarassment = useMemo(() => pending?.harassment ?? [], [pending]);
   const pendingBus = useMemo(() => pending?.bus ?? [], [pending]);
+  const pendingIssues = useMemo(() => pending?.issues ?? [], [pending]);
 
   const pendingTransfers = useMemo(
     () => transfers?.filter((t) => !t.acknowledgedAt) ?? [],
@@ -134,6 +138,7 @@ export default function AdminLayout({
     bereavement: pendingBereavement.length,
     harassment: pendingHarassment.length,
     bus: pendingBus.length,
+    issues: pendingIssues.length,
   };
 
   // Load persisted per-admin "last seen" timestamps once signed in.
@@ -146,6 +151,7 @@ export default function AdminLayout({
       bus: readLastSeen(profile._id, "bus"),
       transfers: readLastSeen(profile._id, "transfers"),
       resets: readLastSeen(profile._id, "resets"),
+      issues: readLastSeen(profile._id, "issues"),
     });
   }, [profile?._id]);
 
@@ -169,7 +175,9 @@ export default function AdminLayout({
             ? "bus"
             : pathname.startsWith("/admin/password-resets")
               ? "resets"
-              : null;
+              : pathname.startsWith("/admin/messages")
+                ? "issues"
+                : null;
     if (domain) {
       const now = Date.now();
       const seen: CountKey[] = domain === "members" ? ["members", "transfers"] : [domain];
@@ -216,6 +224,13 @@ export default function AdminLayout({
         href: `/admin/harassment/${r._id}`,
         createdAt: r.createdAt,
       })),
+      ...pendingIssues.map((n) => ({
+        id: `issue-${n._id}`,
+        title: n.title,
+        subtitle: `CC • ${n.body}`,
+        href: "/admin/messages",
+        createdAt: n.createdAt,
+      })),
       ...pendingBus.map((b) => ({
         id: `bus-${b._id}`,
         title: `Bus: ${b.destination}`,
@@ -225,7 +240,7 @@ export default function AdminLayout({
       })),
     ];
     return items.sort((a, b) => b.createdAt - a.createdAt);
-  }, [pendingMembers, pendingTransfers, pendingResets, pendingBereavement, pendingHarassment, pendingBus]);
+  }, [pendingMembers, pendingTransfers, pendingResets, pendingBereavement, pendingHarassment, pendingBus, pendingIssues]);
 
   const unseenCount = NOTIF_DOMAINS.reduce((sum, domain) => {
     const domainCreatedAts =
@@ -239,7 +254,9 @@ export default function AdminLayout({
               ? pendingTransfers.map((t) => t.createdAt)
               : domain === "resets"
                 ? pendingResets.map((r) => r.requestedAt)
-                : pendingBus.map((b) => b.createdAt);
+                : domain === "issues"
+                  ? pendingIssues.map((n) => n.createdAt)
+                  : pendingBus.map((b) => b.createdAt);
     return sum + domainCreatedAts.filter((ts) => ts > (lastSeen[domain] ?? 0)).length;
   }, 0);
 

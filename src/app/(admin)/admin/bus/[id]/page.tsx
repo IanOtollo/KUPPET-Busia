@@ -161,11 +161,16 @@ export default function AdminBusDetailPage({
               {booking.contributionKes !== undefined && booking.contributionKes > 0 && (
                 <div className="p-3 bg-[var(--surface-sunk)] border border-[var(--line)] rounded-[var(--r-md)]">
                   <span className="text-[11.5px] uppercase font-semibold text-[var(--ink-muted)] block">
-                    Fuel & Contribution
+                    Amount member must pay
                   </span>
                   <span className="mono-ref text-[18px] font-bold text-[var(--ink)]">
                     {formatKES(booking.contributionKes)}
                   </span>
+                  {booking.paymentReference && (
+                    <span className="block text-[12.5px] text-[var(--ink-body)] mt-1">
+                      Payment ref: <span className="mono-ref font-semibold">{booking.paymentReference}</span>
+                    </span>
+                  )}
                 </div>
               )}
 

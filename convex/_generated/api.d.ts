@@ -21,6 +21,8 @@ import type * as http from "../http.js";
 import type * as lib_audit from "../lib/audit.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_loginAlias from "../lib/loginAlias.js";
+import type * as lib_money from "../lib/money.js";
+import type * as lib_notify from "../lib/notify.js";
 import type * as lib_rateLimit from "../lib/rateLimit.js";
 import type * as lib_refs from "../lib/refs.js";
 import type * as lib_uploads from "../lib/uploads.js";
@@ -33,6 +35,7 @@ import type * as passwordResets from "../passwordResets.js";
 import type * as schools from "../schools.js";
 import type * as seed from "../seed.js";
 import type * as settings from "../settings.js";
+import type * as swaps from "../swaps.js";
 import type * as transfers from "../transfers.js";
 import type * as users from "../users.js";
 
@@ -56,6 +59,8 @@ declare const fullApi: ApiFromModules<{
   "lib/audit": typeof lib_audit;
   "lib/auth": typeof lib_auth;
   "lib/loginAlias": typeof lib_loginAlias;
+  "lib/money": typeof lib_money;
+  "lib/notify": typeof lib_notify;
   "lib/rateLimit": typeof lib_rateLimit;
   "lib/refs": typeof lib_refs;
   "lib/uploads": typeof lib_uploads;
@@ -68,6 +73,7 @@ declare const fullApi: ApiFromModules<{
   schools: typeof schools;
   seed: typeof seed;
   settings: typeof settings;
+  swaps: typeof swaps;
   transfers: typeof transfers;
   users: typeof users;
 }>;

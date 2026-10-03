@@ -75,8 +75,8 @@ export default function AdminHarassmentDetailPage({
       return;
     }
 
-    if (newStatus === "closed_no_action" && statusReason.trim().length < 20) {
-      toast.error("Closing a report with no action requires a reason of at least 20 characters.");
+    if (newStatus === "closed_no_action" && !statusReason.trim()) {
+      toast.error("Please give a reason for closing this report with no action.");
       return;
     }
 
@@ -320,14 +320,14 @@ export default function AdminHarassmentDetailPage({
                     onChange={(e) => setStatusReason(e.target.value)}
                     placeholder={
                       newStatus === "closed_no_action"
-                        ? "Mandatory: minimum 20 characters explaining why closed with no action…"
+                        ? "Required: explain why this is closed with no action…"
                         : "Optional remark recorded in file audit…"
                     }
                   />
                   {newStatus === "closed_no_action" && (
                     <p className="text-[11.5px] text-[var(--danger)] mt-1 flex items-center gap-1">
                       <AlertCircle className="h-3.5 w-3.5" />
-                      Closing with no action requires a reason (min 20 chars).
+                      Closing with no action requires a reason.
                     </p>
                   )}
                 </div>

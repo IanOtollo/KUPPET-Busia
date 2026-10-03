@@ -30,14 +30,56 @@ export const send = mutation({
     }
     const threadId = makeThreadId(me._id, args.recipientId);
 
+    const now = Date.now();
     await ctx.db.insert("messages", {
       threadId,
       senderId: me._id,
       recipientId: args.recipientId,
       body,
       isRead: false,
-      createdAt: Date.now(),
+      createdAt: now,
     });
+
+    await ctx.db.insert("notifications", {
+      userId: recipient._id,
+      type: "message",
+      title: `New message from ${me.fullName}`,
+      body: body.length > 140 ? `${body.slice(0, 140)}…` : body,
+      link: "/messages",
+      isRead: false,
+      createdAt: now,
+    });
+
+    // A member writing to a branch official carbon-copies every admin: the
+    // admin receives the same message in their own inbox (and can reply to the
+    // member), plus an alert, so nothing is raised with an official unseen.
+    if (me.role === "member" && recipient.role === "official") {
+      const admins = [
+        ...(await ctx.db.query("users").withIndex("by_role", (q) => q.eq("role", "admin")).collect()),
+        ...(await ctx.db.query("users").withIndex("by_role", (q) => q.eq("role", "superadmin")).collect()),
+      ].filter((a) => a.status === "active" && a._id !== me._id);
+
+      const preview = body.length > 140 ? `${body.slice(0, 140)}…` : body;
+      for (const admin of admins) {
+        await ctx.db.insert("messages", {
+          threadId: makeThreadId(me._id, admin._id),
+          senderId: me._id,
+          recipientId: admin._id,
+          body: `[CC — sent to ${recipient.fullName}]\n${body}`,
+          isRead: false,
+          createdAt: now,
+        });
+        await ctx.db.insert("notifications", {
+          userId: admin._id,
+          type: "member_issue",
+          title: `${me.fullName} wrote to ${recipient.fullName}`,
+          body: preview,
+          link: "/admin/messages",
+          isRead: false,
+          createdAt: now,
+        });
+      }
+    }
   },
 });
 

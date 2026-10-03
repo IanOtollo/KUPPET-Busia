@@ -24,6 +24,7 @@ export default function AdminMessagesPage() {
   const allUsers = useQuery(api.messages.listUsers);
   const sendMessage = useMutation(api.messages.send);
   const markRead = useMutation(api.messages.markThreadRead);
+  const markIssuesRead = useMutation(api.notifications.markTypeRead);
   const profile = useQuery(api.users.getMyProfile);
 
   const [selectedUserId, setSelectedUserId] = useState<Id<"users"> | null>(null);
@@ -40,6 +41,11 @@ export default function AdminMessagesPage() {
   );
 
   const selectedUser = allUsers?.find((u) => u._id === selectedUserId);
+
+  // Opening Messages clears the "member wrote to an official" (CC) alerts.
+  useEffect(() => {
+    markIssuesRead({ type: "member_issue" });
+  }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });

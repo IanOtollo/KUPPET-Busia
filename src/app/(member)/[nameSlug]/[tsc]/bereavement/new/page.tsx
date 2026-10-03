@@ -14,33 +14,26 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-  SUB_COUNTIES,
   BEREAVEMENT_RELATIONSHIPS,
   BereavementRelationship,
-  SubCounty,
+  CONTRIBUTION_METHODS,
+  ContributionMethod,
 } from "@/lib/constants";
 import { toast } from "sonner";
-import { Info, CheckCircle2, ArrowRight, Home, FileText, Paperclip, X } from "lucide-react";
+import { Info, CheckCircle2, Home, FileText, Paperclip, X, Lock } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../../convex/_generated/dataModel";
 import { useMemberBasePath } from "@/lib/memberPath";
 
 const bereavementFormSchema = z.object({
-  fullName: z.string().min(1, "Name is required"),
-  tscNumber: z.string().min(1, "TSC Number is required"),
-  school: z.string().min(3, "School is required"),
-  subCounty: z.enum(SUB_COUNTIES, {
-    errorMap: () => ({ message: "Select sub-county" }),
-  }),
-  phone: z.string().regex(/^(?:\+254|0)?(7\d{8}|1\d{8})$/, "Valid phone required"),
   relationship: z.enum(["mother", "father", "spouse", "child"], {
     errorMap: () => ({
       message:
         "The union only recognises bereavement for mother, father, spouse, or child.",
     }),
   }),
-  deceasedName: z.string().min(3, "Deceased name is required").max(80),
+  deceasedName: z.string().trim().min(1, "Deceased name is required").max(80),
   dateOfBereavement: z.string().refine((val) => {
     const d = new Date(val);
     const now = new Date();
@@ -50,6 +43,12 @@ const bereavementFormSchema = z.object({
   burialPlace: z.string().max(120).optional(),
   burialDate: z.string().optional(),
   details: z.string().max(700, "Maximum 700 characters allowed").optional(),
+  contributionMethod: z.enum(CONTRIBUTION_METHODS, {
+    errorMap: () => ({ message: "Select how colleagues can contribute" }),
+  }),
+  contributionNumber: z.string().trim().min(1, "Enter the number colleagues should send to"),
+  contributionAccount: z.string().max(80).optional(),
+  contributionNote: z.string().max(300).optional(),
 });
 
 type BereavementFormData = z.infer<typeof bereavementFormSchema>;
@@ -64,7 +63,34 @@ export default function NewBereavementPage() {
   const createCase = useMutation(api.bereavement.create);
   const generateUploadUrl = useMutation(api.bereavement.generateDocumentUploadUrl);
   const userProfile = useQuery(api.users.getMyProfile);
+  const locks = useQuery(api.bereavement.myLocks);
   const [documents, setDocuments] = useState<File[]>([]);
+  const [burialPermit, setBurialPermit] = useState<File | null>(null);
+  const [payslip, setPayslip] = useState<File | null>(null);
+  const [docError, setDocError] = useState<string | null>(null);
+
+  // Relatives already claimed are locked: a mother or father only once, a
+  // spouse or child by name (checked again server-side).
+  const lockedRelationships = new Set(
+    (locks ?? [])
+      .filter((l) => l.relationship === "mother" || l.relationship === "father")
+      .map((l) => l.relationship as string)
+  );
+  const lockedNames = (locks ?? [])
+    .filter((l) => l.relationship === "spouse" || l.relationship === "child")
+    .map((l) => ({ relationship: l.relationship as string, name: l.deceasedName }));
+
+  const uploadFile = async (file: File) => {
+    const uploadUrl = await generateUploadUrl();
+    const result = await fetch(uploadUrl, {
+      method: "POST",
+      headers: { "Content-Type": file.type || "application/octet-stream" },
+      body: file,
+    });
+    if (!result.ok) throw new Error(`Could not upload ${file.name}. Please try again.`);
+    const { storageId } = await result.json();
+    return storageId as Id<"_storage">;
+  };
 
   const handleFilesSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -85,12 +111,8 @@ export default function NewBereavementPage() {
   } = useForm<BereavementFormData>({
     resolver: zodResolver(bereavementFormSchema),
     defaultValues: {
-      fullName: userProfile?.fullName || "Member Teacher",
-      tscNumber: userProfile?.tscNumber || "TSC-BUSIA",
-      school: userProfile?.school || "",
-      subCounty: userProfile?.subCounty || "Matayos",
-      phone: userProfile?.phone || "+254700000000",
       relationship: "mother",
+      contributionMethod: "Paybill",
       deceasedName: "",
       dateOfBereavement: new Date().toISOString().split("T")[0],
       details: "",
@@ -98,21 +120,25 @@ export default function NewBereavementPage() {
   });
 
   const detailsValue = watch("details") || "";
+  const selectedRelationship = watch("relationship");
+  const enteredName = (watch("deceasedName") || "").trim().toLowerCase().replace(/\s+/g, " ");
+  const relationshipLocked = lockedRelationships.has(selectedRelationship);
+  const nameLocked = lockedNames.some(
+    (l) => l.relationship === selectedRelationship && l.name.trim().toLowerCase().replace(/\s+/g, " ") === enteredName
+  );
 
   const onSubmit = async (data: BereavementFormData) => {
+    if (!burialPermit || !payslip) {
+      setDocError("Attach both your burial permit and your payslip before submitting.");
+      return;
+    }
+    setDocError(null);
     setIsSubmitting(true);
     try {
+      const burialPermitId = await uploadFile(burialPermit);
+      const payslipId = await uploadFile(payslip);
       const documentIds: Id<"_storage">[] = [];
-      for (const file of documents) {
-        const uploadUrl = await generateUploadUrl();
-        const result = await fetch(uploadUrl, {
-          method: "POST",
-          headers: { "Content-Type": file.type || "application/octet-stream" },
-          body: file,
-        });
-        const { storageId } = await result.json();
-        documentIds.push(storageId as Id<"_storage">);
-      }
+      for (const file of documents) documentIds.push(await uploadFile(file));
 
       const res = await createCase({
         relationship: data.relationship as BereavementRelationship,
@@ -121,10 +147,13 @@ export default function NewBereavementPage() {
         burialPlace: data.burialPlace,
         burialDate: data.burialDate,
         details: data.details,
-        school: data.school,
-        subCounty: data.subCounty as SubCounty,
-        phone: data.phone,
+        burialPermitId,
+        payslipId,
         documentIds,
+        contributionMethod: data.contributionMethod as ContributionMethod,
+        contributionNumber: data.contributionNumber,
+        contributionAccount: data.contributionAccount?.trim() || undefined,
+        contributionNote: data.contributionNote?.trim() || undefined,
       });
 
       setCreatedReference(res.reference);
@@ -256,85 +285,27 @@ export default function NewBereavementPage() {
       <Card>
         <CardContent className="pt-6">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* Section 1: Member Identification */}
+            {/* Section 1: Member details — locked, taken from the member's profile */}
             <div>
-              <h3 className="font-serif text-[18px] font-semibold text-[var(--ink)] mb-4">
-                1. Member Identification
+              <h3 className="font-serif text-[18px] font-semibold text-[var(--ink)] mb-1 flex items-center gap-2">
+                1. Your Details <Lock className="h-4 w-4 text-[var(--ink-muted)]" />
               </h3>
+              <p className="text-[12.5px] text-[var(--ink-muted)] mb-4">
+                Filled in from your profile. You only need to enter the deceased&apos;s details below.
+              </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="fullName">Member Full Name</Label>
-                  <Input
-                    id="fullName"
-                    disabled
-                    value={userProfile?.fullName || "Active Member"}
-                    className="bg-[var(--surface-sunk)]"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="tsc">TSC / Membership Number</Label>
-                  <Input
-                    id="tsc"
-                    disabled
-                    value={userProfile?.tscNumber || "TSC-RECORD"}
-                    className="bg-[var(--surface-sunk)]"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="school">Current School / Institution</Label>
-                  <Input
-                    id="school"
-                    error={!!errors.school}
-                    {...register("school")}
-                  />
-                  {errors.school && (
-                    <p className="text-[13px] text-[var(--danger)] mt-1">
-                      {errors.school.message}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <Label htmlFor="subCounty">Sub-County</Label>
-                  <NativeSelect
-                    id="subCounty"
-                    error={!!errors.subCounty}
-                    defaultValue={userProfile?.subCounty || "Matayos"}
-                    onChange={(e) =>
-                      setValue("subCounty", e.target.value as SubCounty, {
-                        shouldValidate: true,
-                      })
-                    }
-                  >
-                    {SUB_COUNTIES.map((sc) => (
-                      <option key={sc} value={sc}>
-                        {sc}
-                      </option>
-                    ))}
-                  </NativeSelect>
-                  {errors.subCounty && (
-                    <p className="text-[13px] text-[var(--danger)] mt-1">
-                      {errors.subCounty.message}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <Label htmlFor="phone">Contact Mobile Number</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    error={!!errors.phone}
-                    {...register("phone")}
-                  />
-                  {errors.phone && (
-                    <p className="text-[13px] text-[var(--danger)] mt-1">
-                      {errors.phone.message}
-                    </p>
-                  )}
-                </div>
+                {[
+                  ["Member Full Name", userProfile?.fullName],
+                  ["TSC / Membership Number", userProfile?.tscNumber],
+                  ["Current School / Institution", userProfile?.school],
+                  ["Sub-County", userProfile?.subCounty],
+                  ["Contact Mobile Number", userProfile?.phone],
+                ].map(([label, value]) => (
+                  <div key={label}>
+                    <Label>{label}</Label>
+                    <Input disabled readOnly value={value ?? ""} className="bg-[var(--surface-sunk)]" />
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -354,7 +325,7 @@ export default function NewBereavementPage() {
                   <NativeSelect
                     id="relationship"
                     error={!!errors.relationship}
-                    defaultValue="mother"
+                    value={selectedRelationship}
                     onChange={(e) =>
                       setValue("relationship", e.target.value as BereavementRelationship, {
                         shouldValidate: true,
@@ -362,11 +333,19 @@ export default function NewBereavementPage() {
                     }
                   >
                     {BEREAVEMENT_RELATIONSHIPS.map((rel) => (
-                      <option key={rel.value} value={rel.value}>
-                        {rel.label} ({rel.swahili})
+                      <option key={rel.value} value={rel.value} disabled={lockedRelationships.has(rel.value)}>
+                        {rel.label} ({rel.swahili}){lockedRelationships.has(rel.value) ? " — already claimed" : ""}
                       </option>
                     ))}
                   </NativeSelect>
+                  {(relationshipLocked || nameLocked) && (
+                    <p className="text-[13px] text-[var(--danger)] mt-1 flex items-start gap-1.5">
+                      <Lock className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                      {relationshipLocked
+                        ? `A bereavement for your ${selectedRelationship} is already on record, so it cannot be claimed again.`
+                        : "A bereavement for this person is already on record."}
+                    </p>
+                  )}
                   <p className="text-[11.5px] text-[var(--ink-muted)] mt-1">
                     Uhusiano wako na marehemu — mama, baba, mke/mume, au mtoto wako pekee.
                   </p>
@@ -455,43 +434,163 @@ export default function NewBereavementPage() {
                   )}
                 </div>
 
-                <div className="md:col-span-2">
-                  <Label optional>Supporting Documents (Death Certificate, Burial Permit)</Label>
-                  <label
-                    htmlFor="documents"
-                    className="mt-1 flex cursor-pointer items-center gap-2 rounded-[var(--r-md)] border border-dashed border-[var(--line-strong)] bg-[var(--surface-sunk)] p-3 text-[13.5px] text-[var(--ink-muted)] hover:bg-[var(--surface)]"
-                  >
-                    <Paperclip className="h-4 w-4 shrink-0" />
-                    Attach files (PDF, JPG, PNG)
-                  </label>
-                  <input
-                    id="documents"
-                    type="file"
-                    multiple
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    className="hidden"
-                    onChange={handleFilesSelected}
-                  />
-                  {documents.length > 0 && (
-                    <ul className="mt-2 space-y-1.5">
-                      {documents.map((file, idx) => (
-                        <li
-                          key={`${file.name}-${idx}`}
-                          className="flex items-center justify-between rounded-[var(--r-sm)] bg-[var(--surface-sunk)] px-3 py-1.5 text-[13px] text-[var(--ink-body)]"
-                        >
-                          <span className="truncate">{file.name}</span>
+                <div className="md:col-span-2 space-y-4">
+                  <div className="p-3 rounded-[var(--r-md)] bg-[var(--info-soft)] border border-[var(--info)]/20 text-[13px] text-[var(--ink-body)]">
+                    <strong className="text-[var(--ink)]">Both documents are required.</strong> The burial permit proves the
+                    bereavement. The payslip (your latest, showing the KUPPET deduction) confirms you are a paying member.
+                    PDF, JPG or PNG, up to 10 MB each.
+                  </div>
+
+                  {[
+                    { id: "burialPermit", label: "Burial Permit", file: burialPermit, set: setBurialPermit },
+                    { id: "payslip", label: "Latest Payslip", file: payslip, set: setPayslip },
+                  ].map(({ id, label, file, set }) => (
+                    <div key={id}>
+                      <Label htmlFor={id}>
+                        {label} <span className="text-[var(--danger)]">*</span>
+                      </Label>
+                      <label
+                        htmlFor={id}
+                        className="mt-1 flex cursor-pointer items-center gap-2 rounded-[var(--r-md)] border border-dashed border-[var(--line-strong)] bg-[var(--surface-sunk)] p-3 text-[13.5px] text-[var(--ink-muted)] hover:bg-[var(--surface)]"
+                      >
+                        <Paperclip className="h-4 w-4 shrink-0" />
+                        <span className="truncate">{file ? file.name : `Attach ${label.toLowerCase()} (PDF, JPG, PNG)`}</span>
+                        {file && (
                           <button
                             type="button"
-                            onClick={() => removeDocument(idx)}
-                            className="text-[var(--ink-muted)] hover:text-[var(--danger)] shrink-0"
-                            aria-label={`Remove ${file.name}`}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              set(null);
+                            }}
+                            className="ml-auto text-[var(--ink-muted)] hover:text-[var(--danger)] shrink-0"
+                            aria-label={`Remove ${label}`}
                           >
                             <X className="h-3.5 w-3.5" />
                           </button>
-                        </li>
-                      ))}
-                    </ul>
+                        )}
+                      </label>
+                      <input
+                        id={id}
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        className="hidden"
+                        onChange={(e) => {
+                          set(e.target.files?.[0] ?? null);
+                          setDocError(null);
+                          e.target.value = "";
+                        }}
+                      />
+                    </div>
+                  ))}
+                  {docError && <p className="text-[13px] text-[var(--danger)]">{docError}</p>}
+
+                  <div>
+                    <Label optional>Other Supporting Documents (e.g. Death Certificate)</Label>
+                    <label
+                      htmlFor="documents"
+                      className="mt-1 flex cursor-pointer items-center gap-2 rounded-[var(--r-md)] border border-dashed border-[var(--line-strong)] bg-[var(--surface-sunk)] p-3 text-[13.5px] text-[var(--ink-muted)] hover:bg-[var(--surface)]"
+                    >
+                      <Paperclip className="h-4 w-4 shrink-0" />
+                      Attach files (PDF, JPG, PNG)
+                    </label>
+                    <input
+                      id="documents"
+                      type="file"
+                      multiple
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      className="hidden"
+                      onChange={handleFilesSelected}
+                    />
+                    {documents.length > 0 && (
+                      <ul className="mt-2 space-y-1.5">
+                        {documents.map((file, idx) => (
+                          <li
+                            key={`${file.name}-${idx}`}
+                            className="flex items-center justify-between rounded-[var(--r-sm)] bg-[var(--surface-sunk)] px-3 py-1.5 text-[13px] text-[var(--ink-body)]"
+                          >
+                            <span className="truncate">{file.name}</span>
+                            <button
+                              type="button"
+                              onClick={() => removeDocument(idx)}
+                              className="text-[var(--ink-muted)] hover:text-[var(--danger)] shrink-0"
+                              aria-label={`Remove ${file.name}`}
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="h-px bg-[var(--line)] w-full" />
+
+            {/* Section 3: Contribution form */}
+            <div>
+              <h3 className="font-serif text-[18px] font-semibold text-[var(--ink)] mb-1">
+                3. Contribution Details
+              </h3>
+              <p className="text-[12.5px] text-[var(--ink-muted)] mb-4">
+                Where should colleagues send money towards the burial? Once the branch office approves your claim,
+                every member is notified of the bereavement together with these details.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="contributionMethod">
+                    Contribution method <span className="text-[var(--danger)]">*</span>
+                  </Label>
+                  <NativeSelect
+                    id="contributionMethod"
+                    error={!!errors.contributionMethod}
+                    value={watch("contributionMethod")}
+                    onChange={(e) =>
+                      setValue("contributionMethod", e.target.value as ContributionMethod, {
+                        shouldValidate: true,
+                      })
+                    }
+                  >
+                    {CONTRIBUTION_METHODS.map((m) => (
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
+                    ))}
+                  </NativeSelect>
+                </div>
+
+                <div>
+                  <Label htmlFor="contributionNumber">
+                    Paybill / Till / Phone / Account number <span className="text-[var(--danger)]">*</span>
+                  </Label>
+                  <Input
+                    id="contributionNumber"
+                    placeholder="e.g. 247247 or 0712 345 678"
+                    error={!!errors.contributionNumber}
+                    {...register("contributionNumber")}
+                  />
+                  {errors.contributionNumber && (
+                    <p className="text-[13px] text-[var(--danger)] mt-1">{errors.contributionNumber.message}</p>
                   )}
+                </div>
+
+                <div>
+                  <Label htmlFor="contributionAccount" optional>
+                    Account number / account name
+                  </Label>
+                  <Input
+                    id="contributionAccount"
+                    placeholder="e.g. Paybill account, or name the money is registered to"
+                    {...register("contributionAccount")}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="contributionNote" optional>
+                    Note to contributors
+                  </Label>
+                  <Input id="contributionNote" maxLength={300} {...register("contributionNote")} />
                 </div>
               </div>
             </div>
@@ -509,6 +608,7 @@ export default function NewBereavementPage() {
                 type="submit"
                 className="w-full sm:w-auto"
                 loading={isSubmitting}
+                disabled={relationshipLocked || nameLocked}
                 loadingText="Submitting claim…"
               >
                 Submit Bereavement Claim

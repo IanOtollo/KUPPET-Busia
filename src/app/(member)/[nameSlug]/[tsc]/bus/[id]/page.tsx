@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { BackLink } from "@/components/layout/BackLink";
@@ -8,9 +8,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/data/StatusBadge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 import { formatDateTime, formatKES } from "@/lib/format";
-import { ArrowLeft, Bus, MapPin, Calendar, Phone, User, Info, CheckCircle2 } from "lucide-react";
-import { useQuery } from "convex/react";
+import { ArrowLeft, Bus, MapPin, Calendar, Phone, User, Info, CheckCircle2, Wallet, Hourglass } from "lucide-react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../../convex/_generated/dataModel";
 import { useMemberBasePath } from "@/lib/memberPath";
@@ -25,6 +28,25 @@ export default function BusBookingDetailPage({
   const booking = useQuery(api.busBookings.getById, {
     id: resolvedParams.id as Id<"busBookings">,
   });
+  const submitPayment = useMutation(api.busBookings.submitPayment);
+  const [paymentRef, setPaymentRef] = useState("");
+  const [paying, setPaying] = useState(false);
+
+  const handleSubmitPayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!booking) return;
+    setPaying(true);
+    try {
+      await submitPayment({ id: booking._id, paymentReference: paymentRef });
+      toast.success("Payment sent to the branch office for verification.");
+      setPaymentRef("");
+    } catch (err: unknown) {
+      const error = err as { message?: string; data?: { message?: string } };
+      toast.error(error.data?.message || error.message || "Could not submit your payment.");
+    } finally {
+      setPaying(false);
+    }
+  };
 
   if (booking === undefined) {
     return (
@@ -135,12 +157,68 @@ export default function BusBookingDetailPage({
             </CardContent>
           </Card>
 
+          {/* Payment step: admin has approved and named the amount */}
+          {booking.status === "awaiting_payment" && (
+            <Card className="border-[var(--brass)] bg-[var(--brass-soft)]/40">
+              <CardContent className="pt-6 space-y-4">
+                <div className="flex items-center gap-2 text-[var(--ink)] font-semibold text-[16px]">
+                  <Wallet className="h-5 w-5 text-[var(--brass)]" /> Your request is approved — payment required
+                </div>
+                <p className="text-[14px] text-[var(--ink-body)]">
+                  Please pay{" "}
+                  <strong className="mono-ref text-[18px] text-[var(--ink)]">
+                    {formatKES(booking.contributionKes ?? 0)}
+                  </strong>{" "}
+                  to secure the bus. Once you have paid, enter the payment reference below so the branch office can verify it and release the bus.
+                </p>
+                {booking.adminRemarks && (
+                  <p className="text-[13.5px] p-3 rounded-[var(--r-md)] bg-[var(--surface)] border border-[var(--line)]">
+                    <strong>Payment details:</strong> {booking.adminRemarks}
+                  </p>
+                )}
+                {booking.statusReason && (
+                  <p className="text-[13.5px] p-3 rounded-[var(--r-md)] bg-[var(--danger-soft)] border border-[var(--danger)]/30 text-[var(--ink-body)]">
+                    <strong>Previous payment not accepted:</strong> {booking.statusReason}
+                  </p>
+                )}
+                <form onSubmit={handleSubmitPayment} className="flex flex-col sm:flex-row gap-3 sm:items-end">
+                  <div className="flex-1">
+                    <Label htmlFor="paymentRef">Payment reference (e.g. M-Pesa code)</Label>
+                    <Input
+                      id="paymentRef"
+                      value={paymentRef}
+                      onChange={(e) => setPaymentRef(e.target.value)}
+                      placeholder="e.g. SJK3L9XQ2P"
+                      maxLength={60}
+                    />
+                  </div>
+                  <Button type="submit" loading={paying} loadingText="Sending…" disabled={!paymentRef.trim()}>
+                    I have paid
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          )}
+
+          {booking.status === "payment_submitted" && (
+            <Card className="border-[var(--info)]/40 bg-[var(--info-soft)]/40">
+              <CardContent className="pt-6 flex items-start gap-3 text-[14px] text-[var(--ink-body)]">
+                <Hourglass className="h-5 w-5 text-[var(--info)] shrink-0 mt-0.5" />
+                <span>
+                  <strong className="text-[var(--ink)] block">Payment awaiting verification</strong>
+                  You reported paying {formatKES(booking.contributionKes ?? 0)}
+                  {booking.paymentReference ? ` (ref ${booking.paymentReference})` : ""}. The branch office will verify it and release the bus. You will be notified.
+                </span>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Assigned Vehicle & Driver Info if Approved */}
           {["approved", "confirmed"].includes(booking.status) && (
             <Card className="border-[var(--success)] bg-[var(--success-soft)]/30">
               <CardContent className="pt-6 space-y-3">
                 <div className="flex items-center gap-2 text-[var(--success)] font-semibold text-[16px]">
-                  <CheckCircle2 className="h-5 w-5" /> Assigned Driver & Bus Details
+                  <CheckCircle2 className="h-5 w-5" /> {booking.status === "confirmed" ? "Bus released — driver & bus details" : "Assigned Driver & Bus Details"}
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[14px]">
                   <div>
@@ -186,7 +264,7 @@ export default function BusBookingDetailPage({
               {booking.contributionKes !== undefined && booking.contributionKes > 0 && (
                 <div className="p-3 rounded-[var(--r-md)] bg-[var(--surface-sunk)] border border-[var(--line)]">
                   <span className="text-[11.5px] uppercase font-semibold text-[var(--ink-muted)] block">
-                    Fuel & Contribution Fee
+                    Amount to pay
                   </span>
                   <span className="mono-ref text-[18px] font-bold text-[var(--ink)]">
                     {formatKES(booking.contributionKes)}

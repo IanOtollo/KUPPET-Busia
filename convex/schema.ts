@@ -18,6 +18,8 @@ import {
   visibilityValidator,
   announcementPriorityValidator,
   audienceTypeValidator,
+  jobGroupValidator,
+  contributionMethodValidator,
 } from "./lib/validators";
 
 export default defineSchema({
@@ -36,6 +38,9 @@ export default defineSchema({
     schoolRole: v.optional(v.string()),
     subjects: v.optional(v.array(v.string())),
     gender: v.optional(v.string()),
+    jobGroup: v.optional(jobGroupValidator),
+    // ISO date (YYYY-MM-DD) the teacher reported to their current school; drives "length of stay".
+    schoolStartDate: v.optional(v.string()),
     role: userRoleValidator,
     status: userStatusValidator,
     approvedBy: v.optional(v.id("users")),
@@ -102,6 +107,11 @@ export default defineSchema({
     toDesignation: designationValidator,
     effectiveDate: v.optional(v.string()),
     reason: v.optional(v.string()),
+    fromJobGroup: v.optional(jobGroupValidator),
+    toJobGroup: v.optional(jobGroupValidator),
+    // Days the teacher spent at fromSchool (null when their start date was never recorded).
+    previousStayDays: v.optional(v.number()),
+    previousSchoolStartDate: v.optional(v.string()),
     acknowledgedBy: v.optional(v.id("users")),
     acknowledgedAt: v.optional(v.number()),
     createdAt: v.number(),
@@ -124,6 +134,15 @@ export default defineSchema({
     burialDate: v.optional(v.string()),
     details: v.optional(v.string()),
     documentIds: v.array(v.id("_storage")),
+    burialPermitId: v.optional(v.id("_storage")),
+    payslipId: v.optional(v.id("_storage")),
+    // Where colleagues should send contributions towards the burial. Shared
+    // with every member once an admin approves (verifies) the claim.
+    contributionMethod: v.optional(contributionMethodValidator),
+    contributionNumber: v.optional(v.string()),
+    contributionAccount: v.optional(v.string()),
+    contributionNote: v.optional(v.string()),
+    contributionBroadcastAt: v.optional(v.number()),
     status: bereavementStatusValidator,
     statusReason: v.optional(v.string()),
     assignedTo: v.optional(v.id("users")),
@@ -147,6 +166,25 @@ export default defineSchema({
     .index("by_subCounty", ["subCounty"])
     .index("by_createdAt", ["createdAt"])
     .index("by_reference", ["reference"]),
+
+  // Teachers looking to swap schools with a colleague.
+  swapRequests: defineTable({
+    memberId: v.id("users"),
+    memberName: v.string(),
+    tscNumber: v.string(),
+    school: v.string(),
+    subCounty: subCountyValidator,
+    jobGroup: v.optional(jobGroupValidator),
+    subjects: v.array(v.string()),
+    targetSubCounty: subCountyValidator,
+    targetSchool: v.optional(v.string()),
+    note: v.optional(v.string()),
+    status: v.union(v.literal("open"), v.literal("closed")),
+    createdAt: v.number(),
+    closedAt: v.optional(v.number()),
+  })
+    .index("by_member", ["memberId"])
+    .index("by_status", ["status", "createdAt"]),
 
   harassmentReports: defineTable({
     reference: v.string(),
@@ -210,8 +248,12 @@ export default defineSchema({
     statusReason: v.optional(v.string()),
     driverName: v.optional(v.string()),
     driverPhone: v.optional(v.string()),
+    // Amount the member must pay once the admin approves the request.
     contributionKes: v.optional(v.number()),
     adminRemarks: v.optional(v.string()),
+    paymentReference: v.optional(v.string()),
+    paymentSubmittedAt: v.optional(v.number()),
+    paymentConfirmedAt: v.optional(v.number()),
     approvedBy: v.optional(v.id("users")),
     approvedAt: v.optional(v.number()),
     createdAt: v.number(),

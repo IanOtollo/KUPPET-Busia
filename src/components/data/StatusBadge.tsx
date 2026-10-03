@@ -21,6 +21,8 @@ export type AnyStatus =
   | "referred"
   | "closed_no_action"
   | "requested"
+  | "awaiting_payment"
+  | "payment_submitted"
   | "approved"
   | "confirmed"
   | "completed"
@@ -52,6 +54,8 @@ const STATUS_CONFIG: Record<
   closed_no_action: { label: "Closed (No Action)", variant: "neutral" },
 
   requested: { label: "Requested", variant: "info" },
+  awaiting_payment: { label: "Awaiting Payment", variant: "warning" },
+  payment_submitted: { label: "Payment Submitted", variant: "brass" },
   approved: { label: "Approved", variant: "success" },
   confirmed: { label: "Confirmed", variant: "success" },
   completed: { label: "Completed", variant: "success" },

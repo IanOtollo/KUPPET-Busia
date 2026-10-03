@@ -10,16 +10,28 @@ import {
 import { ConvexError } from "convex/values";
 import { Doc } from "./_generated/dataModel";
 import { readBranchConfig } from "./settings";
+import { notifyAdmins } from "./lib/notify";
+import { formatKes } from "./lib/money";
 
+// Admin-driven transitions. The member moves awaiting_payment -> payment_submitted
+// through submitPayment, never through updateStatus.
+//   requested -> awaiting_payment (admin approves + sets the amount)
+//   awaiting_payment -> payment_submitted (member pays)
+//   payment_submitted -> confirmed (admin verifies payment; bus is released)
+// "approved" is only kept for bookings created before the payment flow existed.
 const LEGAL_BUS_TRANSITIONS: Record<string, string[]> = {
-  requested: ["under_review", "approved", "declined", "cancelled"],
-  under_review: ["approved", "declined", "cancelled"],
+  requested: ["awaiting_payment", "under_review", "declined", "cancelled"],
+  under_review: ["awaiting_payment", "declined", "cancelled"],
+  awaiting_payment: ["declined", "cancelled"],
+  payment_submitted: ["confirmed", "awaiting_payment", "cancelled"],
   approved: ["confirmed", "declined", "cancelled"],
   confirmed: ["completed", "cancelled"],
   completed: [],
   declined: [],
   cancelled: [],
 };
+
+const BLOCKING_STATUSES = ["approved", "awaiting_payment", "payment_submitted", "confirmed"] as const;
 
 /**
  * Check if a date range overlaps with any confirmed or approved booking.
@@ -63,21 +75,20 @@ export const create = mutation({
     destination: v.string(),
     distanceKm: v.optional(v.number()),
     passengers: v.number(),
-    tripContactName: v.string(),
-    tripContactPhone: v.string(),
+    // Default to the member when left blank.
+    tripContactName: v.optional(v.string()),
+    tripContactPhone: v.optional(v.string()),
     extraRequirements: v.optional(v.string()),
-    school: v.string(),
-    phone: v.string(),
   },
   handler: async (ctx: MutationCtx, args) => {
     const user = await requireUser(ctx);
 
-    // Mandatory reason length: 30 to 600 chars
+    // A reason is mandatory, but any length will do.
     const cleanReason = args.reason.trim();
-    if (cleanReason.length < 30 || cleanReason.length > 600) {
+    if (cleanReason.length < 1 || cleanReason.length > 1000) {
       throw new ConvexError({
         code: "INVALID_REASON",
-        message: "Reason for request is mandatory and must be between 30 and 600 characters.",
+        message: "Please give a reason for the request (up to 1000 characters).",
       });
     }
 
@@ -116,7 +127,7 @@ export const create = mutation({
     if (conflict) {
       throw new ConvexError({
         code: "BOOKING_CONFLICT",
-        message: "The requested date range conflicts with an existing confirmed bus booking.",
+        message: "The requested date range conflicts with an existing bus booking.",
       });
     }
 
@@ -126,9 +137,10 @@ export const create = mutation({
     const bookingId = await ctx.db.insert("busBookings", {
       reference,
       memberId: user._id,
+      // Member details always come from their profile, never from the form.
       requesterName: user.fullName,
-      phone: args.phone,
-      school: args.school,
+      phone: user.phone,
+      school: user.school,
       purpose: args.purpose,
       reason: cleanReason,
       departureAt: args.departureAt,
@@ -137,8 +149,8 @@ export const create = mutation({
       destination: args.destination.trim(),
       distanceKm: args.distanceKm,
       passengers: args.passengers,
-      tripContactName: args.tripContactName.trim(),
-      tripContactPhone: args.tripContactPhone.trim(),
+      tripContactName: args.tripContactName?.trim() || user.fullName,
+      tripContactPhone: args.tripContactPhone?.trim() || user.phone,
       extraRequirements: args.extraRequirements?.trim(),
       status: "requested",
       createdAt: currentTime,
@@ -156,6 +168,15 @@ export const create = mutation({
       entityId: bookingId,
       isRead: false,
       createdAt: currentTime,
+    });
+
+    await notifyAdmins(ctx, {
+      type: "bus_requested",
+      title: `New bus request (${reference})`,
+      body: `${user.fullName} requests the bus to ${args.destination.trim()} on ${args.departureAt.slice(0, 10)}. Review it and tell the member what to pay.`,
+      link: `/admin/bus/${bookingId}`,
+      entityType: "bus",
+      entityId: bookingId,
     });
 
     await writeAudit(ctx, {
@@ -223,7 +244,14 @@ export const getAvailabilityCalendar = query({
   handler: async (ctx: QueryCtx) => {
     const user = await requireUser(ctx);
     const isStaff = ["official", "admin", "superadmin"].includes(user.role);
-    const activeStatuses = ["requested", "under_review", "approved", "confirmed"] as const;
+    const activeStatuses = [
+      "requested",
+      "under_review",
+      "awaiting_payment",
+      "payment_submitted",
+      "approved",
+      "confirmed",
+    ] as const;
     const today = new Date().toISOString();
     const bookings = (
       await Promise.all(
@@ -242,7 +270,6 @@ export const getAvailabilityCalendar = query({
     // Map booked date ranges. Members only need to know which dates are taken,
     // so booking references and destinations are staff-only.
     return bookings
-      .filter((b) => ["requested", "under_review", "approved", "confirmed"].includes(b.status))
       .map((b) => ({
         id: b._id,
         reference: isStaff ? b.reference : "",
@@ -276,8 +303,11 @@ export const listAllAdmin = query({
 });
 
 /**
- * Admin action to approve or update status on a bus booking.
- * Server-side re-validates conflicts at mutation time!
+ * Admin action to move a booking through its lifecycle.
+ *
+ * Payment flow: the admin approves with an amount (awaiting_payment), the member
+ * pays and reports it (submitPayment), the admin verifies and confirms, which
+ * releases the bus. Conflicts are re-validated server-side on approval.
  */
 export const updateStatus = mutation({
   args: {
@@ -301,52 +331,87 @@ export const updateStatus = mutation({
     if (!allowed.includes(args.newStatus)) {
       throw new ConvexError({
         code: "INVALID_TRANSITION",
-        message: `Cannot transition from ${booking.status} to ${args.newStatus}.`,
+        message: `Cannot transition from ${booking.status.replace(/_/g, " ")} to ${args.newStatus.replace(/_/g, " ")}.`,
       });
     }
 
-    // Server-side conflict re-check on approval
-    if (["approved", "confirmed"].includes(args.newStatus)) {
-      const conflict = await hasBookingConflict(
-        ctx,
-        booking.departureAt,
-        booking.returnAt,
-        booking._id
-      );
+    if (["approved", "awaiting_payment", "confirmed"].includes(args.newStatus)) {
+      const conflict = await hasBookingConflict(ctx, booking.departureAt, booking.returnAt, booking._id);
       if (conflict) {
         throw new ConvexError({
           code: "BOOKING_CONFLICT",
-          message: "Cannot approve: another confirmed booking already occupies this date range.",
+          message: "Cannot approve: another booking already occupies this date range.",
         });
       }
     }
 
-    if (args.newStatus === "declined" && (!args.statusReason || args.statusReason.trim().length < 15)) {
+    const reason = args.statusReason?.trim();
+    if (args.newStatus === "declined" && !reason) {
       throw new ConvexError({
         code: "REASON_REQUIRED",
-        message: "Declining a bus request requires a reason (minimum 15 characters).",
+        message: "Please give a reason for declining this request.",
       });
     }
 
+    // Approving means telling the member how much to pay.
+    const amount = args.contributionKes ?? booking.contributionKes;
+    if (args.newStatus === "awaiting_payment") {
+      if (booking.status === "payment_submitted" && !reason) {
+        throw new ConvexError({
+          code: "REASON_REQUIRED",
+          message: "Say why the payment was not accepted so the member can correct it.",
+        });
+      }
+      if (amount === undefined || !Number.isFinite(amount) || amount <= 0) {
+        throw new ConvexError({
+          code: "AMOUNT_REQUIRED",
+          message: "Enter the amount the member must pay to use the bus.",
+        });
+      }
+    }
+
     const now = Date.now();
+    const releasing = args.newStatus === "confirmed";
+    const approving = ["awaiting_payment", "approved", "confirmed"].includes(args.newStatus);
     await ctx.db.patch(booking._id, {
       status: args.newStatus,
-      statusReason: args.statusReason,
+      statusReason: reason || undefined,
       driverName: args.driverName ?? booking.driverName,
       driverPhone: args.driverPhone ?? booking.driverPhone,
-      contributionKes: args.contributionKes ?? booking.contributionKes,
+      contributionKes: amount,
       adminRemarks: args.adminRemarks ?? booking.adminRemarks,
-      approvedBy: ["approved", "confirmed"].includes(args.newStatus) ? admin._id : booking.approvedBy,
-      approvedAt: ["approved", "confirmed"].includes(args.newStatus) ? now : booking.approvedAt,
+      approvedBy: approving ? admin._id : booking.approvedBy,
+      approvedAt: approving ? (booking.approvedAt ?? now) : booking.approvedAt,
+      paymentConfirmedAt: releasing ? now : booking.paymentConfirmedAt,
+      // A rejected payment goes back to the member to try again.
+      paymentReference: args.newStatus === "awaiting_payment" ? undefined : booking.paymentReference,
+      paymentSubmittedAt: args.newStatus === "awaiting_payment" ? undefined : booking.paymentSubmittedAt,
       updatedAt: now,
     });
 
-    // Member notification
+    const remarks = args.adminRemarks ?? booking.adminRemarks;
+    let title = `Bus Reservation ${args.newStatus.replace(/_/g, " ").toUpperCase()} (${booking.reference})`;
+    let body = `Your bus reservation to ${booking.destination} is now ${args.newStatus.replace(/_/g, " ")}.`;
+    if (args.newStatus === "awaiting_payment") {
+      title = `Pay ${formatKes(amount!)} to secure the bus (${booking.reference})`;
+      body =
+        booking.status === "payment_submitted"
+          ? `Your payment for the bus to ${booking.destination} could not be verified: ${reason}. Please pay ${formatKes(amount!)} and submit the payment details again.`
+          : `Your request for the bus to ${booking.destination} is approved. Please pay ${formatKes(amount!)}, then open the booking and confirm your payment.${
+              remarks ? ` Payment details: ${remarks}` : ""
+            }`;
+    } else if (releasing) {
+      title = `Bus released to you (${booking.reference})`;
+      body = `Your payment was received. The bus to ${booking.destination} is confirmed and released for ${booking.departureAt.slice(0, 10)}.`;
+    } else if (args.newStatus === "declined" && reason) {
+      body += ` Reason: ${reason}`;
+    }
+
     await ctx.db.insert("notifications", {
       userId: booking.memberId,
       type: `bus_status_${args.newStatus}`,
-      title: `Bus Reservation ${args.newStatus.toUpperCase()} (${booking.reference})`,
-      body: `Your bus reservation to ${booking.destination} is now ${args.newStatus.replace(/_/g, " ")}.`,
+      title,
+      body,
       link: `/bus/${booking._id}`,
       entityType: "bus",
       entityId: booking._id,
@@ -360,6 +425,81 @@ export const updateStatus = mutation({
       entityId: booking._id,
       actorId: admin._id,
       actorRole: admin.role,
+      metadata: args.newStatus === "awaiting_payment" ? { amountKes: amount } : undefined,
+    });
+
+    return { success: true };
+  },
+});
+
+/**
+ * Member confirms they have paid the amount the admin asked for. This is the
+ * only way a booking reaches payment_submitted, and it alerts the admins so
+ * they can verify the payment and release the bus.
+ */
+export const submitPayment = mutation({
+  args: {
+    id: v.id("busBookings"),
+    paymentReference: v.string(),
+  },
+  handler: async (ctx: MutationCtx, args) => {
+    const user = await requireUser(ctx);
+    const booking = await ctx.db.get(args.id);
+
+    if (!booking || booking.memberId !== user._id) {
+      throw new ConvexError({ code: "NOT_FOUND", message: "Booking not found." });
+    }
+    if (booking.status !== "awaiting_payment") {
+      throw new ConvexError({
+        code: "INVALID_TRANSITION",
+        message: "This booking is not waiting for a payment.",
+      });
+    }
+
+    const reference = args.paymentReference.trim();
+    if (!reference || reference.length > 60) {
+      throw new ConvexError({
+        code: "INVALID_PAYMENT_REFERENCE",
+        message: "Enter the payment reference (for example the M-Pesa transaction code).",
+      });
+    }
+
+    const now = Date.now();
+    await ctx.db.patch(booking._id, {
+      status: "payment_submitted",
+      paymentReference: reference,
+      paymentSubmittedAt: now,
+      updatedAt: now,
+    });
+
+    await ctx.db.insert("notifications", {
+      userId: user._id,
+      type: "bus_payment_submitted",
+      title: `Payment sent for verification (${booking.reference})`,
+      body: "The branch office will verify your payment and release the bus. You will be notified.",
+      link: `/bus/${booking._id}`,
+      entityType: "bus",
+      entityId: booking._id,
+      isRead: false,
+      createdAt: now,
+    });
+
+    await notifyAdmins(ctx, {
+      type: "bus_payment_submitted",
+      title: `Bus payment to verify (${booking.reference})`,
+      body: `${booking.requesterName} reports paying ${formatKes(booking.contributionKes ?? 0)} for the bus to ${booking.destination}. Reference: ${reference}. Verify it, then release the bus.`,
+      link: `/admin/bus/${booking._id}`,
+      entityType: "bus",
+      entityId: booking._id,
+    });
+
+    await writeAudit(ctx, {
+      action: "bus.payment_submitted",
+      entityType: "busBookings",
+      entityId: booking._id,
+      actorId: user._id,
+      actorRole: user.role,
+      metadata: { paymentReference: reference },
     });
 
     return { success: true };

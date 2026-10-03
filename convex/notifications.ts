@@ -32,3 +32,19 @@ export const markAsRead = mutation({
     return { success: true };
   },
 });
+
+/** Mark all of the caller's unread notifications of one type as read. */
+export const markTypeRead = mutation({
+  args: { type: v.string() },
+  handler: async (ctx: MutationCtx, args) => {
+    const user = await getCurrentUser(ctx);
+    const unread = await ctx.db
+      .query("notifications")
+      .withIndex("by_user_unread", (q) => q.eq("userId", user._id).eq("isRead", false))
+      .take(200);
+    for (const n of unread.filter((n) => n.type === args.type)) {
+      await ctx.db.patch(n._id, { isRead: true });
+    }
+    return { success: true };
+  },
+});

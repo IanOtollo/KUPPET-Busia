@@ -25,6 +25,7 @@ import {
   SCHOOL_ROLES,
   TEACHING_SUBJECTS,
   GENDERS,
+  JOB_GROUPS,
 } from "@/lib/constants";
 import { useConvex } from "convex/react";
 import { api } from "../../../convex/_generated/api";
@@ -63,6 +64,13 @@ const step1Schema = z.object({
   designation: z.enum(DESIGNATIONS, {
     errorMap: () => ({ message: "Select your designation" }),
   }),
+  jobGroup: z.enum(JOB_GROUPS, {
+    errorMap: () => ({ message: "Select your job group" }),
+  }),
+  schoolStartDate: z
+    .string()
+    .min(1, "Enter the date you reported to your current school")
+    .refine((val) => new Date(val).getTime() <= Date.now(), "This date cannot be in the future"),
   schoolRole: z.string().optional(),
   gender: z.enum(GENDERS).optional(),
 });
@@ -146,6 +154,8 @@ export default function RegisterPage() {
       "school",
       "subCounty",
       "designation",
+      "jobGroup",
+      "schoolStartDate",
     ]);
     if (valid) {
       setStep(2);
@@ -183,6 +193,8 @@ export default function RegisterPage() {
         school: data.school,
         subCounty: data.subCounty,
         designation: data.designation,
+        jobGroup: data.jobGroup,
+        schoolStartDate: data.schoolStartDate,
         schoolRole: data.schoolRole || data.designation,
         subjects: selectedSubjects,
         gender: data.gender,
@@ -414,6 +426,47 @@ export default function RegisterPage() {
                       <p className="text-[13px] text-[var(--danger)] mt-1">
                         {errors.designation.message}
                       </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="jobGroup">Job Group</Label>
+                    <Select
+                      onValueChange={(val) =>
+                        setValue("jobGroup", val as (typeof JOB_GROUPS)[number], {
+                          shouldValidate: true,
+                        })
+                      }
+                    >
+                      <SelectTrigger id="jobGroup" error={!!errors.jobGroup}>
+                        <SelectValue placeholder="Select your job group" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {JOB_GROUPS.map((g) => (
+                          <SelectItem key={g} value={g}>
+                            {g}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.jobGroup && (
+                      <p className="text-[13px] text-[var(--danger)] mt-1">{errors.jobGroup.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="schoolStartDate">Date Reported to Current School</Label>
+                    <Input
+                      id="schoolStartDate"
+                      type="date"
+                      max={new Date().toISOString().split("T")[0]}
+                      error={!!errors.schoolStartDate}
+                      {...register("schoolStartDate")}
+                    />
+                    {errors.schoolStartDate && (
+                      <p className="text-[13px] text-[var(--danger)] mt-1">{errors.schoolStartDate.message}</p>
                     )}
                   </div>
                 </div>

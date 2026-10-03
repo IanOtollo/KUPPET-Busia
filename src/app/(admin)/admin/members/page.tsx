@@ -90,8 +90,8 @@ function AdminMembersPageInner() {
       "Reason for rejecting this membership application (shown to the applicant):"
     );
     if (reason === null) return;
-    if (reason.trim().length < 5) {
-      toast.error("Enter a brief reason (at least 5 characters) before rejecting.");
+    if (!reason.trim()) {
+      toast.error("Enter a reason before rejecting.");
       return;
     }
     setProcessingId(userId);

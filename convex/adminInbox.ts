@@ -34,7 +34,7 @@ export const pending = query({
 
     const bus = (
       await Promise.all(
-        (["requested", "under_review"] as const).map((status) =>
+        (["requested", "under_review", "payment_submitted"] as const).map((status) =>
           ctx.db
             .query("busBookings")
             .withIndex("by_status", (q) => q.eq("status", status))
@@ -52,7 +52,7 @@ export const pending = query({
       }));
 
     if (!isFullAdmin) {
-      return { members: [], harassment: [], bereavement, bus };
+      return { members: [], harassment: [], bereavement, bus, issues: [] };
     }
 
     const members = (
@@ -85,6 +85,16 @@ export const pending = query({
         createdAt: r.createdAt,
       }));
 
-    return { members, harassment, bereavement, bus };
+    // Members' messages to officials: the admin is copied so nothing is raised unseen.
+    const issues = (
+      await ctx.db
+        .query("notifications")
+        .withIndex("by_user_unread", (q) => q.eq("userId", user._id).eq("isRead", false))
+        .take(200)
+    )
+      .filter((n) => n.type === "member_issue")
+      .map((n) => ({ _id: n._id, title: n.title, body: n.body, createdAt: n.createdAt }));
+
+    return { members, harassment, bereavement, bus, issues };
   },
 });

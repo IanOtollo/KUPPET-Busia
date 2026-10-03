@@ -128,12 +128,12 @@ export const create = mutation({
       label: "evidence",
     });
 
-    // Narrative 50 to 2500 chars
+    // A narrative is required; any length up to 2500 chars.
     const cleanNarrative = args.narrative.trim();
-    if (cleanNarrative.length < 50 || cleanNarrative.length > 2500) {
+    if (cleanNarrative.length < 1 || cleanNarrative.length > 2500) {
       throw new ConvexError({
         code: "INVALID_NARRATIVE",
-        message: "Report narrative must be between 50 and 2,500 characters.",
+        message: "Please describe what happened (up to 2,500 characters).",
       });
     }
 
@@ -369,10 +369,10 @@ export const updateStatus = mutation({
       });
     }
 
-    if (args.newStatus === "closed_no_action" && (!args.statusReason || args.statusReason.trim().length < 20)) {
+    if (args.newStatus === "closed_no_action" && (!args.statusReason || !args.statusReason.trim())) {
       throw new ConvexError({
         code: "REASON_REQUIRED",
-        message: "Closing a report with no action requires a reason (minimum 20 characters).",
+        message: "Please give a reason for closing this report with no action.",
       });
     }
 

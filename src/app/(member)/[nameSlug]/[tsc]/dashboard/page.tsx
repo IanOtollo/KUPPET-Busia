@@ -45,6 +45,8 @@ const BEREAVEMENT_NEXT: Record<string, string> = {
 const BUS_NEXT: Record<string, string> = {
   requested: "Waiting for the branch office to review your request.",
   under_review: "The branch office is reviewing your request.",
+  awaiting_payment: "Approved — open the booking to see the amount to pay.",
+  payment_submitted: "Payment sent — waiting for the branch office to verify it.",
   approved: "Approved — awaiting final confirmation.",
   confirmed: "Confirmed. Check the date and pick-up details.",
 };
@@ -74,10 +76,13 @@ export default function MemberDashboardPage() {
   const isPendingApproval =
     profile?.status === "pending_approval" || profile?.status === "pending_verification";
 
-  const urgentAnnouncement = announcements?.find((a: { priority: string }) => a.priority === "urgent");
-  const latestAnnouncements = (announcements ?? [])
-    .filter((a: { _id: string }) => a._id !== (urgentAnnouncement as { _id?: string } | undefined)?._id)
-    .slice(0, 3);
+  // Every current announcement, most important first, then newest.
+  const PRIORITY_RANK: Record<string, number> = { urgent: 0, important: 1, normal: 2 };
+  const sortedAnnouncements = [...(announcements ?? [])].sort(
+    (a: { priority: string; publishedAt: string }, b: { priority: string; publishedAt: string }) =>
+      (PRIORITY_RANK[a.priority] ?? 2) - (PRIORITY_RANK[b.priority] ?? 2) ||
+      b.publishedAt.localeCompare(a.publishedAt)
+  );
 
   // Everything the teacher is waiting on or should act on. Deliberately built
   // only from bereavement, bus, messages and notifications — harassment reports
@@ -152,7 +157,51 @@ export default function MemberDashboardPage() {
         </h1>
       </div>
 
-      {/* 2. Account status warning (if awaiting verification) */}
+      {/* 2. Branch announcements: the first thing every member sees */}
+      {sortedAnnouncements.length > 0 && (
+        <section aria-label="Branch announcements">
+          <h2 className="font-serif text-[20px] font-semibold text-[var(--ink)] mb-4 flex items-center gap-2">
+            <Megaphone className="h-5 w-5 text-[var(--brass)]" /> Branch Announcements
+          </h2>
+          <div className="space-y-3">
+            {sortedAnnouncements.map(
+              (a: { _id: string; title: string; body: string; priority: string; publishedAt: string }) => {
+                const urgent = a.priority === "urgent";
+                const important = a.priority === "important";
+                return (
+                  <div
+                    key={a._id}
+                    className={`p-4 rounded-[var(--r-md)] border ${
+                      urgent
+                        ? "bg-[var(--warning-soft)] border-[var(--warning)]"
+                        : important
+                          ? "bg-[var(--brass-soft)] border-[var(--brass)]/40"
+                          : "bg-[var(--surface)] border-[var(--line)]"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <strong className="font-semibold text-[var(--ink)] text-[15px]">{a.title}</strong>
+                      {(urgent || important) && (
+                        <span className="eyebrow text-[var(--brass)] font-semibold shrink-0">
+                          {urgent ? "URGENT" : "IMPORTANT"}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[14px] leading-relaxed text-[var(--ink-body)] mt-1 whitespace-pre-line">
+                      {a.body}
+                    </p>
+                    <span className="text-[12px] text-[var(--ink-muted)] block mt-2">
+                      {formatRelativeTime(new Date(a.publishedAt).getTime())}
+                    </span>
+                  </div>
+                );
+              }
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* 3. Account status warning (if awaiting verification) */}
       {isPendingApproval && (
         <div className="p-4 rounded-[var(--r-md)] bg-[var(--warning-soft)] border border-[var(--warning)] flex items-start gap-3.5">
           <AlertTriangle className="h-5 w-5 text-[var(--warning)] shrink-0 mt-0.5" />
@@ -161,22 +210,6 @@ export default function MemberDashboardPage() {
               Membership Verification Pending
             </strong>
             Your registration is awaiting verification by the branch office.
-          </div>
-        </div>
-      )}
-
-      {/* 3. Urgent announcement */}
-      {urgentAnnouncement && (
-        <div className="p-4 rounded-[var(--r-md)] bg-[var(--warning-soft)] border border-[var(--warning)] flex items-start gap-3.5">
-          <Sparkles className="h-5 w-5 text-[var(--brass)] shrink-0 mt-0.5" />
-          <div className="text-[14px] leading-relaxed text-[var(--ink-body)]">
-            <span className="eyebrow text-[var(--brass)] font-semibold block mb-0.5">
-              URGENT BRANCH NOTICE
-            </span>
-            <strong className="font-semibold text-[var(--ink)] block">
-              {urgentAnnouncement.title}
-            </strong>
-            <p className="text-[var(--ink-muted)] mt-1">{urgentAnnouncement.body}</p>
           </div>
         </div>
       )}
@@ -236,34 +269,6 @@ export default function MemberDashboardPage() {
         )}
       </section>
 
-      {/* 5. Branch announcements */}
-      {latestAnnouncements.length > 0 && (
-        <section>
-          <h2 className="font-serif text-[20px] font-semibold text-[var(--ink)] mb-4">
-            From the branch
-          </h2>
-          <Card>
-            <CardContent className="pt-2 pb-2 divide-y divide-[var(--line)]">
-              {latestAnnouncements.map(
-                (a: { _id: string; title: string; body: string; publishedAt: string }) => (
-                  <div key={a._id} className="py-4 flex items-start gap-3.5">
-                    <Megaphone className="h-4 w-4 text-[var(--brass)] shrink-0 mt-1" />
-                    <div className="min-w-0">
-                      <strong className="font-semibold text-[var(--ink)] block text-[14.5px]">
-                        {a.title}
-                      </strong>
-                      <p className="text-[13.5px] text-[var(--ink-muted)] mt-0.5 line-clamp-2">
-                        {a.body}
-                      </p>
-                    </div>
-                  </div>
-                )
-              )}
-            </CardContent>
-          </Card>
-        </section>
-      )}
-
       {/* 6. Quick actions */}
       <section>
         <h2 className="font-serif text-[20px] font-semibold text-[var(--ink)] mb-4">
@@ -285,9 +290,9 @@ export default function MemberDashboardPage() {
           </Button>
 
           <Button variant="secondary" className="h-[48px] justify-start px-4 text-left" asChild>
-            <Link href={`${basePath}/profile`}>
+            <Link href={`${basePath}/transfers`}>
               <ArrowRightLeft className="h-4 w-4 text-[var(--union)] shrink-0" />
-              <span className="truncate">Report Transfer</span>
+              <span className="truncate">Transfers & Swaps</span>
             </Link>
           </Button>
 

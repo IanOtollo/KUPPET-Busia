@@ -20,6 +20,7 @@ import {
   userStatusValidator,
   subCountyValidator,
   designationValidator,
+  jobGroupValidator,
 } from "./lib/validators";
 import { ConvexError } from "convex/values";
 
@@ -147,6 +148,9 @@ export const registerMember = action({
     schoolRole: v.optional(v.string()),
     subjects: v.optional(v.array(v.string())),
     gender: v.optional(v.string()),
+    jobGroup: jobGroupValidator,
+    // Date the teacher reported to their current school (YYYY-MM-DD); used for length of stay.
+    schoolStartDate: v.optional(v.string()),
   },
   handler: async (ctx: ActionCtx, args) => {
     const email = args.email.toLowerCase().trim();
@@ -195,6 +199,8 @@ export const registerMember = action({
         ...(args.schoolRole ? { schoolRole: args.schoolRole } : {}),
         ...(args.subjects ? { subjects: args.subjects } : {}),
         ...(args.gender ? { gender: args.gender } : {}),
+        jobGroup: args.jobGroup,
+        ...(args.schoolStartDate ? { schoolStartDate: args.schoolStartDate } : {}),
         role: "member",
         status: "pending_approval",
         failedLoginCount: 0,
@@ -575,3 +581,34 @@ export const removeMyPhoto = mutation({
   },
 });
 
+
+/**
+ * Lets a member set their job group and the date they reported to their
+ * current school (needed for "length of stay"). Existing members registered
+ * before these fields existed fill them in here.
+ */
+export const updateMyEmployment = mutation({
+  args: {
+    jobGroup: v.optional(jobGroupValidator),
+    schoolStartDate: v.optional(v.string()),
+  },
+  handler: async (ctx: MutationCtx, args) => {
+    const user = await requireUser(ctx);
+    const patch: { jobGroup?: typeof args.jobGroup; schoolStartDate?: string; updatedAt: number } = {
+      updatedAt: Date.now(),
+    };
+    if (args.jobGroup) patch.jobGroup = args.jobGroup;
+    if (args.schoolStartDate) {
+      const d = new Date(args.schoolStartDate);
+      if (Number.isNaN(d.getTime()) || d.getTime() > Date.now()) {
+        throw new ConvexError({
+          code: "INVALID_DATE",
+          message: "Enter the date you reported to this school (it cannot be in the future).",
+        });
+      }
+      patch.schoolStartDate = args.schoolStartDate.slice(0, 10);
+    }
+    await ctx.db.patch(user._id, patch);
+    return { success: true };
+  },
+});

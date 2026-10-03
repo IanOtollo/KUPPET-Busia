@@ -2,7 +2,18 @@ import { query, mutation, QueryCtx, MutationCtx } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { requireRole, requireUser } from "./lib/auth";
 import { writeAudit } from "./lib/audit";
-import { subCountyValidator, designationValidator } from "./lib/validators";
+import { subCountyValidator, designationValidator, jobGroupValidator } from "./lib/validators";
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Whole days between two ISO dates (or a date and now); undefined when start is unknown. */
+function daysBetween(startIso: string | undefined, endIso?: string): number | undefined {
+  if (!startIso) return undefined;
+  const start = new Date(startIso).getTime();
+  const end = endIso ? new Date(endIso).getTime() : Date.now();
+  if (Number.isNaN(start) || Number.isNaN(end)) return undefined;
+  return Math.max(0, Math.floor((end - start) / DAY_MS));
+}
 
 /**
  * A teacher reports a school transfer and/or promotion. The new school,
@@ -15,6 +26,7 @@ export const report = mutation({
     school: v.string(),
     subCounty: subCountyValidator,
     designation: designationValidator,
+    jobGroup: v.optional(jobGroupValidator),
     effectiveDate: v.optional(v.string()),
     reason: v.optional(v.string()),
   },
@@ -32,7 +44,8 @@ export const report = mutation({
     const unchanged =
       school.toLowerCase() === user.school.trim().toLowerCase() &&
       args.subCounty === user.subCounty &&
-      args.designation === user.designation;
+      args.designation === user.designation &&
+      (!args.jobGroup || args.jobGroup === user.jobGroup);
     if (unchanged) {
       throw new ConvexError({
         code: "NO_CHANGE",
@@ -41,10 +54,17 @@ export const report = mutation({
     }
 
     const now = Date.now();
+    const movedSchool = school.toLowerCase() !== user.school.trim().toLowerCase();
+    const effective = args.effectiveDate?.trim() || undefined;
+    const effectiveIso = effective ?? new Date(now).toISOString().slice(0, 10);
+
     await ctx.db.patch(user._id, {
       school,
       subCounty: args.subCounty,
       designation: args.designation,
+      ...(args.jobGroup ? { jobGroup: args.jobGroup } : {}),
+      // A new school starts a new length-of-stay clock.
+      ...(movedSchool ? { schoolStartDate: effectiveIso } : {}),
       updatedAt: now,
     });
 
@@ -58,12 +78,15 @@ export const report = mutation({
       toSubCounty: args.subCounty,
       fromDesignation: user.designation,
       toDesignation: args.designation,
-      effectiveDate: args.effectiveDate?.trim() || undefined,
+      effectiveDate: effective,
       reason: args.reason?.trim() || undefined,
+      fromJobGroup: user.jobGroup,
+      toJobGroup: args.jobGroup ?? user.jobGroup,
+      previousSchoolStartDate: movedSchool ? user.schoolStartDate : undefined,
+      previousStayDays: movedSchool ? daysBetween(user.schoolStartDate, effectiveIso) : undefined,
       createdAt: now,
     });
 
-    const movedSchool = school.toLowerCase() !== user.school.trim().toLowerCase();
     const promoted = args.designation !== user.designation;
     const kind = movedSchool && promoted ? "Transfer & promotion" : promoted ? "Promotion" : "Transfer";
     const body = [
@@ -136,5 +159,29 @@ export const acknowledge = mutation({
       actorRole: admin.role,
     });
     return { success: true };
+  },
+});
+
+/**
+ * The signed-in member's transfer cases plus how long they have been at their
+ * current school.
+ */
+export const myOverview = query({
+  args: {},
+  handler: async (ctx: QueryCtx) => {
+    const user = await requireUser(ctx);
+    const history = await ctx.db
+      .query("transfers")
+      .withIndex("by_member", (q) => q.eq("memberId", user._id))
+      .collect();
+
+    return {
+      school: user.school,
+      subCounty: user.subCounty,
+      jobGroup: user.jobGroup ?? null,
+      schoolStartDate: user.schoolStartDate ?? null,
+      currentStayDays: daysBetween(user.schoolStartDate) ?? null,
+      history: history.sort((a, b) => b.createdAt - a.createdAt),
+    };
   },
 });

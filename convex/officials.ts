@@ -1,4 +1,4 @@
-import { query, mutation, QueryCtx, MutationCtx } from "./_generated/server";
+import { query, mutation, internalMutation, QueryCtx, MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { requireRole } from "./lib/auth";
 import { writeAudit } from "./lib/audit";
@@ -8,13 +8,20 @@ import { ConvexError } from "convex/values";
 const CURRENT_OFFICIAL_ROSTER = [
   { fullName: "Charles Mukhwana", position: "Executive Secretary", responsibilities: "Leads branch administration, correspondence, and the implementation of Executive Committee decisions.", portfolioArea: "Branch Administration", displayOrder: 1, tier: "executive" as const, canHandleHarassment: true },
   { fullName: "Hellen Mwene", position: "Assistant Executive Secretary", responsibilities: "Supports branch administration, records, correspondence, and member services.", portfolioArea: "Administration & Records", displayOrder: 2, tier: "executive" as const, canHandleHarassment: true },
-  { fullName: "James Omaset", position: "Branch Chairperson", responsibilities: "Chairs branch meetings, provides governance oversight, and represents the branch in official forums.", portfolioArea: "Branch Governance", displayOrder: 3, tier: "executive" as const, canHandleHarassment: true },
-  { fullName: "Alex Makana", position: "Assistant Chairperson", responsibilities: "Deputises the Branch Chairperson and supports branch governance and member welfare matters.", portfolioArea: "Branch Governance & Welfare", displayOrder: 4, tier: "executive" as const, canHandleHarassment: false },
+  { fullName: "James Omaset", position: "Chairman", responsibilities: "Chairs branch meetings, provides governance oversight, and represents the branch in official forums.", portfolioArea: "Branch Governance", displayOrder: 3, tier: "executive" as const, canHandleHarassment: true },
+  { fullName: "Alex Makana", position: "Vice Chairman", responsibilities: "Deputises the Chairman and supports branch governance and member welfare matters.", portfolioArea: "Branch Governance & Welfare", displayOrder: 4, tier: "executive" as const, canHandleHarassment: false },
   { fullName: "Moses Were", position: "Treasurer", responsibilities: "Oversees branch finances, accounts, approved disbursements, and financial reporting.", portfolioArea: "Treasury & Finance", displayOrder: 5, tier: "executive" as const, canHandleHarassment: false },
-  { fullName: "Yonam Okoro", position: "Organizing Secretary", responsibilities: "Coordinates member mobilization, branch activities, meetings, and events.", portfolioArea: "Mobilization & Events", displayOrder: 6, tier: "executive" as const, canHandleHarassment: false },
-  { fullName: "Don Emacar", position: "Secretary – Secondary Schools", responsibilities: "Coordinates representation and member services for secondary-school teachers.", portfolioArea: "Secondary Schools", displayOrder: 7, tier: "official" as const, canHandleHarassment: false },
-  { fullName: "Kelvin Obilo", position: "Secretary – Junior Secondary (JS)", responsibilities: "Coordinates representation and member services for junior-secondary teachers.", portfolioArea: "Junior Secondary", displayOrder: 8, tier: "official" as const, canHandleHarassment: false },
+  { fullName: "Jack Namutala", position: "Assistant Treasurer", responsibilities: "Supports the Treasurer with branch accounts, collections, and financial records.", portfolioArea: "Treasury & Finance", displayOrder: 6, tier: "executive" as const, canHandleHarassment: false },
+  { fullName: "Yonam Okoro", position: "Organizing Secretary", responsibilities: "Coordinates member mobilization, branch activities, meetings, and events.", portfolioArea: "Mobilization & Events", displayOrder: 7, tier: "executive" as const, canHandleHarassment: false },
+  { fullName: "Don Emacar", position: "Secretary Secondary", responsibilities: "Coordinates representation and member services for secondary-school teachers.", portfolioArea: "Secondary Schools", displayOrder: 8, tier: "official" as const, canHandleHarassment: false },
+  { fullName: "Kelvin Obilo", position: "Secretary Junior Secondary", responsibilities: "Coordinates representation and member services for junior-secondary teachers.", portfolioArea: "Junior Secondary", displayOrder: 9, tier: "official" as const, canHandleHarassment: false },
+  { fullName: "Kevin Khasenye", position: "Secretary Tertiary", responsibilities: "Coordinates representation and member services for teachers in tertiary institutions.", portfolioArea: "Tertiary Institutions", displayOrder: 10, tier: "official" as const, canHandleHarassment: false },
+  { fullName: "Cynthia Olale", position: "Gender Secretary", responsibilities: "Leads gender affairs in the branch and champions the welfare and rights of women and girls in the teaching service.", portfolioArea: "Gender Affairs", displayOrder: 11, tier: "official" as const, canHandleHarassment: true },
+  { fullName: "Lydia Nyongesa", position: "Gender 1", responsibilities: "Supports the Gender Secretary on gender-related welfare, awareness, and member concerns.", portfolioArea: "Gender Affairs", displayOrder: 12, tier: "official" as const, canHandleHarassment: true },
+  { fullName: "Elizabeth Nzomo", position: "Gender 2 (PLWD)", responsibilities: "Represents teachers living with disabilities and promotes their inclusion, welfare, and rights.", portfolioArea: "Persons Living with Disabilities", displayOrder: 13, tier: "official" as const, canHandleHarassment: false },
+  { fullName: "Murunga Muliro", position: "Gender 3 (Youths and Sports)", responsibilities: "Represents young teachers and promotes sports and youth engagement, welfare, and rights in the branch.", portfolioArea: "Youths & Sports", displayOrder: 14, tier: "official" as const, canHandleHarassment: false },
 ];
+
 
 /**
  * Public & Member query to list all active branch officials ordered by displayOrder.
@@ -61,52 +68,87 @@ export const listAllAdmin = query({
   },
 });
 
-/** Replaces the active branch roster with the approved current office holders. */
+const norm = (t: string) => t.trim().toLowerCase().replace(/\s+/g, " ");
+
+/**
+ * Makes the officials table match the approved roster: current office holders
+ * are updated (keeping their photo, phone, email and linked account) or
+ * created when missing, and anyone no longer on the roster is archived.
+ * Existing rows are matched by name, then by position, so a re-spelt name or a
+ * re-titled office keeps its photo instead of being duplicated.
+ */
+async function applyRoster(ctx: MutationCtx) {
+  const now = Date.now();
+  const all = await ctx.db.query("officials").collect();
+  const claimed = new Set<string>();
+
+  for (const entry of CURRENT_OFFICIAL_ROSTER) {
+    const existing =
+      all.find((o) => !claimed.has(o._id) && norm(o.fullName) === norm(entry.fullName)) ??
+      all.find((o) => !claimed.has(o._id) && norm(o.position) === norm(entry.position));
+
+    if (existing) {
+      claimed.add(existing._id);
+      await ctx.db.replace(existing._id, {
+        ...entry,
+        ...(existing.phone ? { phone: existing.phone } : {}),
+        ...(existing.email ? { email: existing.email } : {}),
+        ...(existing.photoStorageId ? { photoStorageId: existing.photoStorageId } : {}),
+        ...(existing.linkedUserId ? { linkedUserId: existing.linkedUserId } : {}),
+        isActive: true,
+        createdAt: existing.createdAt,
+        updatedAt: now,
+      });
+    } else {
+      await ctx.db.insert("officials", { ...entry, isActive: true, createdAt: now, updatedAt: now });
+    }
+  }
+
+  for (const o of all) {
+    if (!claimed.has(o._id) && o.isActive) {
+      await ctx.db.patch(o._id, { isActive: false, updatedAt: now });
+    }
+  }
+}
+
+/** Admin: replace the branch roster with the approved office holders. */
 export const syncCurrentRoster = mutation({
   args: {},
   handler: async (ctx: MutationCtx) => {
     const admin = await requireRole(ctx, ["admin", "superadmin"]);
-    const now = Date.now();
-    const activeOfficials = (await ctx.db
-      .query("officials")
-      .withIndex("by_active", (q) => q.eq("isActive", true))
-      .collect()).sort((a, b) => a.displayOrder - b.displayOrder);
-
-    for (let index = 0; index < CURRENT_OFFICIAL_ROSTER.length; index++) {
-      const rosterEntry = CURRENT_OFFICIAL_ROSTER[index];
-      const existing = activeOfficials[index];
-      if (existing) {
-        await ctx.db.replace(existing._id, {
-          ...rosterEntry,
-          ...(existing.photoStorageId
-            ? { photoStorageId: existing.photoStorageId }
-            : {}),
-          isActive: true,
-          createdAt: existing.createdAt,
-          updatedAt: now,
-        });
-      } else {
-        await ctx.db.insert("officials", {
-          ...rosterEntry,
-          isActive: true,
-          createdAt: now,
-          updatedAt: now,
-        });
-      }
-    }
-
-    for (const surplus of activeOfficials.slice(CURRENT_OFFICIAL_ROSTER.length)) {
-      await ctx.db.patch(surplus._id, { isActive: false, updatedAt: now });
-    }
-
+    await applyRoster(ctx);
     await writeAudit(ctx, {
       action: "officials.roster_synced",
       entityType: "officials",
       actorId: admin._id,
       actorRole: admin.role,
     });
-
     return { success: true, count: CURRENT_OFFICIAL_ROSTER.length };
+  },
+});
+
+// Bump when CURRENT_OFFICIAL_ROSTER changes so the next deploy re-applies it.
+const ROSTER_VERSION = 1;
+const ROSTER_VERSION_KEY = "officials_roster_version";
+
+/**
+ * Run after every deploy (see vercel.json). Applies the roster once per
+ * ROSTER_VERSION, so later admin edits to officials are never overwritten by a
+ * routine redeploy.
+ */
+export const applyApprovedRoster = internalMutation({
+  args: {},
+  handler: async (ctx: MutationCtx) => {
+    const row = await ctx.db
+      .query("settings")
+      .withIndex("by_key", (q) => q.eq("key", ROSTER_VERSION_KEY))
+      .first();
+    if (row && row.value >= ROSTER_VERSION) return { applied: false };
+
+    await applyRoster(ctx);
+    if (row) await ctx.db.patch(row._id, { value: ROSTER_VERSION });
+    else await ctx.db.insert("settings", { key: ROSTER_VERSION_KEY, value: ROSTER_VERSION });
+    return { applied: true, count: CURRENT_OFFICIAL_ROSTER.length };
   },
 });
 

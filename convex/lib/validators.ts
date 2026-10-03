@@ -18,6 +18,7 @@ export const userStatusValidator = v.union(
 export const subCountyValidator = v.union(
   v.literal("Teso North"),
   v.literal("Teso South"),
+  v.literal("Teso Central"),
   v.literal("Nambale"),
   v.literal("Matayos"),
   v.literal("Butula"),
@@ -39,6 +40,15 @@ export const bereavementRelationshipValidator = v.union(
   v.literal("father"),
   v.literal("spouse"),
   v.literal("child")
+);
+
+// How colleagues can send money towards a burial.
+export const contributionMethodValidator = v.union(
+  v.literal("Paybill"),
+  v.literal("Till Number"),
+  v.literal("Send Money (M-Pesa)"),
+  v.literal("Bank Account"),
+  v.literal("Other")
 );
 
 export const bereavementStatusValidator = v.union(
@@ -98,6 +108,8 @@ export const busPurposeValidator = v.union(
 export const busBookingStatusValidator = v.union(
   v.literal("requested"),
   v.literal("under_review"),
+  v.literal("awaiting_payment"),
+  v.literal("payment_submitted"),
   v.literal("approved"),
   v.literal("confirmed"),
   v.literal("completed"),
@@ -135,4 +147,18 @@ export const audienceTypeValidator = v.union(
   v.literal("all"),
   v.literal("sub_county"),
   v.literal("designation")
+);
+
+// TSC teacher job groups.
+export const jobGroupValidator = v.union(
+  v.literal("C1"),
+  v.literal("C2"),
+  v.literal("C3"),
+  v.literal("C4"),
+  v.literal("C5"),
+  v.literal("D1"),
+  v.literal("D2"),
+  v.literal("D3"),
+  v.literal("D4"),
+  v.literal("D5")
 );

@@ -56,7 +56,7 @@ const harassmentFormSchema = z.object({
   isOngoing: z.boolean(),
   narrative: z
     .string()
-    .min(50, "Narrative must be at least 50 characters describing what happened")
+    .min(1, "Please describe what happened")
     .max(2500, "Narrative cannot exceed 2500 characters"),
   reportedElsewhere: z.boolean(),
   reportedElsewhereDetail: z.string().optional(),
@@ -485,7 +485,7 @@ export default function NewHarassmentPage() {
                   Detailed Incident Narrative <span className="text-[var(--danger)]">*</span>
                 </Label>
                 <span className="text-[12px] text-[var(--ink-muted)]">
-                  {narrativeValue.length} / 2500 chars (Min 50)
+                  {narrativeValue.length} / 2500 chars
                 </span>
               </div>
               <Textarea

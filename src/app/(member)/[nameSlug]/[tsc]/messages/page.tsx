@@ -32,6 +32,7 @@ export default function MessagesPage() {
   const [draftBody, setDraftBody] = useState("");
   const [searchQ, setSearchQ] = useState("");
   const [userSearchQ, setUserSearchQ] = useState("");
+  const [pickerGroup, setPickerGroup] = useState<"staff" | "colleagues">("staff");
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -57,10 +58,27 @@ export default function MessagesPage() {
     t.otherUser.school.toLowerCase().includes(searchQ.toLowerCase())
   );
 
-  const filteredUsers = allUsers?.filter((u) =>
-    u.fullName.toLowerCase().includes(userSearchQ.toLowerCase()) ||
-    u.school.toLowerCase().includes(userSearchQ.toLowerCase())
+  const isStaffUser = (role: string) => ["official", "admin", "superadmin"].includes(role);
+
+  const filteredUsers = allUsers?.filter(
+    (u) =>
+      (pickerGroup === "staff") === isStaffUser(u.role) &&
+      (u.fullName.toLowerCase().includes(userSearchQ.toLowerCase()) ||
+        u.school.toLowerCase().includes(userSearchQ.toLowerCase()))
   );
+
+  // The CC applies to members writing to an official (not to admins directly).
+  const ccAdmin = profile?.role === "member" && selectedUser?.role === "official";
+
+  // Deep link from elsewhere in the portal, e.g. /messages?to=<userId>.
+  useEffect(() => {
+    if (!allUsers) return;
+    const to = new URLSearchParams(window.location.search).get("to");
+    if (to && allUsers.some((u) => u._id === to)) {
+      setSelectedUserId(to as Id<"users">);
+      setComposing(false);
+    }
+  }, [allUsers]);
 
   async function handleSend() {
     if (!selectedUserId || !draftBody.trim() || sending) return;
@@ -171,6 +189,31 @@ export default function MessagesPage() {
                 </button>
                 <span className="font-semibold text-[var(--ink)]">New Message — Select recipient</span>
               </div>
+              <div className="px-3 pt-3 flex gap-2">
+                {(
+                  [
+                    ["staff", "Branch officials & admin"],
+                    ["colleagues", "Colleagues"],
+                  ] as const
+                ).map(([key, label]) => (
+                  <button
+                    key={key}
+                    onClick={() => setPickerGroup(key)}
+                    className={`px-3 py-1.5 rounded-[var(--r-sm)] text-[13px] font-medium cursor-pointer ${
+                      pickerGroup === key
+                        ? "bg-[var(--union)] text-white"
+                        : "bg-[var(--surface-sunk)] text-[var(--ink-body)] hover:bg-[var(--line)]"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {profile?.role === "member" && pickerGroup === "staff" && (
+                <p className="px-4 pt-2 text-[12px] text-[var(--ink-muted)]">
+                  Raise your issue directly with an official. The branch admin is copied (CC) on messages to officials.
+                </p>
+              )}
               <div className="p-3 border-b border-[var(--line)]">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--ink-muted)]" />
@@ -197,9 +240,11 @@ export default function MessagesPage() {
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-[var(--ink)] truncate">{u.fullName}</p>
                       <p className="text-[12px] text-[var(--ink-muted)] truncate">{u.schoolRole || u.role} · {u.school}</p>
-                      <p className="text-[11px] text-[var(--ink-muted)] flex items-center gap-1 mt-0.5">
-                        <Phone className="h-3 w-3" />{u.phone}
-                      </p>
+                      {u.phone && (
+                        <p className="text-[11px] text-[var(--ink-muted)] flex items-center gap-1 mt-0.5">
+                          <Phone className="h-3 w-3" />{u.phone}
+                        </p>
+                      )}
                     </div>
                   </button>
                 ))}
@@ -222,10 +267,15 @@ export default function MessagesPage() {
                   <p className="text-sm font-semibold text-[var(--ink)] truncate">{selectedUser.fullName}</p>
                   <p className="text-[12px] text-[var(--ink-muted)] truncate">{selectedUser.schoolRole || selectedUser.role} · {selectedUser.school}</p>
                 </div>
-                <a href={`tel:${selectedUser.phone}`} className="p-2 rounded-[var(--r-md)] text-[var(--union)] hover:bg-[var(--union-soft)] transition-colors" title={`Call ${selectedUser.phone}`}>
+                {selectedUser.phone && <a href={`tel:${selectedUser.phone}`} className="p-2 rounded-[var(--r-md)] text-[var(--union)] hover:bg-[var(--union-soft)] transition-colors" title={`Call ${selectedUser.phone}`}>
                   <Phone className="h-4 w-4" />
-                </a>
+                </a>}
               </div>
+              {ccAdmin && (
+                <div className="px-4 py-2 text-[12px] bg-[var(--info-soft)] text-[var(--ink-body)] border-b border-[var(--line)]">
+                  The branch admin is copied (CC) on messages you send to {selectedUser?.fullName}.
+                </div>
+              )}
 
               {/* Messages */}
               <div className="flex-1 overflow-y-auto p-4 space-y-3">

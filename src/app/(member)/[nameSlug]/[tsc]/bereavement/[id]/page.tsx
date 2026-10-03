@@ -111,6 +111,29 @@ export default function BereavementDetailPage({
       {/* Case Details Card */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
+          {caseDoc.contributionMethod && (
+            <Card>
+              <CardContent className="pt-6 space-y-2">
+                <h3 className="font-serif text-[18px] font-semibold text-[var(--ink)] border-b border-[var(--line)] pb-3">
+                  Contribution Details
+                </h3>
+                <p className="text-[14px] text-[var(--ink-body)]">
+                  <strong>{caseDoc.contributionMethod}:</strong>{" "}
+                  <span className="mono-ref">{caseDoc.contributionNumber}</span>
+                  {caseDoc.contributionAccount ? ` (${caseDoc.contributionAccount})` : ""}
+                </p>
+                {caseDoc.contributionNote && (
+                  <p className="text-[13.5px] text-[var(--ink-muted)]">{caseDoc.contributionNote}</p>
+                )}
+                <p className="text-[12.5px] text-[var(--ink-muted)]">
+                  {caseDoc.contributionBroadcastAt
+                    ? "All members have been notified of this bereavement and how to contribute."
+                    : "Members are notified of these details once the branch office approves the claim."}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardContent className="pt-6 space-y-4">
               <h3 className="font-serif text-[18px] font-semibold text-[var(--ink)] border-b border-[var(--line)] pb-3">

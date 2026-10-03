@@ -1,6 +1,7 @@
 export const SUB_COUNTIES = [
   "Teso North",
   "Teso South",
+  "Teso Central",
   "Nambale",
   "Matayos",
   "Butula",
@@ -80,6 +81,15 @@ export const BEREAVEMENT_RELATIONSHIPS = [
 ] as const;
 
 export type BereavementRelationship = (typeof BEREAVEMENT_RELATIONSHIPS)[number]["value"];
+
+export const CONTRIBUTION_METHODS = [
+  "Paybill",
+  "Till Number",
+  "Send Money (M-Pesa)",
+  "Bank Account",
+  "Other",
+] as const;
+export type ContributionMethod = (typeof CONTRIBUTION_METHODS)[number];
 
 export const BEREAVEMENT_STATUSES = [
   "submitted",
@@ -180,6 +190,8 @@ export type BusPurpose = (typeof BUS_PURPOSES)[number];
 export const BUS_BOOKING_STATUSES = [
   "requested",
   "under_review",
+  "awaiting_payment",
+  "payment_submitted",
   "approved",
   "confirmed",
   "completed",
@@ -188,15 +200,24 @@ export const BUS_BOOKING_STATUSES = [
 ] as const;
 export type BusBookingStatus = (typeof BUS_BOOKING_STATUSES)[number];
 
-// Mirrors convex/busBookings.ts's LEGAL_BUS_TRANSITIONS.
+// Admin-driven transitions; mirrors convex/busBookings.ts's LEGAL_BUS_TRANSITIONS.
+// awaiting_payment -> payment_submitted is done by the member (busBookings.submitPayment).
 export const BUS_TRANSITIONS: Record<string, BusBookingStatus[]> = {
-  requested: ["under_review", "approved", "declined", "cancelled"],
-  under_review: ["approved", "declined", "cancelled"],
+  requested: ["awaiting_payment", "under_review", "declined", "cancelled"],
+  under_review: ["awaiting_payment", "declined", "cancelled"],
+  awaiting_payment: ["declined", "cancelled"],
+  payment_submitted: ["confirmed", "awaiting_payment", "cancelled"],
   approved: ["confirmed", "declined", "cancelled"],
   confirmed: ["completed", "cancelled"],
   completed: [],
   declined: [],
   cancelled: [],
+};
+
+export const BUS_STATUS_LABELS: Record<string, string> = {
+  awaiting_payment: "Approve � member must pay",
+  payment_submitted: "Payment received",
+  confirmed: "Confirm payment & release bus",
 };
 
 export const BUS_CAPACITY = 62;
@@ -218,12 +239,21 @@ export type AnnouncementPriority = (typeof ANNOUNCEMENT_PRIORITIES)[number];
 export const OFFICIAL_POSITIONS = [
   "Executive Secretary",
   "Assistant Executive Secretary",
-  "Branch Chairperson",
-  "Assistant Chairperson",
+  "Chairman",
+  "Vice Chairman",
   "Treasurer",
+  "Assistant Treasurer",
   "Organizing Secretary",
-  "Secretary – Secondary Schools",
-  "Secretary – Junior Secondary (JS)",
+  "Secretary Secondary",
+  "Secretary Junior Secondary",
+  "Secretary Tertiary",
+  "Gender Secretary",
+  "Gender 1",
+  "Gender 2 (PLWD)",
+  "Gender 3 (Youths and Sports)",
 ] as const;
 
 export type OfficialPosition = (typeof OFFICIAL_POSITIONS)[number];
+
+export const JOB_GROUPS = ["C1", "C2", "C3", "C4", "C5", "D1", "D2", "D3", "D4", "D5"] as const;
+export type JobGroup = (typeof JOB_GROUPS)[number];

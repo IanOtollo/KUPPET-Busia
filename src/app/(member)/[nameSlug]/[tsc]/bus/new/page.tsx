@@ -33,16 +33,14 @@ const minNoticeDateStr = (noticeDays: number) => {
 
 const busFormSchema = z
   .object({
-    requesterName: z.string().min(1, "Requester name is required"),
-    phone: z.string().regex(/^(?:\+254|0)?(7\d{8}|1\d{8})$/, "Valid phone required"),
-    school: z.string().min(3, "School / Institution is required"),
     purpose: z.enum(BUS_PURPOSES, {
       errorMap: () => ({ message: "Select trip purpose" }),
     }),
     reason: z
       .string()
-      .min(30, "Mandatory requirement: reason must be at least 30 characters explaining why the bus is needed")
-      .max(600, "Reason cannot exceed 600 characters"),
+      .trim()
+      .min(1, "Please give a reason for requesting the bus")
+      .max(1000, "Reason cannot exceed 1000 characters"),
     departureAt: z.string().min(1, "Departure date & time is required"),
     returnAt: z.string().min(1, "Return date & time is required"),
     departurePoint: z.string().min(3, "Departure point is required"),
@@ -52,10 +50,12 @@ const busFormSchema = z
       .coerce
       .number()
       .min(1, "At least 1 passenger required"),
-    tripContactName: z.string().min(3, "Contact person name is required"),
+    // Left blank, the trip contact is the member themselves.
+    tripContactName: z.string().optional(),
     tripContactPhone: z
       .string()
-      .regex(/^(?:\+254|0)?(7\d{8}|1\d{8})$/, "Valid contact phone required"),
+      .optional()
+      .refine((val) => !val || /^(?:\+254|0)?(7\d{8}|1\d{8})$/.test(val), "Valid contact phone required"),
     extraRequirements: z.string().max(400).optional(),
   })
   .refine(
@@ -88,9 +88,6 @@ export default function NewBusBookingPage() {
   } = useForm<BusFormData>({
     resolver: zodResolver(busFormSchema),
     defaultValues: {
-      requesterName: userProfile?.fullName || "",
-      phone: userProfile?.phone || "+254700000000",
-      school: userProfile?.school || "",
       purpose: "Funeral / Bereavement Procession",
       reason: "",
       departureAt: minNoticeDateStr(3),
@@ -98,8 +95,8 @@ export default function NewBusBookingPage() {
       departurePoint: "Busia Secretariat Plaza",
       destination: "",
       passengers: 40,
-      tripContactName: userProfile?.fullName || "",
-      tripContactPhone: userProfile?.phone || "+254700000000",
+      tripContactName: "",
+      tripContactPhone: "",
     },
   });
 
@@ -127,11 +124,9 @@ export default function NewBusBookingPage() {
         destination: data.destination,
         distanceKm: data.distanceKm,
         passengers: data.passengers,
-        tripContactName: data.tripContactName,
-        tripContactPhone: data.tripContactPhone,
+        tripContactName: data.tripContactName?.trim() || undefined,
+        tripContactPhone: data.tripContactPhone?.trim() || undefined,
         extraRequirements: data.extraRequirements,
-        school: data.school,
-        phone: data.phone,
       });
 
       toast.success("Bus reservation request submitted successfully.");
@@ -151,7 +146,7 @@ export default function NewBusBookingPage() {
       <PageHeader
         eyebrow="RESERVE UNION BUS"
         title="Request KUPPET Busia Branch Bus"
-        lead="Complete the trip details below. The reason for request is mandatory to enable administrative allocation."
+        lead="Complete the trip details below. Your details are filled in from your profile. Once the branch office approves, you will be told the amount to pay."
         breadcrumbs={[
           { label: "Dashboard", href: `${basePath}/dashboard` },
           { label: "Union Bus", href: `${basePath}/bus` },
@@ -183,41 +178,17 @@ export default function NewBusBookingPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="reqName">Requester Full Name</Label>
-                  <Input
-                    id="reqName"
-                    disabled
-                    value={userProfile?.fullName || "Member Taa"}
-                    className="bg-[var(--surface-sunk)]"
-                  />
+                  <Input id="reqName" disabled value={userProfile?.fullName ?? ""} className="bg-[var(--surface-sunk)]" />
                 </div>
 
                 <div>
                   <Label htmlFor="school">School / Institution</Label>
-                  <Input
-                    id="school"
-                    error={!!errors.school}
-                    {...register("school")}
-                  />
-                  {errors.school && (
-                    <p className="text-[13px] text-[var(--danger)] mt-1">
-                      {errors.school.message}
-                    </p>
-                  )}
+                  <Input id="school" disabled value={userProfile?.school ?? ""} className="bg-[var(--surface-sunk)]" />
                 </div>
 
                 <div>
                   <Label htmlFor="phone">Contact Phone Number</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    error={!!errors.phone}
-                    {...register("phone")}
-                  />
-                  {errors.phone && (
-                    <p className="text-[13px] text-[var(--danger)] mt-1">
-                      {errors.phone.message}
-                    </p>
-                  )}
+                  <Input id="phone" disabled value={userProfile?.phone ?? ""} className="bg-[var(--surface-sunk)]" />
                 </div>
 
                 <div>
@@ -303,19 +274,19 @@ export default function NewBusBookingPage() {
                       Reason for Requesting the Union Bus <span className="text-[var(--danger)]">*</span>
                     </Label>
                     <span className="text-[12px] text-[var(--ink-muted)]">
-                      {reasonValue.length} / 600 chars (Min 30)
+                      {reasonValue.length} / 1000 chars
                     </span>
                   </div>
                   <Textarea
                     id="reason"
-                    maxLength={600}
+                    maxLength={1000}
                     rows={4}
-                    placeholder="Mandatory requirement: Explain in detail why the union bus is needed, the nature of the function, and why branch transportation support is requested…"
+                    placeholder="Briefly say why you need the union bus…"
                     error={!!errors.reason}
                     {...register("reason")}
                   />
                   <p className="text-[11.5px] text-[var(--ink-muted)] mt-1">
-                    Maelezo ya kina ya sababu za kuomba bus la tawi. Must be between 30 and 600 characters.
+                    Eleza kwa ufupi sababu ya kuomba bus la tawi. A reason is required, but it can be short.
                   </p>
                   {errors.reason && (
                     <p className="text-[13px] text-[var(--danger)] mt-1">
@@ -401,22 +372,24 @@ export default function NewBusBookingPage() {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="tripContactName">
-                    Contact Person Name on Bus <span className="text-[var(--danger)]">*</span>
+                  <Label htmlFor="tripContactName" optional>
+                    Contact Person Name on Bus
                   </Label>
                   <Input
                     id="tripContactName"
+                    placeholder="Leave blank to use your own name"
                     error={!!errors.tripContactName}
                     {...register("tripContactName")}
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="tripContactPhone">
-                    Contact Person Mobile Phone <span className="text-[var(--danger)]">*</span>
+                  <Label htmlFor="tripContactPhone" optional>
+                    Contact Person Mobile Phone
                   </Label>
                   <Input
                     id="tripContactPhone"
+                    placeholder="Leave blank to use your own number"
                     type="tel"
                     error={!!errors.tripContactPhone}
                     {...register("tripContactPhone")}

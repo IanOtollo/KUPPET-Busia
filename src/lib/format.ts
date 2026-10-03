@@ -81,3 +81,15 @@ export function formatPhoneDisplay(phone: string): string {
   }
   return phone;
 }
+
+/** Length of stay in plain words: "12 days", "5 mos", "3 yrs 2 mos". */
+export function formatStay(days: number | null | undefined): string {
+  if (days === null || days === undefined) return "Not recorded";
+  if (days < 31) return `${days} ${days === 1 ? "day" : "days"}`;
+  const years = Math.floor(days / 365);
+  const months = Math.floor((days % 365) / 30);
+  const parts = [];
+  if (years) parts.push(`${years} ${years === 1 ? "yr" : "yrs"}`);
+  if (months) parts.push(`${months} ${months === 1 ? "mo" : "mos"}`);
+  return parts.join(" ") || "Under a month";
+}
