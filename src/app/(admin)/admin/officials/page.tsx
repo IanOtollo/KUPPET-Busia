@@ -53,32 +53,7 @@ export default function AdminOfficialsPage() {
   const createOfficial = useMutation(api.officials.create);
   const updateOfficial = useMutation(api.officials.update);
   const archiveOfficial = useMutation(api.officials.archive);
-  const syncRoster = useMutation(api.officials.syncCurrentRoster);
   const confirm = useConfirm();
-  const [syncing, setSyncing] = useState(false);
-
-  const handleSyncRoster = async () => {
-    const ok = await confirm({
-      title: "Reset the officials list to the approved roster?",
-      description: (
-        <p>
-          This updates every office holder to the approved list and archives anyone not on it. Photos and contacts of
-          people who stay on the list are kept.
-        </p>
-      ),
-      confirmLabel: "Yes, apply roster",
-    });
-    if (!ok) return;
-    setSyncing(true);
-    try {
-      const res = await syncRoster({});
-      toast.success(`Officials list updated to the approved roster (${res.count} office holders).`);
-    } catch {
-      toast.error("Could not update the officials list.");
-    } finally {
-      setSyncing(false);
-    }
-  };
   const generatePhotoUploadUrl = useMutation(api.officials.generatePhotoUploadUrl);
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -326,9 +301,6 @@ export default function AdminOfficialsPage() {
         ]}
         action={
           <div className="flex items-center gap-3">
-            <Button size="sm" variant="secondary" onClick={handleSyncRoster} loading={syncing} loadingText="Updating…">
-              Apply approved roster
-            </Button>
             <Button size="sm" onClick={handleOpenCreate}>
               <Plus className="h-4 w-4 mr-1.5" /> Add Official
             </Button>
