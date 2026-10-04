@@ -122,7 +122,10 @@ export default function NewBereavementPage() {
   const detailsValue = watch("details") || "";
   const selectedRelationship = watch("relationship");
   const enteredName = (watch("deceasedName") || "").trim().toLowerCase().replace(/\s+/g, " ");
-  const relationshipLocked = lockedRelationships.has(selectedRelationship);
+  const childLimitReached =
+    selectedRelationship === "child" &&
+    (locks ?? []).filter((l) => l.relationship === "child").length >= 4;
+  const relationshipLocked = lockedRelationships.has(selectedRelationship) || childLimitReached;
   const nameLocked = lockedNames.some(
     (l) => l.relationship === selectedRelationship && l.name.trim().toLowerCase().replace(/\s+/g, " ") === enteredName
   );
@@ -341,7 +344,9 @@ export default function NewBereavementPage() {
                   {(relationshipLocked || nameLocked) && (
                     <p className="text-[13px] text-[var(--danger)] mt-1 flex items-start gap-1.5">
                       <Lock className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                      {relationshipLocked
+                      {childLimitReached
+                        ? "You have already claimed for 4 children, which is the maximum."
+                        : relationshipLocked
                         ? `A bereavement for your ${selectedRelationship} is already on record, so it cannot be claimed again.`
                         : "A bereavement for this person is already on record."}
                     </p>

@@ -17,7 +17,10 @@ import { notifyAdmins } from "./lib/notify";
 
 type Relationship = "mother" | "father" | "spouse" | "child";
 
-const normName = (n: string) => n.trim().toLowerCase().replace(/\s+/g, " ");
+/** A member can claim for at most this many children. */
+const MAX_CHILD_CLAIMS = 4;
+
+const normName =(n: string) => n.trim().toLowerCase().replace(/\s+/g, " ");
 
 /**
  * Relatives that can no longer be claimed for this member, derived from their
@@ -123,7 +126,17 @@ export const create = mutation({
     if (!deceasedName) {
       throw new ConvexError({ code: "INVALID_NAME", message: "Enter the full name of the deceased." });
     }
-    const lock = findLock(await loadLocks(ctx, user._id), args.relationship, deceasedName);
+    const locks = await loadLocks(ctx, user._id);
+    if (
+      args.relationship === "child" &&
+      locks.filter((l) => l.relationship === "child").length >= MAX_CHILD_CLAIMS
+    ) {
+      throw new ConvexError({
+        code: "CHILD_LIMIT_REACHED",
+        message: `You have already claimed for ${MAX_CHILD_CLAIMS} children, which is the maximum.`,
+      });
+    }
+    const lock = findLock(locks, args.relationship, deceasedName);
     if (lock) {
       throw new ConvexError({
         code: "BENEFICIARY_LOCKED",
