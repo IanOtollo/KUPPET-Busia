@@ -28,6 +28,8 @@ import {
   TEACHING_SUBJECTS,
   SUB_COUNTIES,
   DESIGNATIONS,
+  JOB_GROUPS,
+  type JobGroup,
   type SubCounty,
   type Designation,
 } from "@/lib/constants";
@@ -42,11 +44,13 @@ export default function MemberProfilePage() {
   const basePath = useMemberBasePath();
   const profile = useQuery(api.users.getMyProfile);
   const updateProfile = useMutation(api.users.updateMyProfile);
+  const updateEmployment = useMutation(api.users.updateMyEmployment);
 
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editSchoolRole, setEditSchoolRole] = useState("");
   const [editPhone, setEditPhone] = useState("");
   const [editEmail, setEditEmail] = useState("");
+  const [editJobGroup, setEditJobGroup] = useState("");
   const [editSubjects, setEditSubjects] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -64,6 +68,7 @@ export default function MemberProfilePage() {
       setEditSchoolRole(profile.schoolRole || profile.designation || "Teacher");
       setEditPhone(profile.phone || "");
       setEditEmail(profile.email || "");
+      setEditJobGroup(profile.jobGroup || "");
       setEditSubjects(profile.subjects || []);
     }
   }, [profile]);
@@ -115,6 +120,9 @@ export default function MemberProfilePage() {
         email: editEmail,
         subjects: editSubjects,
       });
+      if (editJobGroup && editJobGroup !== profile?.jobGroup) {
+        await updateEmployment({ jobGroup: editJobGroup as JobGroup });
+      }
       toast.success("Profile updated successfully!");
       setIsEditOpen(false);
     } catch (err: any) {
@@ -181,6 +189,15 @@ export default function MemberProfilePage() {
               </div>
               <Badge className="bg-[var(--union)] text-white text-xs px-2.5 py-1">
                 {profile?.schoolRole || profile?.designation || "Teacher"}
+              </Badge>
+            </div>
+
+            <div>
+              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                <Briefcase className="h-3.5 w-3.5 text-slate-400" /> Job Group
+              </div>
+              <Badge className="bg-[var(--union)] text-white text-xs px-2.5 py-1">
+                {profile?.jobGroup || "Not set"}
               </Badge>
             </div>
 
@@ -388,6 +405,22 @@ export default function MemberProfilePage() {
                   {SCHOOL_ROLES.map((r) => (
                     <SelectItem key={r} value={r}>
                       {r}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="editJobGroup">Job Group (update when you are promoted)</Label>
+              <Select value={editJobGroup} onValueChange={setEditJobGroup}>
+                <SelectTrigger id="editJobGroup">
+                  <SelectValue placeholder="Select job group" />
+                </SelectTrigger>
+                <SelectContent>
+                  {JOB_GROUPS.map((g) => (
+                    <SelectItem key={g} value={g}>
+                      {g}
                     </SelectItem>
                   ))}
                 </SelectContent>

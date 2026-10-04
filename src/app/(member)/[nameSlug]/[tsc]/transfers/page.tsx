@@ -77,7 +77,8 @@ function TransferCases({ basePath }: { basePath: string }) {
 
   if (overview === undefined) return <Skeleton className="h-64 w-full" />;
 
-  const needsSetup = !overview.schoolStartDate || !overview.jobGroup;
+  const selectedJobGroup = jobGroup || overview.jobGroup || "";
+  const jobGroupChanged = !!jobGroup && jobGroup !== overview.jobGroup;
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,7 +86,7 @@ function TransferCases({ basePath }: { basePath: string }) {
     try {
       await updateEmployment({
         schoolStartDate: startDate || undefined,
-        jobGroup: (jobGroup || undefined) as JobGroup | undefined,
+        jobGroup: (jobGroupChanged ? jobGroup : undefined) as JobGroup | undefined,
       });
       toast.success("Your details have been saved.");
     } catch (err) {
@@ -126,7 +127,7 @@ function TransferCases({ basePath }: { basePath: string }) {
             </div>
           </dl>
 
-          {needsSetup && (
+          {(
             <form
               onSubmit={handleSave}
               className="pt-4 border-t border-[var(--line)] grid grid-cols-1 sm:grid-cols-3 gap-3 sm:items-end"
@@ -143,10 +144,10 @@ function TransferCases({ basePath }: { basePath: string }) {
                   />
                 </div>
               )}
-              {!overview.jobGroup && (
+              {(
                 <div>
-                  <Label htmlFor="jobGroup">Job group</Label>
-                  <NativeSelect id="jobGroup" value={jobGroup} onChange={(e) => setJobGroup(e.target.value)}>
+                  <Label htmlFor="jobGroup">Job group (update if you are promoted)</Label>
+                  <NativeSelect id="jobGroup" value={selectedJobGroup} onChange={(e) => setJobGroup(e.target.value)}>
                     <option value="">Select…</option>
                     {JOB_GROUPS.map((g) => (
                       <option key={g} value={g}>
@@ -156,7 +157,7 @@ function TransferCases({ basePath }: { basePath: string }) {
                   </NativeSelect>
                 </div>
               )}
-              <Button type="submit" loading={saving} disabled={!startDate && !jobGroup}>
+              <Button type="submit" loading={saving} disabled={!startDate && !jobGroupChanged}>
                 Save
               </Button>
             </form>
