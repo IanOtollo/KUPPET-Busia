@@ -16,7 +16,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { formatShortDate } from "@/lib/format";
-import { ArrowRightLeft, Search, X, CheckCircle2, Mail, Phone, School, ShieldCheck, UserRound, UserCheck, XCircle } from "lucide-react";
+import { JOB_GROUPS } from "@/lib/constants";
+import { ArrowRightLeft, Download, Search, X, CheckCircle2, Mail, Phone, School, ShieldCheck, UserRound, UserCheck, XCircle } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { Doc, Id } from "../../../../../convex/_generated/dataModel";
@@ -147,6 +148,7 @@ function AdminMembersPageInner() {
 
   const [query, setQuery] = useState("");
   const [statusTab, setStatusTab] = useState<StatusTab>("all");
+  const [jobGroupFilter, setJobGroupFilter] = useState<string>("all");
 
   const q = query.trim().toLowerCase();
 
@@ -167,11 +169,50 @@ function AdminMembersPageInner() {
         if (statusTab === "pending_approval" && m.status !== "pending_approval") return false;
         if (statusTab === "active" && m.status !== "active") return false;
         if (statusTab === "inactive" && m.status !== "suspended" && m.status !== "rejected") return false;
+        if (jobGroupFilter === "none" && m.jobGroup) return false;
+        if (jobGroupFilter !== "all" && jobGroupFilter !== "none" && m.jobGroup !== jobGroupFilter) return false;
         if (!q) return true;
         return [m.fullName, m.school, m.tscNumber, m.idNumber, m.phone].some((v) => v?.toLowerCase().includes(q));
       })
       .sort((a, b) => a.fullName.localeCompare(b.fullName, undefined, { sensitivity: "base" }));
-  }, [members, statusTab, q]);
+  }, [members, statusTab, jobGroupFilter, q]);
+
+  const csvCell = (value: string | number | undefined | null) => {
+    let s = String(value ?? "");
+    // Neutralise spreadsheet formula injection in user-supplied text.
+    if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
+    return `"${s.replace(/"/g, '""')}"`;
+  };
+
+  const handleExportCSV = () => {
+    if (visibleMembers.length === 0) {
+      toast.error("No members in this view to export.");
+      return;
+    }
+    const headers = ["Name", "TSC Number", "Job Group", "School", "Sub-County", "Phone", "Email", "Status"];
+    const rows = visibleMembers.map((m) => [
+      m.fullName,
+      m.tscNumber,
+      m.jobGroup ?? "",
+      m.school,
+      m.subCounty,
+      m.phone,
+      m.email,
+      m.status,
+    ]);
+    const csv = [headers, ...rows].map((r) => r.map(csvCell).join(",")).join("\r\n");
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const groupPart = jobGroupFilter === "all" ? "" : `_JobGroup-${jobGroupFilter === "none" ? "Unset" : jobGroupFilter}`;
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `KUPPET_Busia_Members${groupPart}_${statusTab}_${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success(`Exported ${visibleMembers.length} member${visibleMembers.length === 1 ? "" : "s"}.`);
+  };
 
   const columns: Column<Doc<"users"> & { photoUrl: string | null }>[] = [
     {
@@ -327,6 +368,24 @@ function AdminMembersPageInner() {
               )}
             </div>
 
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                value={jobGroupFilter}
+                onChange={(e) => setJobGroupFilter(e.target.value)}
+                aria-label="Filter by job group"
+                className="h-[40px] rounded-[var(--r-md)] border border-[var(--line-strong)] bg-[var(--surface)] px-3 text-[13.5px] text-[var(--ink-body)] focus:border-[var(--union)] focus:outline-none focus:ring-2 focus:ring-[rgba(31,61,92,0.12)] cursor-pointer"
+              >
+                <option value="all">All job groups</option>
+                {JOB_GROUPS.map((g) => (
+                  <option key={g} value={g}>Job Group {g}</option>
+                ))}
+                <option value="none">Not set</option>
+              </select>
+              <Button variant="secondary" size="sm" onClick={handleExportCSV}>
+                <Download className="mr-1.5 h-4 w-4" /> Export CSV
+              </Button>
+            </div>
+
             <div role="tablist" className="flex flex-wrap gap-1.5">
               {STATUS_TABS.map((t) => (
                 <button
@@ -350,7 +409,8 @@ function AdminMembersPageInner() {
           </div>
 
           <p className="mb-3 text-[12.5px] text-[var(--ink-muted)]">
-            {visibleMembers.length} teacher{visibleMembers.length === 1 ? "" : "s"} · sorted A–Z by name
+            {visibleMembers.length} teacher{visibleMembers.length === 1 ? "" : "s"}
+            {jobGroupFilter !== "all" && ` · ${jobGroupFilter === "none" ? "no job group set" : `Job Group ${jobGroupFilter}`}`} · sorted A–Z by name
           </p>
 
           {visibleMembers.length === 0 ? (
