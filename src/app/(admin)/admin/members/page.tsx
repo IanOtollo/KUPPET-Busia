@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/dialog";
 import { formatShortDate } from "@/lib/format";
 import { JOB_GROUPS } from "@/lib/constants";
+import { downloadExcel } from "@/lib/exportExcel";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowRightLeft, Download, Search, X, CheckCircle2, Mail, Phone, School, ShieldCheck, UserRound, UserCheck, XCircle } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
@@ -177,41 +179,37 @@ function AdminMembersPageInner() {
       .sort((a, b) => a.fullName.localeCompare(b.fullName, undefined, { sensitivity: "base" }));
   }, [members, statusTab, jobGroupFilter, q]);
 
-  const csvCell = (value: string | number | undefined | null) => {
-    let s = String(value ?? "");
-    // Neutralise spreadsheet formula injection in user-supplied text.
-    if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
-    return `"${s.replace(/"/g, '""')}"`;
-  };
+  const [exporting, setExporting] = useState(false);
 
-  const handleExportCSV = () => {
+  const handleExportExcel = async () => {
     if (visibleMembers.length === 0) {
       toast.error("No members in this view to export.");
       return;
     }
-    const headers = ["Name", "TSC Number", "Job Group", "School", "Sub-County", "Phone", "Email", "Status"];
-    const rows = visibleMembers.map((m) => [
-      m.fullName,
-      m.tscNumber,
-      m.jobGroup ?? "",
-      m.school,
-      m.subCounty,
-      m.phone,
-      m.email,
-      m.status,
-    ]);
-    const csv = [headers, ...rows].map((r) => r.map(csvCell).join(",")).join("\r\n");
-    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const groupPart = jobGroupFilter === "all" ? "" : `_JobGroup-${jobGroupFilter === "none" ? "Unset" : jobGroupFilter}`;
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `KUPPET_Busia_Members${groupPart}_${statusTab}_${new Date().toISOString().split("T")[0]}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    toast.success(`Exported ${visibleMembers.length} member${visibleMembers.length === 1 ? "" : "s"}.`);
+    setExporting(true);
+    try {
+      const groupPart = jobGroupFilter === "all" ? "" : `_JobGroup-${jobGroupFilter === "none" ? "Unset" : jobGroupFilter}`;
+      await downloadExcel({
+        fileName: `KUPPET_Busia_Members${groupPart}_${statusTab}_${new Date().toISOString().split("T")[0]}.xlsx`,
+        sheetName: "Members",
+        columns: [
+          { header: "Name" },
+          { header: "TSC Number", text: true },
+          { header: "Job Group" },
+          { header: "School" },
+          { header: "Sub-County" },
+          { header: "Phone", text: true },
+          { header: "Email" },
+          { header: "Status" },
+        ],
+        rows: visibleMembers.map((m) => [m.fullName, m.tscNumber, m.jobGroup ?? "", m.school, m.subCounty, m.phone, m.email, m.status]),
+      });
+      toast.success(`Exported ${visibleMembers.length} member${visibleMembers.length === 1 ? "" : "s"}.`);
+    } catch {
+      toast.error("Export failed. Please try again.");
+    } finally {
+      setExporting(false);
+    }
   };
 
   const columns: Column<Doc<"users"> & { photoUrl: string | null }>[] = [
@@ -369,20 +367,20 @@ function AdminMembersPageInner() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <select
-                value={jobGroupFilter}
-                onChange={(e) => setJobGroupFilter(e.target.value)}
-                aria-label="Filter by job group"
-                className="h-[40px] rounded-[var(--r-md)] border border-[var(--line-strong)] bg-[var(--surface)] px-3 text-[13.5px] text-[var(--ink-body)] focus:border-[var(--union)] focus:outline-none focus:ring-2 focus:ring-[rgba(31,61,92,0.12)] cursor-pointer"
-              >
-                <option value="all">All job groups</option>
-                {JOB_GROUPS.map((g) => (
-                  <option key={g} value={g}>Job Group {g}</option>
-                ))}
-                <option value="none">Not set</option>
-              </select>
-              <Button variant="secondary" size="sm" onClick={handleExportCSV}>
-                <Download className="mr-1.5 h-4 w-4" /> Export CSV
+              <Select value={jobGroupFilter} onValueChange={setJobGroupFilter}>
+                <SelectTrigger aria-label="Filter by job group" className="h-[40px] w-[180px] text-[13.5px]">
+                  <SelectValue placeholder="All job groups" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All job groups</SelectItem>
+                  {JOB_GROUPS.map((g) => (
+                    <SelectItem key={g} value={g}>Job Group {g}</SelectItem>
+                  ))}
+                  <SelectItem value="none">Not set</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button variant="secondary" size="sm" onClick={handleExportExcel} disabled={exporting}>
+                <Download className="mr-1.5 h-4 w-4" /> {exporting ? "Exporting…" : "Export Excel"}
               </Button>
             </div>
 

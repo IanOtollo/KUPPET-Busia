@@ -22,6 +22,7 @@ import { api } from "../../../../../convex/_generated/api";
 import { SUB_COUNTIES, BEREAVEMENT_STATUSES, SubCounty, BereavementStatus } from "@/lib/constants";
 import { Doc } from "../../../../../convex/_generated/dataModel";
 import { toast } from "sonner";
+import { downloadExcel } from "@/lib/exportExcel";
 
 export default function AdminBereavementPage() {
   const router = useRouter();
@@ -36,53 +37,49 @@ export default function AdminBereavementPage() {
     subCounty: querySubCounty,
   });
 
-  const handleExportCSV = () => {
+  const [exporting, setExporting] = useState(false);
+
+  const handleExportExcel = async () => {
     if (!cases || cases.length === 0) {
       toast.error("No case records available to export.");
       return;
     }
-
-    const headers = [
-      "Reference",
-      "Member Name",
-      "TSC Number",
-      "School",
-      "Sub-County",
-      "Deceased Name",
-      "Relationship",
-      "Date of Loss",
-      "Status",
-      "Support Amount",
-    ];
-
-    const rows = cases.map((c: Doc<"bereavementCases">) => [
-      c.reference,
-      `"${c.memberNameSnapshot}"`,
-      c.tscSnapshot,
-      `"${c.school}"`,
-      c.subCounty,
-      `"${c.deceasedName}"`,
-      c.relationship,
-      c.dateOfBereavement,
-      c.status,
-      c.supportAmount || 0,
-    ]);
-
-    const csvContent =
-      "data:text/csv;charset=utf-8," +
-      [headers.join(","), ...rows.map((e: (string | number)[]) => e.join(","))].join("\n");
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute(
-      "download",
-      `KUPPET_Busia_Bereavement_${new Date().toISOString().split("T")[0]}.csv`
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success("Bereavement CSV exported successfully.");
+    setExporting(true);
+    try {
+      await downloadExcel({
+        fileName: `KUPPET_Busia_Bereavement_${new Date().toISOString().split("T")[0]}.xlsx`,
+        sheetName: "Bereavement",
+        columns: [
+          { header: "Reference" },
+          { header: "Member Name" },
+          { header: "TSC Number", text: true },
+          { header: "School" },
+          { header: "Sub-County" },
+          { header: "Deceased Name" },
+          { header: "Relationship" },
+          { header: "Date of Loss" },
+          { header: "Status" },
+          { header: "Support Amount (KES)", numFmt: "#,##0" },
+        ],
+        rows: cases.map((c: Doc<"bereavementCases">) => [
+          c.reference,
+          c.memberNameSnapshot,
+          c.tscSnapshot,
+          c.school,
+          c.subCounty,
+          c.deceasedName,
+          c.relationship,
+          c.dateOfBereavement,
+          c.status,
+          c.supportAmount || 0,
+        ]),
+      });
+      toast.success("Bereavement Excel file exported successfully.");
+    } catch {
+      toast.error("Export failed. Please try again.");
+    } finally {
+      setExporting(false);
+    }
   };
 
   const columns: Column<Doc<"bereavementCases">>[] = [
@@ -159,8 +156,8 @@ export default function AdminBereavementPage() {
           { label: "Bereavement Queue" },
         ]}
         action={
-          <Button variant="secondary" size="sm" onClick={handleExportCSV}>
-            <Download className="h-4 w-4 mr-1.5" /> Export Filtered CSV
+          <Button variant="secondary" size="sm" onClick={handleExportExcel} disabled={exporting}>
+            <Download className="h-4 w-4 mr-1.5" /> {exporting ? "Exporting…" : "Export Filtered Excel"}
           </Button>
         }
       />
