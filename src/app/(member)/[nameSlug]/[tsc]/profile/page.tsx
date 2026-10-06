@@ -37,6 +37,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../../convex/_generated/api";
 import { toast } from "sonner";
 import { User, Phone, Mail, School, Briefcase, BookOpen, Edit, Check, Save, ArrowRightLeft } from "lucide-react";
+import { SchoolPicker } from "@/components/modules/SchoolPicker";
 import { ProfilePhotoUpload } from "@/components/modules/ProfilePhotoUpload";
 import { useMemberBasePath } from "@/lib/memberPath";
 
@@ -314,7 +315,12 @@ export default function MemberProfilePage() {
           <form onSubmit={handleReportTransfer} className="space-y-4 pt-2">
             <div>
               <Label htmlFor="trSchool">New School / Institution</Label>
-              <Input id="trSchool" value={trSchool} onChange={(e) => setTrSchool(e.target.value)} required />
+              <SchoolPicker
+                id="trSchool"
+                value={trSchool}
+                onChange={setTrSchool}
+                onPick={(s) => setTrSubCounty(s.subCounty)}
+              />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

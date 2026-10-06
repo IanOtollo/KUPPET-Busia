@@ -115,7 +115,7 @@ function NoticeCard({
   const long = a.body.length > 220;
   const important = a.priority === "important";
   return (
-    <article className="rounded-[var(--r-md)] border border-[var(--brass)]/25 bg-[var(--surface)] p-5">
+    <article className="rounded-[var(--r-md)] border border-[var(--brass)]/25 bg-[var(--surface)] p-6">
       <div className="flex items-start justify-between gap-3">
         <h3 className="text-[18px] font-semibold leading-snug text-[var(--ink)]">{a.title}</h3>
         {important && (
@@ -269,7 +269,7 @@ export default function MemberDashboardPage() {
     unreadMessages !== undefined;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-12 lg:space-y-14">
       {/* 1. Greeting */}
       <div>
         <span className="eyebrow block mb-1">MEMBER PORTAL</span>
@@ -350,7 +350,7 @@ export default function MemberDashboardPage() {
               return (
                 <Card interactive key={item.id} className="border-l-4 border-l-[var(--union)]">
                   <Link href={item.href}>
-                    <CardContent className="flex items-center gap-4 pt-5 pb-5">
+                    <CardContent className="flex items-center gap-5 pt-7 pb-7">
                       <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[var(--union-soft)]">
                         <Icon className="h-5 w-5 text-[var(--union)]" />
                       </span>
@@ -425,19 +425,19 @@ export default function MemberDashboardPage() {
             helper="Notices from the branch office. For your information; nothing to do."
           />
           <div className="space-y-3">
-            {(showAllNotices ? regularAnnouncements : regularAnnouncements.slice(0, 2)).map(
+            {(showAllNotices ? regularAnnouncements : regularAnnouncements.slice(0, 1)).map(
               (a: { _id: string; title: string; body: string; priority: string; publishedAt: string; expiresAt?: string }) => (
                 <NoticeCard key={a._id} a={a} nowMs={nowMs} />
               )
             )}
           </div>
-          {regularAnnouncements.length > 2 && (
+          {regularAnnouncements.length > 1 && (
             <button
               type="button"
               onClick={() => setShowAllNotices((v) => !v)}
               className="mt-4 inline-flex items-center gap-1.5 text-[16px] font-semibold text-[var(--union)] hover:underline cursor-pointer"
             >
-              {showAllNotices ? "Show fewer notices" : `Show ${regularAnnouncements.length - 2} more`}
+              {showAllNotices ? "Show fewer notices" : `Show ${regularAnnouncements.length - 1} more`}
               <ChevronDown className={`h-4 w-4 transition-transform ${showAllNotices ? "rotate-180" : ""}`} />
             </button>
           )}
@@ -448,29 +448,29 @@ export default function MemberDashboardPage() {
       <section>
         <h2 className="mb-1 font-serif text-[22px] font-semibold text-[var(--ink)]">Quick actions</h2>
         <p className="mb-4 text-[16px] text-[var(--ink-muted)]">Start something new.</p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <Button variant="secondary" className="h-[56px] justify-start px-4 text-left text-[16px]" asChild>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Button variant="secondary" className="h-[64px] justify-start px-5 text-left text-[17px]" asChild>
             <Link href={`${basePath}/bereavement/new`}>
               <HeartHandshake className="h-4 w-4 text-[var(--union)] shrink-0" />
               <span className="truncate">Report Bereavement</span>
             </Link>
           </Button>
 
-          <Button variant="secondary" className="h-[56px] justify-start px-4 text-left text-[16px]" asChild>
+          <Button variant="secondary" className="h-[64px] justify-start px-5 text-left text-[17px]" asChild>
             <Link href={`${basePath}/bus/new`}>
               <Bus className="h-4 w-4 text-[var(--union)] shrink-0" />
               <span className="truncate">Book Union Bus</span>
             </Link>
           </Button>
 
-          <Button variant="secondary" className="h-[56px] justify-start px-4 text-left text-[16px]" asChild>
+          <Button variant="secondary" className="h-[64px] justify-start px-5 text-left text-[17px]" asChild>
             <Link href={`${basePath}/transfers`}>
               <ArrowRightLeft className="h-4 w-4 text-[var(--union)] shrink-0" />
               <span className="truncate">Transfers & Swaps</span>
             </Link>
           </Button>
 
-          <Button variant="secondary" className="h-[56px] justify-start px-4 text-left text-[16px]" asChild>
+          <Button variant="secondary" className="h-[64px] justify-start px-5 text-left text-[17px]" asChild>
             <Link href={`${basePath}/branch/officials`}>
               <Users className="h-4 w-4 text-[var(--union)] shrink-0" />
               <span className="truncate">Branch Directory</span>
@@ -480,10 +480,12 @@ export default function MemberDashboardPage() {
       </section>
 
       {/* 7. Branch leadership contacts */}
-      <div className="p-5 rounded-[var(--r-lg)] border border-[var(--line)] bg-[var(--surface)]">
-        <h4 className="font-serif text-[17px] font-semibold text-[var(--ink)] mb-3">
-          Your Branch Leadership Contacts
-        </h4>
+      <details className="group rounded-[var(--r-lg)] border border-[var(--line)] bg-[var(--surface)] p-6">
+        <summary className="flex cursor-pointer list-none items-center justify-between font-serif text-[22px] font-semibold text-[var(--heading-accent)]">
+          Branch leadership contacts
+          <ChevronDown className="h-5 w-5 transition-transform group-open:rotate-180" />
+        </summary>
+        <div className="mt-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-[15px]">
           {leadershipContacts && leadershipContacts.length > 0 ? (
             leadershipContacts.map((official: { _id: string; fullName: string; position: string; phone?: string }) => (
@@ -512,7 +514,8 @@ export default function MemberDashboardPage() {
             </p>
           )}
         </div>
-      </div>
+        </div>
+      </details>
     </div>
   );
 }

@@ -433,7 +433,7 @@ export default function MemberLayout({
         </header>
 
         <main id="main-content" tabIndex={-1} className="flex-1 pb-[88px] lg:pb-12 outline-none">
-          <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-10 py-6 lg:py-8">
+          <div className="max-w-[960px] mx-auto px-5 sm:px-8 lg:px-10 py-8 lg:py-14">
             {children}
           </div>
         </main>

@@ -72,6 +72,14 @@ export const roster = query({
 
 const SCHOOL_NAME_RE = /^[\p{L}\p{N} .,'&()\/-]+$/u;
 
+/** Spelling-insensitive key: drops "secondary"/"school", case, spaces and punctuation. */
+function schoolMatchKey(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/\b(secondary|school|sec|sch)\b/g, " ")
+    .replace(/[^a-z0-9]+/g, "");
+}
+
 function cleanSchoolName(raw: string): string {
   const name = raw.replace(/\s+/g, " ").trim();
   if (name.length < 3 || name.length > 120 || !SCHOOL_NAME_RE.test(name)) {
@@ -89,9 +97,9 @@ function cleanSchoolName(raw: string): string {
  */
 export async function ensureSchool(ctx: MutationCtx, rawName: string, subCounty: string) {
   const name = cleanSchoolName(rawName);
-  const key = name.toLowerCase();
+  const key = schoolMatchKey(name);
   const existing = await ctx.db.query("schools").take(3000);
-  const match = existing.find((s) => s.name.toLowerCase().replace(/\s+/g, " ").trim() === key);
+  const match = existing.find((s) => schoolMatchKey(s.name) === key);
   if (match) return { name: match.name, created: false };
 
   await ctx.db.insert("schools", {
@@ -136,7 +144,7 @@ export const update = mutation({
 
     const name = cleanSchoolName(args.name);
     const all = await ctx.db.query("schools").take(3000);
-    if (all.some((s) => s._id !== args.id && s.name.toLowerCase() === name.toLowerCase())) {
+    if (all.some((s) => s._id !== args.id && schoolMatchKey(s.name) === schoolMatchKey(name))) {
       throw new ConvexError({ code: "DUPLICATE_SCHOOL", message: `"${name}" already exists in the directory.` });
     }
     if (name === school.name && args.subCounty === school.subCounty) return { changed: false };
