@@ -141,7 +141,7 @@ export default function AdminHarassmentDetailPage({
   if (loadError || !report) {
     return (
       <div className="p-8 text-center bg-[var(--surface)] border border-[var(--line)] rounded-[var(--r-lg)]">
-        <p className="text-[15px] text-[var(--danger)] mb-4">{loadError || "Report not found."}</p>
+        <p className="text-[16px] text-[var(--danger)] mb-4">{loadError || "Report not found."}</p>
         <Button asChild>
           <Link href="/admin/harassment">Back to Reports Queue</Link>
         </Button>
@@ -164,14 +164,14 @@ export default function AdminHarassmentDetailPage({
       />
 
       {/* Audit Logged Banner */}
-      <div className="p-3.5 rounded-[var(--r-md)] bg-[var(--brass-soft)] border border-[var(--brass)]/30 mb-6 flex items-center justify-between text-[13px]">
+      <div className="p-3.5 rounded-[var(--r-md)] bg-[var(--brass-soft)] border border-[var(--brass)]/30 mb-6 flex items-center justify-between text-[14.5px]">
         <div className="flex items-center gap-2">
           <Lock className="h-4 w-4 text-[var(--brass)]" />
           <span>
             This file access has been logged in the system audit trail (<code>harassment.view</code>).
           </span>
         </div>
-        <span className="mono-ref text-[12px] font-semibold text-[var(--ink)]">
+        <span className="mono-ref text-[13.5px] font-semibold text-[var(--ink)]">
           {report.reference}
         </span>
       </div>
@@ -184,9 +184,9 @@ export default function AdminHarassmentDetailPage({
               <CardTitle>Incident Investigation Record</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-[14.5px]">
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-[16px]">
                 <div>
-                  <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">
+                  <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)]">
                     Anonymity Status
                   </dt>
                   <dd className="font-semibold text-[var(--ink)] mt-0.5">
@@ -197,14 +197,14 @@ export default function AdminHarassmentDetailPage({
                 {!report.isAnonymous && (
                   <>
                     <div>
-                      <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">
+                      <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)]">
                         Reporter Name
                       </dt>
                       <dd className="font-medium mt-0.5">{report.reporterName || "Not provided"}</dd>
                     </div>
 
                     <div>
-                      <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">
+                      <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)]">
                         Reporter Contact
                       </dt>
                       <dd className="font-medium mt-0.5">{report.reporterContact || "Not provided"}</dd>
@@ -213,7 +213,7 @@ export default function AdminHarassmentDetailPage({
                 )}
 
                 <div>
-                  <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">
+                  <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)]">
                     Involved Person Role
                   </dt>
                   <dd className="font-medium mt-0.5">{report.involvedRole}</dd>
@@ -221,7 +221,7 @@ export default function AdminHarassmentDetailPage({
 
                 {report.involvedName && (
                   <div>
-                    <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">
+                    <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)]">
                       Name of Person Involved
                     </dt>
                     <dd className="font-medium mt-0.5">{report.involvedName}</dd>
@@ -229,28 +229,28 @@ export default function AdminHarassmentDetailPage({
                 )}
 
                 <div>
-                  <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">
+                  <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)]">
                     Date of Occurrence
                   </dt>
                   <dd className="mt-0.5">{formatDate(report.occurredAt)}</dd>
                 </div>
 
                 <div>
-                  <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">
+                  <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)]">
                     Is Ongoing?
                   </dt>
                   <dd className="mt-0.5 font-medium">{report.isOngoing ? "Yes (Ongoing)" : "No"}</dd>
                 </div>
 
                 <div className="sm:col-span-2 pt-3 border-t border-[var(--line)]">
-                  <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)] mb-1">
+                  <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)] mb-1">
                     Requested Support Actions
                   </dt>
                   <dd className="flex flex-wrap gap-2 mt-1">
                     {report.supportNeeded.map((sup: string) => (
                       <span
                         key={sup}
-                        className="px-2.5 py-1 rounded-[var(--r-full)] bg-[var(--union-soft)] text-[var(--union)] text-[12.5px] font-semibold"
+                        className="px-2.5 py-1 rounded-[var(--r-full)] bg-[var(--union-soft)] text-[var(--union)] text-[14px] font-semibold"
                       >
                         {sup}
                       </span>
@@ -259,16 +259,16 @@ export default function AdminHarassmentDetailPage({
                 </div>
 
                 <div className="sm:col-span-2 pt-3 border-t border-[var(--line)]">
-                  <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)] mb-2">
+                  <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)] mb-2">
                     Full Incident Narrative Statement
                   </dt>
-                  <dd className="text-[14px] leading-relaxed text-[var(--ink-body)] bg-[var(--canvas)] p-4 rounded-[var(--r-md)] border border-[var(--line)] whitespace-pre-line font-serif">
+                  <dd className="text-[15.5px] leading-relaxed text-[var(--ink-body)] bg-[var(--canvas)] p-4 rounded-[var(--r-md)] border border-[var(--line)] whitespace-pre-line font-serif">
                     {report.narrative}
                   </dd>
                 </div>
 
                 <div className="sm:col-span-2 pt-3 border-t border-[var(--line)]">
-                  <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)] mb-2 flex items-center gap-1.5">
+                  <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)] mb-2 flex items-center gap-1.5">
                     <Paperclip className="h-3.5 w-3.5" /> Supporting Evidence
                   </dt>
                   {report.evidenceUrls && report.evidenceUrls.length > 0 ? (
@@ -280,18 +280,18 @@ export default function AdminHarassmentDetailPage({
                               href={ev.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-2 text-[13.5px] text-[var(--union)] hover:underline"
+                              className="inline-flex items-center gap-2 text-[15px] text-[var(--union)] hover:underline"
                             >
                               <Paperclip className="h-3.5 w-3.5" /> Evidence file {idx + 1}
                             </a>
                           ) : (
-                            <span className="text-[13.5px] text-[var(--ink-muted)]">Evidence file {idx + 1} (unavailable)</span>
+                            <span className="text-[15px] text-[var(--ink-muted)]">Evidence file {idx + 1} (unavailable)</span>
                           )}
                         </li>
                       ))}
                     </ul>
                   ) : (
-                    <p className="text-[13px] text-[var(--ink-muted)] italic">
+                    <p className="text-[14.5px] text-[var(--ink-muted)] italic">
                       No evidence files were attached to this report.
                     </p>
                   )}
@@ -309,20 +309,20 @@ export default function AdminHarassmentDetailPage({
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <span className="text-[12px] uppercase font-semibold text-[var(--ink-muted)] block mb-1">
+                <span className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)] block mb-1">
                   Current Status
                 </span>
                 <StatusBadge status={report.status} />
               </div>
 
               {report.statusReason && (
-                <div className="p-3 bg-[var(--surface-sunk)] border border-[var(--line)] rounded-[var(--r-md)] text-[13px]">
+                <div className="p-3 bg-[var(--surface-sunk)] border border-[var(--line)] rounded-[var(--r-md)] text-[14.5px]">
                   <strong>Remarks:</strong> {report.statusReason}
                 </div>
               )}
 
               {(HARASSMENT_TRANSITIONS[report.status] ?? []).length === 0 ? (
-                <p className="pt-4 border-t border-[var(--line)] text-[13.5px] text-[var(--ink-muted)]">
+                <p className="pt-4 border-t border-[var(--line)] text-[15px] text-[var(--ink-muted)]">
                   This report is <strong className="text-[var(--ink)]">{report.status.replace(/_/g, " ")}</strong> and
                   can no longer be changed.
                 </p>
@@ -360,7 +360,7 @@ export default function AdminHarassmentDetailPage({
                     }
                   />
                   {newStatus === "closed_no_action" && (
-                    <p className="text-[11.5px] text-[var(--danger)] mt-1 flex items-center gap-1">
+                    <p className="text-[13px] text-[var(--danger)] mt-1 flex items-center gap-1">
                       <AlertCircle className="h-3.5 w-3.5" />
                       Closing with no action requires a reason.
                     </p>

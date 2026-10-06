@@ -75,7 +75,7 @@ export default function ForgotPasswordPage() {
         <h2 className="font-serif text-[26px] font-semibold text-[var(--ink)] leading-tight">
           Forgot Password
         </h2>
-        <p className="text-[14px] text-[var(--ink-muted)] mt-1">
+        <p className="text-[15.5px] text-[var(--ink-muted)] mt-1">
           Enter your TSC number and National ID number. The Executive Secretary will
           verify and reset your account.
         </p>
@@ -83,7 +83,7 @@ export default function ForgotPasswordPage() {
 
       {submitted ? (
         <div className="space-y-4">
-          <div className="p-4 rounded-[var(--r-md)] bg-[var(--surface-sunk)] border border-[var(--line)] text-[13.5px] leading-relaxed text-[var(--ink-body)]">
+          <div className="p-4 rounded-[var(--r-md)] bg-[var(--surface-sunk)] border border-[var(--line)] text-[15px] leading-relaxed text-[var(--ink-body)]">
             <div className="flex items-center gap-2 font-semibold text-[var(--ink)] mb-2">
               <CheckCircle2 className="h-4 w-4 text-[var(--union)]" /> Request received
             </div>
@@ -115,7 +115,7 @@ export default function ForgotPasswordPage() {
               {...register("tscNumber")}
             />
             {errors.tscNumber && (
-              <p className="text-[13px] text-[var(--danger)] mt-1">{errors.tscNumber.message}</p>
+              <p className="text-[14.5px] text-[var(--danger)] mt-1">{errors.tscNumber.message}</p>
             )}
           </div>
 
@@ -130,7 +130,7 @@ export default function ForgotPasswordPage() {
               {...register("idNumber")}
             />
             {errors.idNumber && (
-              <p className="text-[13px] text-[var(--danger)] mt-1">{errors.idNumber.message}</p>
+              <p className="text-[14.5px] text-[var(--danger)] mt-1">{errors.idNumber.message}</p>
             )}
           </div>
 
@@ -142,7 +142,7 @@ export default function ForgotPasswordPage() {
           <div className="pt-2 text-center">
             <Link
               href="/login"
-              className="text-[13px] text-[var(--ink-muted)] hover:text-[var(--ink)] inline-flex items-center gap-1.5"
+              className="text-[14.5px] text-[var(--ink-muted)] hover:text-[var(--ink)] inline-flex items-center gap-1.5"
             >
               <ArrowLeft className="h-3.5 w-3.5" /> Back to Sign In
             </Link>

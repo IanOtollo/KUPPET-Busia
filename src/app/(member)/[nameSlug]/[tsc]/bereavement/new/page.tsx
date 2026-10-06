@@ -185,12 +185,12 @@ export default function NewBereavementPage() {
           <h2 className="font-serif text-[26px] sm:text-[32px] font-bold text-[var(--ink)] mb-2">
             Bereavement Case Received
           </h2>
-          <p className="text-[15px] text-[var(--ink-muted)] mb-6">
+          <p className="text-[16px] text-[var(--ink-muted)] mb-6">
             Your bereavement notification has been registered in the branch welfare system.
           </p>
 
           <div className="p-4 rounded-[var(--r-md)] bg-[var(--surface-sunk)] border border-[var(--line)] mb-6 text-center">
-            <span className="text-[12px] uppercase tracking-wider text-[var(--ink-muted)] font-semibold block">
+            <span className="text-[13.5px] uppercase tracking-wider text-[var(--ink-muted)] font-semibold block">
               Official Reference Code
             </span>
             <span className="mono-ref text-[20px] sm:text-[24px] font-bold text-[var(--union)] block mt-1">
@@ -203,9 +203,9 @@ export default function NewBereavementPage() {
             <h4 className="font-serif text-[16px] font-semibold text-[var(--ink)] mb-4">
               What happens next:
             </h4>
-            <div className="space-y-4 text-[14px]">
+            <div className="space-y-4 text-[15.5px]">
               <div className="flex items-start gap-3">
-                <span className="w-6 h-6 rounded-full bg-[var(--union)] text-white font-semibold text-[12px] flex items-center justify-center shrink-0 mt-0.5">
+                <span className="w-6 h-6 rounded-full bg-[var(--union)] text-white font-semibold text-[13.5px] flex items-center justify-center shrink-0 mt-0.5">
                   1
                 </span>
                 <div>
@@ -217,7 +217,7 @@ export default function NewBereavementPage() {
               </div>
 
               <div className="flex items-start gap-3">
-                <span className="w-6 h-6 rounded-full bg-[var(--union)] text-white font-semibold text-[12px] flex items-center justify-center shrink-0 mt-0.5">
+                <span className="w-6 h-6 rounded-full bg-[var(--union)] text-white font-semibold text-[13.5px] flex items-center justify-center shrink-0 mt-0.5">
                   2
                 </span>
                 <div>
@@ -229,7 +229,7 @@ export default function NewBereavementPage() {
               </div>
 
               <div className="flex items-start gap-3">
-                <span className="w-6 h-6 rounded-full bg-[var(--union)] text-white font-semibold text-[12px] flex items-center justify-center shrink-0 mt-0.5">
+                <span className="w-6 h-6 rounded-full bg-[var(--union)] text-white font-semibold text-[13.5px] flex items-center justify-center shrink-0 mt-0.5">
                   3
                 </span>
                 <div>
@@ -275,7 +275,7 @@ export default function NewBereavementPage() {
       {/* Mandatory Dual-Language Policy Notice */}
       <div className="p-4 rounded-[var(--r-md)] bg-[var(--info-soft)] border border-[var(--info)]/20 mb-8 flex items-start gap-3.5">
         <Info className="h-5 w-5 text-[var(--info)] shrink-0 mt-0.5" />
-        <div className="text-[14px] leading-relaxed text-[var(--ink-body)]">
+        <div className="text-[15.5px] leading-relaxed text-[var(--ink-body)]">
           <p className="font-semibold text-[var(--ink)]">
             Branch Welfare Policy (Sera ya Ustawi wa Tawi):
           </p>
@@ -293,7 +293,7 @@ export default function NewBereavementPage() {
               <h3 className="font-serif text-[18px] font-semibold text-[var(--ink)] mb-1 flex items-center gap-2">
                 1. Your Details <Lock className="h-4 w-4 text-[var(--ink-muted)]" />
               </h3>
-              <p className="text-[12.5px] text-[var(--ink-muted)] mb-4">
+              <p className="text-[14px] text-[var(--ink-muted)] mb-4">
                 Filled in from your profile. You only need to enter the deceased&apos;s details below.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -342,7 +342,7 @@ export default function NewBereavementPage() {
                     ))}
                   </NativeSelect>
                   {(relationshipLocked || nameLocked) && (
-                    <p className="text-[13px] text-[var(--danger)] mt-1 flex items-start gap-1.5">
+                    <p className="text-[14.5px] text-[var(--danger)] mt-1 flex items-start gap-1.5">
                       <Lock className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                       {childLimitReached
                         ? "You have already claimed for 4 children, which is the maximum."
@@ -351,11 +351,11 @@ export default function NewBereavementPage() {
                         : "A bereavement for this person is already on record."}
                     </p>
                   )}
-                  <p className="text-[11.5px] text-[var(--ink-muted)] mt-1">
+                  <p className="text-[13px] text-[var(--ink-muted)] mt-1">
                     Uhusiano wako na marehemu — mama, baba, mke/mume, au mtoto wako pekee.
                   </p>
                   {errors.relationship && (
-                    <p className="text-[13px] text-[var(--danger)] mt-1">
+                    <p className="text-[14.5px] text-[var(--danger)] mt-1">
                       {errors.relationship.message}
                     </p>
                   )}
@@ -372,7 +372,7 @@ export default function NewBereavementPage() {
                     {...register("deceasedName")}
                   />
                   {errors.deceasedName && (
-                    <p className="text-[13px] text-[var(--danger)] mt-1">
+                    <p className="text-[14.5px] text-[var(--danger)] mt-1">
                       {errors.deceasedName.message}
                     </p>
                   )}
@@ -389,11 +389,11 @@ export default function NewBereavementPage() {
                     error={!!errors.dateOfBereavement}
                     {...register("dateOfBereavement")}
                   />
-                  <p className="text-[11.5px] text-[var(--ink-muted)] mt-1">
+                  <p className="text-[13px] text-[var(--ink-muted)] mt-1">
                     Must not exceed 180 days from occurrence.
                   </p>
                   {errors.dateOfBereavement && (
-                    <p className="text-[13px] text-[var(--danger)] mt-1">
+                    <p className="text-[14.5px] text-[var(--danger)] mt-1">
                       {errors.dateOfBereavement.message}
                     </p>
                   )}
@@ -421,7 +421,7 @@ export default function NewBereavementPage() {
                 <div className="md:col-span-2">
                   <div className="flex items-center justify-between mb-1">
                     <Label htmlFor="details" optional>Additional Welfare Information</Label>
-                    <span className="text-[12px] text-[var(--ink-muted)]">
+                    <span className="text-[13.5px] text-[var(--ink-muted)]">
                       {detailsValue.length} / 700 chars
                     </span>
                   </div>
@@ -433,14 +433,14 @@ export default function NewBereavementPage() {
                     {...register("details")}
                   />
                   {errors.details && (
-                    <p className="text-[13px] text-[var(--danger)] mt-1">
+                    <p className="text-[14.5px] text-[var(--danger)] mt-1">
                       {errors.details.message}
                     </p>
                   )}
                 </div>
 
                 <div className="md:col-span-2 space-y-4">
-                  <div className="p-3 rounded-[var(--r-md)] bg-[var(--info-soft)] border border-[var(--info)]/20 text-[13px] text-[var(--ink-body)]">
+                  <div className="p-3 rounded-[var(--r-md)] bg-[var(--info-soft)] border border-[var(--info)]/20 text-[14.5px] text-[var(--ink-body)]">
                     <strong className="text-[var(--ink)]">Both documents are required.</strong> The burial permit proves the
                     bereavement. The payslip (your latest, showing the KUPPET deduction) confirms you are a paying member.
                     PDF, JPG or PNG, up to 10 MB each.
@@ -456,7 +456,7 @@ export default function NewBereavementPage() {
                       </Label>
                       <label
                         htmlFor={id}
-                        className="mt-1 flex cursor-pointer items-center gap-2 rounded-[var(--r-md)] border border-dashed border-[var(--line-strong)] bg-[var(--surface-sunk)] p-3 text-[13.5px] text-[var(--ink-muted)] hover:bg-[var(--surface)]"
+                        className="mt-1 flex cursor-pointer items-center gap-2 rounded-[var(--r-md)] border border-dashed border-[var(--line-strong)] bg-[var(--surface-sunk)] p-3 text-[15px] text-[var(--ink-muted)] hover:bg-[var(--surface)]"
                       >
                         <Paperclip className="h-4 w-4 shrink-0" />
                         <span className="truncate">{file ? file.name : `Attach ${label.toLowerCase()} (PDF, JPG, PNG)`}</span>
@@ -487,13 +487,13 @@ export default function NewBereavementPage() {
                       />
                     </div>
                   ))}
-                  {docError && <p className="text-[13px] text-[var(--danger)]">{docError}</p>}
+                  {docError && <p className="text-[14.5px] text-[var(--danger)]">{docError}</p>}
 
                   <div>
                     <Label optional>Other Supporting Documents (e.g. Death Certificate)</Label>
                     <label
                       htmlFor="documents"
-                      className="mt-1 flex cursor-pointer items-center gap-2 rounded-[var(--r-md)] border border-dashed border-[var(--line-strong)] bg-[var(--surface-sunk)] p-3 text-[13.5px] text-[var(--ink-muted)] hover:bg-[var(--surface)]"
+                      className="mt-1 flex cursor-pointer items-center gap-2 rounded-[var(--r-md)] border border-dashed border-[var(--line-strong)] bg-[var(--surface-sunk)] p-3 text-[15px] text-[var(--ink-muted)] hover:bg-[var(--surface)]"
                     >
                       <Paperclip className="h-4 w-4 shrink-0" />
                       Attach files (PDF, JPG, PNG)
@@ -511,7 +511,7 @@ export default function NewBereavementPage() {
                         {documents.map((file, idx) => (
                           <li
                             key={`${file.name}-${idx}`}
-                            className="flex items-center justify-between rounded-[var(--r-sm)] bg-[var(--surface-sunk)] px-3 py-1.5 text-[13px] text-[var(--ink-body)]"
+                            className="flex items-center justify-between rounded-[var(--r-sm)] bg-[var(--surface-sunk)] px-3 py-1.5 text-[14.5px] text-[var(--ink-body)]"
                           >
                             <span className="truncate">{file.name}</span>
                             <button
@@ -538,7 +538,7 @@ export default function NewBereavementPage() {
               <h3 className="font-serif text-[18px] font-semibold text-[var(--ink)] mb-1">
                 3. Contribution Details
               </h3>
-              <p className="text-[12.5px] text-[var(--ink-muted)] mb-4">
+              <p className="text-[14px] text-[var(--ink-muted)] mb-4">
                 Where should colleagues send money towards the burial? Once the branch office approves your claim,
                 every member is notified of the bereavement together with these details.
               </p>
@@ -576,7 +576,7 @@ export default function NewBereavementPage() {
                     {...register("contributionNumber")}
                   />
                   {errors.contributionNumber && (
-                    <p className="text-[13px] text-[var(--danger)] mt-1">{errors.contributionNumber.message}</p>
+                    <p className="text-[14.5px] text-[var(--danger)] mt-1">{errors.contributionNumber.message}</p>
                   )}
                 </div>
 

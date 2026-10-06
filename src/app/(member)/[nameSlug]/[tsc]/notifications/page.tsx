@@ -72,7 +72,7 @@ export default function MemberNotificationsPage() {
                       </span>
                     )}
                     {!n.isRead && (
-                      <span className="px-2 py-0.5 rounded-full bg-[var(--union)] text-white text-[12px] font-bold">
+                      <span className="px-2 py-0.5 rounded-full bg-[var(--union)] text-white text-[13.5px] font-bold">
                         NEW
                       </span>
                     )}
@@ -80,7 +80,7 @@ export default function MemberNotificationsPage() {
                   <p className="text-[16.5px] text-[var(--ink-body)] leading-relaxed">
                     {n.body}
                   </p>
-                  <span className="text-[14px] text-[var(--ink-muted)] block">
+                  <span className="text-[15.5px] text-[var(--ink-muted)] block">
                     {formatRelativeTime(n.createdAt)}
                   </span>
                 </div>
@@ -88,7 +88,7 @@ export default function MemberNotificationsPage() {
                 {!n.isRead && (
                   <button
                     onClick={() => markRead({ id: n._id })}
-                    className="text-[14.5px] text-[var(--union)] hover:underline flex items-center gap-1 shrink-0 cursor-pointer"
+                    className="text-[16px] text-[var(--union)] hover:underline flex items-center gap-1 shrink-0 cursor-pointer"
                   >
                     <CheckCircle2 className="h-4 w-4" /> Mark read
                   </button>

@@ -97,7 +97,7 @@ export default function AdminBereavementPage() {
           <span className="font-semibold text-[var(--ink)] block">
             {item.memberNameSnapshot}
           </span>
-          <span className="mono-ref text-[12px] text-[var(--ink-muted)]">
+          <span className="mono-ref text-[13.5px] text-[var(--ink-muted)]">
             {item.tscSnapshot}
           </span>
         </div>
@@ -111,7 +111,7 @@ export default function AdminBereavementPage() {
           <span className="font-medium text-[var(--ink)] block">
             {item.deceasedName}
           </span>
-          <span className="text-[12px] uppercase tracking-wider text-[var(--brass)] font-semibold">
+          <span className="text-[13.5px] uppercase tracking-wider text-[var(--brass)] font-semibold">
             {item.relationship}
           </span>
         </div>
@@ -165,7 +165,7 @@ export default function AdminBereavementPage() {
       {/* Filter Bar */}
       <div className="flex flex-wrap items-center gap-3 p-4 rounded-[var(--r-md)] bg-[var(--surface)] border border-[var(--line)] mb-6 shadow-[var(--shadow-hair)]">
         <Filter className="h-4 w-4 text-[var(--ink-muted)]" />
-        <span className="text-[13px] font-semibold text-[var(--ink)]">Filter:</span>
+        <span className="text-[14.5px] font-semibold text-[var(--ink)]">Filter:</span>
 
         <div className="w-44">
           <Select value={selectedStatus} onValueChange={setSelectedStatus}>

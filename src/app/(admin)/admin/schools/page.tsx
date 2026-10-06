@@ -386,7 +386,7 @@ export default function AdminSchoolsPage() {
 
             <div className="space-y-4 pt-4">
               {rosterTeachers === undefined ? (
-                <div className="p-6 text-center text-[14px] text-slate-500">Loading staff…</div>
+                <div className="p-6 text-center text-[15.5px] text-slate-500">Loading staff…</div>
               ) : selectedSchoolRoster.teachers.length > 0 ? (
                 <div className="divide-y divide-[var(--line)] border border-[var(--line)] rounded-lg">
                   {selectedSchoolRoster.teachers.map((teacher: any) => (
@@ -394,10 +394,10 @@ export default function AdminSchoolsPage() {
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-slate-900">{teacher.fullName}</span>
-                          <Badge className="text-[11px] bg-[var(--union)] text-white">
+                          <Badge className="text-[12.5px] bg-[var(--union)] text-white">
                             {teacher.schoolRole}
                           </Badge>
-                          <Badge variant="neutral" className="text-[11px] border-slate-300">
+                          <Badge variant="neutral" className="text-[12.5px] border-slate-300">
                             TSC: {teacher.tscNumber}
                           </Badge>
                         </div>
@@ -414,11 +414,11 @@ export default function AdminSchoolsPage() {
                         {/* Teaching Subjects */}
                         {teacher.subjects && teacher.subjects.length > 0 && (
                           <div className="flex flex-wrap items-center gap-1 pt-1.5">
-                            <span className="text-[11px] text-slate-400 flex items-center gap-1 mr-1">
+                            <span className="text-[12.5px] text-slate-400 flex items-center gap-1 mr-1">
                               <BookOpen className="h-3 w-3" /> Subjects:
                             </span>
                             {teacher.subjects.map((sub: string) => (
-                              <Badge key={sub} variant="neutral" className="text-[10px] bg-slate-100 text-slate-700">
+                              <Badge key={sub} variant="neutral" className="text-[12px] bg-slate-100 text-slate-700">
                                 {sub}
                               </Badge>
                             ))}

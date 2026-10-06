@@ -12,10 +12,10 @@ export default function HomePage() {
           <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
             <Image src="/logo.png" alt="KUPPET Logo" width={112} height={56} className="h-14 w-auto object-contain shrink-0" priority />
             <div className="min-w-0">
-              <span className="block truncate text-[11px] font-semibold tracking-[0.04em] text-[var(--ink)] uppercase sm:text-[13px] sm:tracking-[0.08em]">
+              <span className="block truncate text-[12.5px] font-semibold tracking-[0.04em] text-[var(--ink)] uppercase sm:text-[14.5px] sm:tracking-[0.08em]">
                 KUPPET BUSIA
               </span>
-              <span className="block text-[10px] text-[var(--ink-muted)] sm:text-[11.5px]">
+              <span className="block text-[12px] text-[var(--ink-muted)] sm:text-[13px]">
                 Branch Portal
               </span>
             </div>
@@ -60,7 +60,7 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="border-t border-[var(--line)] bg-[var(--surface-sunk)] py-10">
-        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-10 flex flex-col sm:flex-row items-center justify-between gap-4 text-[13px] text-[var(--ink-muted)]">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-10 flex flex-col sm:flex-row items-center justify-between gap-4 text-[14.5px] text-[var(--ink-muted)]">
           <p>© 2026 KUPPET Busia Branch. All rights reserved.</p>
           <div className="flex items-center gap-6">
             <Link href="/about" className="hover:text-[var(--ink)]">About Branch</Link>

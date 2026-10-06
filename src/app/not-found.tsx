@@ -39,7 +39,7 @@ export default function NotFound() {
     <div className="min-h-screen bg-[var(--canvas)] flex items-center justify-center p-6 relative">
       <Link
         href="/"
-        className="absolute top-4 left-4 sm:top-8 sm:left-8 flex items-center gap-1.5 text-[13px] font-medium text-[var(--ink-muted)] hover:text-[var(--ink)] transition-colors"
+        className="absolute top-4 left-4 sm:top-8 sm:left-8 flex items-center gap-1.5 text-[14.5px] font-medium text-[var(--ink-muted)] hover:text-[var(--ink)] transition-colors"
       >
         <ArrowLeft className="h-4 w-4" /> Back to Home
       </Link>
@@ -63,10 +63,10 @@ export default function NotFound() {
         </div>
 
         <div className="pt-6 border-t border-[var(--line)]">
-          <p className="text-[12.5px] uppercase tracking-wider text-[var(--ink-muted)] font-semibold mb-3">
+          <p className="text-[14px] uppercase tracking-wider text-[var(--ink-muted)] font-semibold mb-3">
             Helpful Portals
           </p>
-          <div className="flex justify-center gap-6 text-[14px] text-[var(--union)]">
+          <div className="flex justify-center gap-6 text-[15.5px] text-[var(--union)]">
             {helpfulLinks.map((link) => (
               <Link key={link.href} href={link.href} className="hover:underline">
                 {link.label}

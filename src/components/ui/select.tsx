@@ -14,7 +14,7 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      "flex h-[44px] w-full items-center justify-between rounded-[var(--r-md)] border bg-[var(--surface)] px-[14px] py-2 text-[15px] text-[var(--ink-body)] shadow-[var(--shadow-hair)] transition-colors focus:outline-none disabled:cursor-not-allowed disabled:bg-[var(--surface-sunk)] disabled:opacity-60 [&>span]:line-clamp-1 cursor-pointer",
+      "flex h-[48px] w-full items-center justify-between rounded-[var(--r-md)] border bg-[var(--surface)] px-[14px] py-2 text-[16px] text-[var(--ink-body)] shadow-[var(--shadow-hair)] transition-colors focus:outline-none disabled:cursor-not-allowed disabled:bg-[var(--surface-sunk)] disabled:opacity-60 [&>span]:line-clamp-1 cursor-pointer",
       error
         ? "border-[var(--danger)] focus:ring-2 focus:ring-[var(--danger-soft)]"
         : "border-[var(--line-strong)] focus:border-[var(--union)] focus:ring-[3px] focus:ring-[rgba(31,61,92,0.12)]",
@@ -103,7 +103,7 @@ const SelectLabel = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SelectPrimitive.Label
     ref={ref}
-    className={cn("py-1.5 pl-8 pr-2 text-[12px] font-semibold text-[var(--ink-muted)]", className)}
+    className={cn("py-1.5 pl-8 pr-2 text-[13.5px] font-semibold text-[var(--ink-muted)]", className)}
     {...props}
   />
 ));
@@ -116,7 +116,7 @@ const SelectItem = React.forwardRef<
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex w-full cursor-pointer select-none items-center rounded-[var(--r-sm)] py-2 pl-8 pr-2 text-[14.5px] outline-none focus:bg-[var(--surface-sunk)] focus:text-[var(--ink)] data-[disabled]:pointer-events-none data-[disabled]:opacity-50 transition-colors",
+      "relative flex w-full cursor-pointer select-none items-center rounded-[var(--r-sm)] py-2 pl-8 pr-2 text-[16px] outline-none focus:bg-[var(--surface-sunk)] focus:text-[var(--ink)] data-[disabled]:pointer-events-none data-[disabled]:opacity-50 transition-colors",
       className
     )}
     {...props}

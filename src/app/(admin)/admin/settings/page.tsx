@@ -181,7 +181,7 @@ export default function AdminSettingsPage() {
             role="tab"
             aria-selected={tab === value}
             onClick={() => setTab(value)}
-            className={`rounded-[var(--r-sm)] px-3 py-2.5 text-[15px] font-semibold transition-colors cursor-pointer ${
+            className={`rounded-[var(--r-sm)] px-3 py-2.5 text-[16px] font-semibold transition-colors cursor-pointer ${
               tab === value ? "bg-[var(--surface)] text-[var(--union)] shadow-sm" : "text-[var(--ink-muted)]"
             }`}
           >

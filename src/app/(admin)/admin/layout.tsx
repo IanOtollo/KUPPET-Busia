@@ -56,7 +56,18 @@ const ADMIN_NAV_ITEMS: {
   { href: "/admin/announcements", label: "Announcements", icon: Megaphone },
   { href: "/admin/transfers", label: "Transfers & Swaps", icon: ArrowRightLeft },
   { href: "/admin/messages", label: "Messages", icon: MessageSquare, countKey: "issues" },
-  { href: "/admin/settings", label: "Branch Settings", icon: Settings },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
+];
+
+// The flat list above stays for search; the sidebar shows it in these groups,
+// ordered by how often an admin reaches for them.
+const ADMIN_NAV_GROUPS: { title: string; hrefs: string[] }[] = [
+  { title: "Overview", hrefs: ["/admin"] },
+  { title: "People", hrefs: ["/admin/members", "/admin/schools", "/admin/officials", "/admin/password-resets"] },
+  { title: "Welfare & Cases", hrefs: ["/admin/bereavement", "/admin/harassment", "/admin/transfers"] },
+  { title: "Operations", hrefs: ["/admin/bus", "/admin/reports"] },
+  { title: "Communication", hrefs: ["/admin/announcements", "/admin/messages"] },
+  { title: "System", hrefs: ["/admin/settings"] },
 ];
 
 function readLastSeen(userId: string, domain: string): number {
@@ -428,7 +439,7 @@ export default function AdminLayout({
           <div className={cn("h-[64px] flex items-center border-b border-white/10", sidebarCollapsed ? "lg:justify-center lg:px-0 px-6 justify-between" : "px-6 justify-between")}>
             <div className={cn("flex items-center gap-3", sidebarCollapsed && "lg:gap-0")}>
               <Image src="/logo.png" alt="KUPPET Logo" width={112} height={56} className="h-14 w-auto object-contain shrink-0" priority />
-              <span className={cn("whitespace-nowrap text-[12px] font-semibold tracking-[0.06em] text-white uppercase", sidebarCollapsed && "lg:hidden")}>
+              <span className={cn("whitespace-nowrap text-[13.5px] font-semibold tracking-[0.06em] text-white uppercase", sidebarCollapsed && "lg:hidden")}>
                 KUPPET BUSIA
               </span>
             </div>
@@ -444,8 +455,20 @@ export default function AdminLayout({
           </div>
 
           {/* Navigation Links */}
-          <nav className="p-3 space-y-1 overflow-y-auto max-h-[calc(100vh-160px)]">
-            {ADMIN_NAV_ITEMS.map((item) => {
+          <nav className="p-3 space-y-5 overflow-y-auto max-h-[calc(100vh-160px)]">
+            {ADMIN_NAV_GROUPS.map((group) => (
+              <div key={group.title}>
+                {group.hrefs.length > 0 && group.title !== "Overview" && (
+                  <span className={cn("mb-1.5 block px-3.5 text-[13.5px] font-semibold uppercase tracking-[0.1em] text-[#8E9CA8]", sidebarCollapsed && "lg:hidden")}>
+                    {group.title}
+                  </span>
+                )}
+                {group.title !== "Overview" && sidebarCollapsed && <div className="mx-3 mb-2 hidden h-px bg-white/10 lg:block" />}
+                <div className="space-y-1">
+            {group.hrefs
+              .map((h) => ADMIN_NAV_ITEMS.find((i) => i.href === h)!)
+              .filter(Boolean)
+              .map((item) => {
               const Icon = item.icon;
               const isActive = item.exact
                 ? pathname === item.href
@@ -459,7 +482,7 @@ export default function AdminLayout({
                   title={sidebarCollapsed ? item.label : undefined}
                   onClick={() => setMobileDrawerOpen(false)}
                   className={cn(
-                    "relative flex items-center gap-3 h-[42px] px-3.5 rounded-[var(--r-md)] text-[14px] font-medium transition-colors",
+                    "relative flex items-center gap-3 h-[44px] px-3.5 rounded-[var(--r-md)] text-[16px] font-medium transition-colors",
                     sidebarCollapsed && "lg:justify-center lg:px-0",
                     isActive
                       ? "bg-white/10 text-white font-semibold"
@@ -484,13 +507,16 @@ export default function AdminLayout({
                   </span>
                   <span className={cn(sidebarCollapsed && "lg:hidden")}>{item.label}</span>
                   {count > 0 && (
-                    <span className={cn("ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-[var(--brass)] px-1 text-[10px] font-bold text-[var(--ink)]", sidebarCollapsed && "lg:hidden")}>
+                    <span className={cn("ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-[var(--brass)] px-1 text-[12px] font-bold text-[var(--ink)]", sidebarCollapsed && "lg:hidden")}>
                       {count > 99 ? "99+" : count}
                     </span>
                   )}
                 </Link>
               );
             })}
+                </div>
+              </div>
+            ))}
           </nav>
         </div>
 
@@ -499,7 +525,7 @@ export default function AdminLayout({
           <div className="p-3 border-t border-white/10">
             <div className={cn("flex items-center justify-between p-2 rounded-[var(--r-md)] bg-white/5", sidebarCollapsed && "lg:justify-center")}>
               <div className={cn("flex items-center gap-2.5 overflow-hidden", sidebarCollapsed && "lg:gap-0")}>
-                <div className="w-8 h-8 rounded-full bg-[var(--brass)] text-[var(--ink)] font-semibold text-[13px] flex items-center justify-center shrink-0 overflow-hidden">
+                <div className="w-8 h-8 rounded-full bg-[var(--brass)] text-[var(--ink)] font-semibold text-[14.5px] flex items-center justify-center shrink-0 overflow-hidden">
                   {profile?.photoUrl ? (
                     <img src={profile.photoUrl} alt={adminName} className="h-full w-full object-cover" />
                   ) : (
@@ -507,10 +533,10 @@ export default function AdminLayout({
                   )}
                 </div>
                 <div className={cn("overflow-hidden", sidebarCollapsed && "lg:hidden")}>
-                  <span className="block text-[13px] font-medium text-white truncate">
+                  <span className="block text-[14.5px] font-medium text-white truncate">
                     {adminName}
                   </span>
-                  <span className="block text-[11px] text-[#8E9CA8] truncate capitalize">
+                  <span className="block text-[12.5px] text-[#8E9CA8] truncate capitalize">
                     {adminRoleLabel}
                   </span>
                 </div>
@@ -568,7 +594,7 @@ export default function AdminLayout({
                   }
                 }}
                 placeholder="Search cases, members (TSC/Name/ID), bookings, or pages…"
-                className="h-[36px] w-full pl-9 pr-3 text-[13.5px] rounded-[var(--r-md)] border border-[var(--line-strong)] bg-[var(--surface)] placeholder:text-[var(--ink-muted)] focus:outline-none focus:border-[var(--union)] focus:ring-2 focus:ring-[rgba(31,61,92,0.12)]"
+                className="h-[36px] w-full pl-9 pr-3 text-[15px] rounded-[var(--r-md)] border border-[var(--line-strong)] bg-[var(--surface)] placeholder:text-[var(--ink-muted)] focus:outline-none focus:border-[var(--union)] focus:ring-2 focus:ring-[rgba(31,61,92,0.12)]"
               />
 
               {searchDropdownOpen && (
@@ -576,7 +602,7 @@ export default function AdminLayout({
                   <div onClick={() => setSearchFocused(false)} className="fixed inset-0 z-40" />
                   <div className="absolute left-0 top-[calc(100%+8px)] z-50 w-full max-h-[440px] overflow-y-auto rounded-[var(--r-lg)] border border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow-panel)]">
                     {searchResults.length === 0 ? (
-                      <p className="p-4 text-center text-[13px] text-[var(--ink-muted)]">
+                      <p className="p-4 text-center text-[14.5px] text-[var(--ink-muted)]">
                         No matches for "{searchQuery.trim()}".
                       </p>
                     ) : (
@@ -585,7 +611,7 @@ export default function AdminLayout({
                         if (items.length === 0) return null;
                         return (
                           <div key={group}>
-                            <div className="sticky top-0 bg-[var(--surface-sunk)] px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--ink-muted)]">
+                            <div className="sticky top-0 bg-[var(--surface-sunk)] px-4 py-1.5 text-[12.5px] font-semibold uppercase tracking-wider text-[var(--ink-muted)]">
                               {group === "Page" ? "Jump to page" : `${group}${items.length > 1 ? "s" : ""}`}
                             </div>
                             <ul className="divide-y divide-[var(--line)]">
@@ -599,8 +625,8 @@ export default function AdminLayout({
                                     }}
                                     className="flex flex-col gap-0.5 px-4 py-2.5 hover:bg-[var(--surface-sunk)] transition-colors"
                                   >
-                                    <span className="text-[13.5px] font-medium text-[var(--ink)] truncate">{r.title}</span>
-                                    <span className="text-[12px] text-[var(--ink-muted)] truncate">{r.subtitle}</span>
+                                    <span className="text-[15px] font-medium text-[var(--ink)] truncate">{r.title}</span>
+                                    <span className="text-[13.5px] text-[var(--ink-muted)] truncate">{r.subtitle}</span>
                                   </Link>
                                 </li>
                               ))}
@@ -624,7 +650,7 @@ export default function AdminLayout({
             >
               <Bell className="h-5 w-5" />
               {unseenCount > 0 && (
-                <span className="absolute top-0.5 right-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-[var(--danger)] px-1 text-[9px] font-bold text-white">
+                <span className="absolute top-0.5 right-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-[var(--danger)] px-1 text-[11px] font-bold text-white">
                   {unseenCount > 99 ? "99+" : unseenCount}
                 </span>
               )}
@@ -638,11 +664,11 @@ export default function AdminLayout({
                 />
                 <div className="absolute right-0 top-[calc(100%+10px)] z-50 w-[360px] max-h-[440px] overflow-y-auto rounded-[var(--r-lg)] border border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow-panel)]">
                   <div className="sticky top-0 flex items-center justify-between border-b border-[var(--line)] bg-[var(--surface)] px-4 py-3">
-                    <span className="text-[13.5px] font-semibold text-[var(--ink)]">Pending Tasks</span>
-                    <span className="text-[12px] text-[var(--ink-muted)]">{notifItems.length} total</span>
+                    <span className="text-[15px] font-semibold text-[var(--ink)]">Pending Tasks</span>
+                    <span className="text-[13.5px] text-[var(--ink-muted)]">{notifItems.length} total</span>
                   </div>
                   {notifItems.length === 0 ? (
-                    <p className="p-6 text-center text-[13.5px] text-[var(--ink-muted)]">
+                    <p className="p-6 text-center text-[15px] text-[var(--ink-muted)]">
                       Nothing pending — you're all caught up.
                     </p>
                   ) : (
@@ -654,9 +680,9 @@ export default function AdminLayout({
                             onClick={() => setNotifOpen(false)}
                             className="flex flex-col gap-0.5 px-4 py-3 hover:bg-[var(--surface-sunk)] transition-colors"
                           >
-                            <span className="text-[13.5px] font-medium text-[var(--ink)] truncate">{item.title}</span>
-                            <span className="text-[12px] text-[var(--ink-muted)] truncate">{item.subtitle}</span>
-                            <span className="text-[11px] text-[var(--ink-muted)] mt-0.5">{formatRelativeTime(item.createdAt)}</span>
+                            <span className="text-[15px] font-medium text-[var(--ink)] truncate">{item.title}</span>
+                            <span className="text-[13.5px] text-[var(--ink-muted)] truncate">{item.subtitle}</span>
+                            <span className="text-[12.5px] text-[var(--ink-muted)] mt-0.5">{formatRelativeTime(item.createdAt)}</span>
                           </Link>
                         </li>
                       ))}
@@ -673,13 +699,13 @@ export default function AdminLayout({
               aria-label="Sign out"
             >
               <LogOut className="h-5 w-5" />
-              <span className="hidden sm:inline text-[13px] font-medium">Sign Out</span>
+              <span className="hidden sm:inline text-[14.5px] font-medium">Sign Out</span>
             </button>
           </div>
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8">
+        <main id="main-content" tabIndex={-1} className="flex-1 p-4 sm:p-6 lg:p-8 outline-none">
           <ConfirmProvider>
             <div className="max-w-[1300px] mx-auto">{children}</div>
           </ConfirmProvider>

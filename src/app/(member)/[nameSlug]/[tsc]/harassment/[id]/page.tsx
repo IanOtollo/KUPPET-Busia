@@ -37,7 +37,7 @@ export default function HarassmentDetailPage({
   if (!report) {
     return (
       <div className="p-8 text-center bg-[var(--surface)] border border-[var(--line)] rounded-[var(--r-lg)]">
-        <p className="text-[15px] text-[var(--ink-muted)] mb-4">
+        <p className="text-[16px] text-[var(--ink-muted)] mb-4">
           Report not found for reference code <code>{refCode}</code>.
         </p>
         <Button asChild>
@@ -65,38 +65,38 @@ export default function HarassmentDetailPage({
         <CardContent className="pt-6 space-y-4">
           <div className="flex items-center justify-between border-b border-[var(--line)] pb-4">
             <div>
-              <span className="text-[12px] uppercase font-semibold text-[var(--ink-muted)] block">
+              <span className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)] block">
                 Investigation Status
               </span>
               <StatusBadge status={report.status} className="mt-1" />
             </div>
             <div className="text-right">
-              <span className="text-[12px] uppercase font-semibold text-[var(--ink-muted)] block">
+              <span className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)] block">
                 Filed Date
               </span>
-              <span className="text-[14px] font-medium text-[var(--ink)]">
+              <span className="text-[15.5px] font-medium text-[var(--ink)]">
                 {formatShortDate(report.createdAt)}
               </span>
             </div>
           </div>
 
-          <div className="space-y-3 text-[14.5px]">
+          <div className="space-y-3 text-[16px]">
             <div>
-              <span className="text-[12px] uppercase font-semibold text-[var(--ink-muted)] block">
+              <span className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)] block">
                 Category
               </span>
               <span className="font-semibold text-[var(--ink)]">{report.category}</span>
             </div>
 
             <div>
-              <span className="text-[12px] uppercase font-semibold text-[var(--ink-muted)] block">
+              <span className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)] block">
                 Incident Date
               </span>
               <span>{formatShortDate(report.occurredAt)}</span>
             </div>
 
             {report.statusReason && (
-              <div className="p-3 bg-[var(--surface-sunk)] border border-[var(--line)] rounded-[var(--r-md)] text-[13.5px]">
+              <div className="p-3 bg-[var(--surface-sunk)] border border-[var(--line)] rounded-[var(--r-md)] text-[15px]">
                 <strong>Officer Remark:</strong> {report.statusReason}
               </div>
             )}

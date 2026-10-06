@@ -40,7 +40,7 @@ export default function AdminTransfersPage() {
             role="tab"
             aria-selected={tab === key}
             onClick={() => setTab(key)}
-            className={`px-4 py-1.5 rounded-[var(--r-sm)] text-[13.5px] font-medium transition-colors cursor-pointer ${
+            className={`px-4 py-1.5 rounded-[var(--r-sm)] text-[15px] font-medium transition-colors cursor-pointer ${
               tab === key
                 ? "bg-[var(--union)] text-white font-semibold"
                 : "text-[var(--ink-body)] hover:bg-[var(--surface-sunk)]"
@@ -62,13 +62,13 @@ function Cases() {
 
   if (transfers === undefined) return <Skeleton className="h-64 w-full" />;
   if (transfers.length === 0) {
-    return <p className="text-[14px] text-[var(--ink-muted)]">No transfer cases have been reported yet.</p>;
+    return <p className="text-[15.5px] text-[var(--ink-muted)]">No transfer cases have been reported yet.</p>;
   }
 
   return (
     <div className="overflow-x-auto rounded-[var(--r-md)] border border-[var(--line)] bg-[var(--surface)]">
-      <table className="w-full text-[13.5px]">
-        <thead className="bg-[var(--surface-sunk)] text-left text-[12px] uppercase tracking-wider text-[var(--ink-muted)]">
+      <table className="w-full text-[15px]">
+        <thead className="bg-[var(--surface-sunk)] text-left text-[13.5px] uppercase tracking-wider text-[var(--ink-muted)]">
           <tr>
             <th className="px-4 py-3">Teacher</th>
             <th className="px-4 py-3">Move</th>
@@ -82,13 +82,13 @@ function Cases() {
             <tr key={t._id}>
               <td className="px-4 py-3">
                 <span className="font-semibold text-[var(--ink)] block">{t.memberName}</span>
-                <span className="mono-ref text-[12px] text-[var(--ink-muted)]">{t.tscNumber}</span>
+                <span className="mono-ref text-[13.5px] text-[var(--ink-muted)]">{t.tscNumber}</span>
               </td>
               <td className="px-4 py-3">
                 <span className="block">
                   {t.fromSchool} → {t.toSchool}
                 </span>
-                <span className="text-[12px] text-[var(--ink-muted)]">
+                <span className="text-[13.5px] text-[var(--ink-muted)]">
                   {t.fromSubCounty} → {t.toSubCounty}
                   {t.fromDesignation !== t.toDesignation ? ` • ${t.fromDesignation} → ${t.toDesignation}` : ""}
                 </span>
@@ -99,7 +99,7 @@ function Cases() {
               <td className="px-4 py-3 text-[var(--ink-muted)]">{formatShortDate(new Date(t.createdAt).toISOString())}</td>
               <td className="px-4 py-3 text-right">
                 {t.acknowledgedAt ? (
-                  <span className="text-[12px] text-[var(--ink-muted)]">Reviewed</span>
+                  <span className="text-[13.5px] text-[var(--ink-muted)]">Reviewed</span>
                 ) : (
                   <Button
                     size="sm"
@@ -148,11 +148,11 @@ function Swaps() {
       </div>
 
       {rows.length === 0 ? (
-        <p className="text-[14px] text-[var(--ink-muted)]">No open swap requests.</p>
+        <p className="text-[15.5px] text-[var(--ink-muted)]">No open swap requests.</p>
       ) : (
         <div className="overflow-x-auto rounded-[var(--r-md)] border border-[var(--line)] bg-[var(--surface)]">
-          <table className="w-full text-[13.5px]">
-            <thead className="bg-[var(--surface-sunk)] text-left text-[12px] uppercase tracking-wider text-[var(--ink-muted)]">
+          <table className="w-full text-[15px]">
+            <thead className="bg-[var(--surface-sunk)] text-left text-[13.5px] uppercase tracking-wider text-[var(--ink-muted)]">
               <tr>
                 <th className="px-4 py-3">Teacher</th>
                 <th className="px-4 py-3">Now at</th>
@@ -170,17 +170,17 @@ function Swaps() {
                       {s.memberName}
                       {s.jobGroup ? ` • ${s.jobGroup}` : ""}
                     </span>
-                    <span className="text-[12px] text-[var(--ink-muted)]">
+                    <span className="text-[13.5px] text-[var(--ink-muted)]">
                       {s.tscNumber} • {s.phone}
                     </span>
                   </td>
                   <td className="px-4 py-3">
                     {s.school}
-                    <span className="block text-[12px] text-[var(--ink-muted)]">{s.subCounty}</span>
+                    <span className="block text-[13.5px] text-[var(--ink-muted)]">{s.subCounty}</span>
                   </td>
                   <td className="px-4 py-3">
                     {s.targetSubCounty}
-                    {s.targetSchool && <span className="block text-[12px] text-[var(--ink-muted)]">{s.targetSchool}</span>}
+                    {s.targetSchool && <span className="block text-[13.5px] text-[var(--ink-muted)]">{s.targetSchool}</span>}
                   </td>
                   <td className="px-4 py-3 text-[var(--ink-body)]">{s.subjects.join(", ")}</td>
                   <td className="px-4 py-3 text-[var(--ink-muted)]">{formatRelativeTime(s.createdAt)}</td>

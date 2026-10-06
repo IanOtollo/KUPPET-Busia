@@ -52,7 +52,7 @@ export default function TransfersPage() {
             role="tab"
             aria-selected={tab === key}
             onClick={() => setTab(key)}
-            className={`px-4 py-1.5 rounded-[var(--r-sm)] text-[13.5px] font-medium transition-colors cursor-pointer ${
+            className={`px-4 py-1.5 rounded-[var(--r-sm)] text-[15px] font-medium transition-colors cursor-pointer ${
               tab === key
                 ? "bg-[var(--union)] text-white font-semibold"
                 : "text-[var(--ink-body)] hover:bg-[var(--surface-sunk)]"
@@ -103,24 +103,24 @@ function TransferCases({ basePath }: { basePath: string }) {
           <h3 className="font-serif text-[18px] font-semibold text-[var(--ink)] flex items-center gap-2">
             <School className="h-5 w-5 text-[var(--union)]" /> Your current school
           </h3>
-          <dl className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-[14px]">
+          <dl className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-[15.5px]">
             <div>
-              <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">School</dt>
+              <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)]">School</dt>
               <dd className="font-medium text-[var(--ink)] mt-0.5">{overview.school}</dd>
-              <dd className="text-[12.5px] text-[var(--ink-muted)]">{overview.subCounty}</dd>
+              <dd className="text-[14px] text-[var(--ink-muted)]">{overview.subCounty}</dd>
             </div>
             <div>
-              <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">Job group</dt>
+              <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)]">Job group</dt>
               <dd className="font-medium text-[var(--ink)] mt-0.5">{overview.jobGroup ?? "Not set"}</dd>
             </div>
             <div>
-              <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">Reported on</dt>
+              <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)]">Reported on</dt>
               <dd className="font-medium text-[var(--ink)] mt-0.5">
                 {overview.schoolStartDate ? formatShortDate(overview.schoolStartDate) : "Not recorded"}
               </dd>
             </div>
             <div>
-              <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">Length of stay</dt>
+              <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)]">Length of stay</dt>
               <dd className="font-semibold text-[var(--union)] mt-0.5 flex items-center gap-1.5">
                 <Clock className="h-4 w-4" /> {formatStay(overview.currentStayDays)}
               </dd>
@@ -163,7 +163,7 @@ function TransferCases({ basePath }: { basePath: string }) {
             </form>
           )}
 
-          <div className="pt-4 border-t border-[var(--line)] flex flex-wrap items-center justify-between gap-3 text-[13.5px] text-[var(--ink-muted)]">
+          <div className="pt-4 border-t border-[var(--line)] flex flex-wrap items-center justify-between gap-3 text-[15px] text-[var(--ink-muted)]">
             <span>Moved to a new school or promoted? Report it so the branch office has your current details.</span>
             <Button variant="secondary" size="sm" asChild>
               <Link href={`${basePath}/profile`}>
@@ -178,7 +178,7 @@ function TransferCases({ basePath }: { basePath: string }) {
         <h3 className="font-serif text-[18px] font-semibold text-[var(--ink)] mb-3">Your transfer history</h3>
         {overview.history.length === 0 ? (
           <Card>
-            <CardContent className="pt-6 text-[14px] text-[var(--ink-muted)]">
+            <CardContent className="pt-6 text-[15.5px] text-[var(--ink-muted)]">
               No transfers reported yet.
             </CardContent>
           </Card>
@@ -188,17 +188,17 @@ function TransferCases({ basePath }: { basePath: string }) {
               <Card key={t._id}>
                 <CardContent className="pt-5 pb-5 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
                   <div className="min-w-0">
-                    <span className="font-semibold text-[var(--ink)] block text-[15px]">
+                    <span className="font-semibold text-[var(--ink)] block text-[16px]">
                       {t.fromSchool} → {t.toSchool}
                     </span>
-                    <span className="text-[13px] text-[var(--ink-muted)] block">
+                    <span className="text-[14.5px] text-[var(--ink-muted)] block">
                       {t.fromSubCounty} → {t.toSubCounty}
                       {t.effectiveDate ? ` • effective ${formatShortDate(t.effectiveDate)}` : ""}
                     </span>
-                    {t.reason && <span className="text-[13px] text-[var(--ink-body)] block mt-1">{t.reason}</span>}
+                    {t.reason && <span className="text-[14.5px] text-[var(--ink-body)] block mt-1">{t.reason}</span>}
                   </div>
                   <div className="text-left sm:text-right shrink-0">
-                    <span className="text-[11.5px] uppercase font-semibold text-[var(--ink-muted)] block">
+                    <span className="text-[13px] uppercase font-semibold text-[var(--ink-muted)] block">
                       Stayed at {t.fromSchool}
                     </span>
                     <span className="font-semibold text-[var(--union)]">{formatStay(t.previousStayDays)}</span>
@@ -275,20 +275,20 @@ function SchoolSwaps({ basePath }: { basePath: string }) {
                 Close request
               </Button>
             </div>
-            <p className="text-[14px] text-[var(--ink-body)]">
+            <p className="text-[15.5px] text-[var(--ink-body)]">
               You are at <strong>{mine.school}</strong> ({mine.subCounty}) and want to move to{" "}
               <strong>{mine.targetSubCounty}</strong>
               {mine.targetSchool ? `, ideally ${mine.targetSchool}` : ""}.
             </p>
-            <p className="text-[13px] text-[var(--ink-muted)]">Subjects: {mine.subjects.join(", ")}</p>
-            {mine.note && <p className="text-[13px] text-[var(--ink-body)]">{mine.note}</p>}
+            <p className="text-[14.5px] text-[var(--ink-muted)]">Subjects: {mine.subjects.join(", ")}</p>
+            {mine.note && <p className="text-[14.5px] text-[var(--ink-body)]">{mine.note}</p>}
           </CardContent>
         </Card>
       ) : (
         <Card>
           <CardContent className="pt-6">
             <h3 className="font-serif text-[18px] font-semibold text-[var(--ink)] mb-1">Request a school swap</h3>
-            <p className="text-[13px] text-[var(--ink-muted)] mb-4">
+            <p className="text-[14.5px] text-[var(--ink-muted)] mb-4">
               You are currently at {profile?.school} ({profile?.subCounty}). Say which sub-county you want to be
               swapped to and we will show you teachers who want to come to yours.
             </p>
@@ -374,7 +374,7 @@ function SchoolSwaps({ basePath }: { basePath: string }) {
 
         {board.length === 0 ? (
           <Card>
-            <CardContent className="pt-6 text-[14px] text-[var(--ink-muted)]">
+            <CardContent className="pt-6 text-[15.5px] text-[var(--ink-muted)]">
               No other teachers are looking to swap right now.
             </CardContent>
           </Card>
@@ -385,25 +385,25 @@ function SchoolSwaps({ basePath }: { basePath: string }) {
                 <CardContent className="pt-5 pb-5 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
                   <div className="min-w-0 space-y-1">
                     {s.isMatch && (
-                      <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-[var(--success)]">
+                      <span className="inline-flex items-center gap-1 text-[13.5px] font-semibold text-[var(--success)]">
                         <Sparkles className="h-3.5 w-3.5" /> Possible swap partner
                       </span>
                     )}
-                    <span className="font-semibold text-[var(--ink)] block text-[15px]">
+                    <span className="font-semibold text-[var(--ink)] block text-[16px]">
                       {s.memberName}
                       {s.jobGroup ? ` • ${s.jobGroup}` : ""}
                     </span>
-                    <span className="text-[13px] text-[var(--ink-body)] flex items-center gap-1.5">
+                    <span className="text-[14.5px] text-[var(--ink-body)] flex items-center gap-1.5">
                       <MapPin className="h-3.5 w-3.5 text-[var(--ink-muted)]" />
                       {s.school} ({s.subCounty}) → wants {s.targetSubCounty}
                       {s.targetSchool ? ` (${s.targetSchool})` : ""}
                     </span>
-                    <span className="text-[12.5px] text-[var(--ink-muted)] block">
+                    <span className="text-[14px] text-[var(--ink-muted)] block">
                       Teaches: {s.subjects.join(", ")}
                       {s.sharedSubjects.length > 0 ? ` • you share ${s.sharedSubjects.join(", ")}` : ""}
                     </span>
-                    {s.note && <span className="text-[13px] text-[var(--ink-body)] block">{s.note}</span>}
-                    <span className="text-[11.5px] text-[var(--ink-muted)] block">
+                    {s.note && <span className="text-[14.5px] text-[var(--ink-body)] block">{s.note}</span>}
+                    <span className="text-[13px] text-[var(--ink-muted)] block">
                       Posted {formatRelativeTime(s.createdAt)}
                     </span>
                   </div>

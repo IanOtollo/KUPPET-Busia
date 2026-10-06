@@ -130,7 +130,7 @@ export default function MessagesPage() {
               placeholder="Search conversations…"
               value={searchQ}
               onChange={(e) => setSearchQ(e.target.value)}
-              className="w-full pl-9 pr-3 h-[38px] text-[13px] rounded-[var(--r-md)] border border-[var(--line-strong)] bg-[var(--surface)] placeholder:text-[var(--ink-muted)] focus:outline-none focus:border-[var(--union)]"
+              className="w-full pl-9 pr-3 h-[38px] text-[14.5px] rounded-[var(--r-md)] border border-[var(--line-strong)] bg-[var(--surface)] placeholder:text-[var(--ink-muted)] focus:outline-none focus:border-[var(--union)]"
             />
           </div>
 
@@ -158,19 +158,19 @@ export default function MessagesPage() {
                       </span>
                       <div className="flex items-center gap-1.5 shrink-0">
                         {t.unreadCount > 0 && (
-                          <span className="w-4 h-4 rounded-full bg-[var(--union)] text-white text-[10px] font-bold flex items-center justify-center">
+                          <span className="w-4 h-4 rounded-full bg-[var(--union)] text-white text-[12px] font-bold flex items-center justify-center">
                             {t.unreadCount}
                           </span>
                         )}
-                        <span className="text-[11px] text-[var(--ink-muted)]">
+                        <span className="text-[12.5px] text-[var(--ink-muted)]">
                           {formatRelativeTime(new Date(t.lastAt))}
                         </span>
                       </div>
                     </div>
-                    <p className="text-[12px] text-[var(--ink-muted)] truncate">
+                    <p className="text-[13.5px] text-[var(--ink-muted)] truncate">
                       {t.isMine ? "You: " : ""}{t.lastMessage}
                     </p>
-                    <p className="text-[11px] text-[var(--ink-muted)] mt-0.5 truncate">{t.otherUser.school}</p>
+                    <p className="text-[12.5px] text-[var(--ink-muted)] mt-0.5 truncate">{t.otherUser.school}</p>
                   </button>
                 ))
               )}
@@ -199,7 +199,7 @@ export default function MessagesPage() {
                   <button
                     key={key}
                     onClick={() => setPickerGroup(key)}
-                    className={`px-3 py-1.5 rounded-[var(--r-sm)] text-[13px] font-medium cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-[var(--r-sm)] text-[14.5px] font-medium cursor-pointer ${
                       pickerGroup === key
                         ? "bg-[var(--union)] text-white"
                         : "bg-[var(--surface-sunk)] text-[var(--ink-body)] hover:bg-[var(--line)]"
@@ -210,7 +210,7 @@ export default function MessagesPage() {
                 ))}
               </div>
               {profile?.role === "member" && pickerGroup === "staff" && (
-                <p className="px-4 pt-2 text-[12px] text-[var(--ink-muted)]">
+                <p className="px-4 pt-2 text-[13.5px] text-[var(--ink-muted)]">
                   Raise your issue directly with an official. The branch admin is copied (CC) on messages to officials.
                 </p>
               )}
@@ -223,7 +223,7 @@ export default function MessagesPage() {
                     placeholder="Search by name or school…"
                     value={userSearchQ}
                     onChange={(e) => setUserSearchQ(e.target.value)}
-                    className="w-full pl-9 pr-3 h-[38px] text-[13px] rounded-[var(--r-md)] border border-[var(--line-strong)] bg-[var(--surface)] placeholder:text-[var(--ink-muted)] focus:outline-none focus:border-[var(--union)]"
+                    className="w-full pl-9 pr-3 h-[38px] text-[14.5px] rounded-[var(--r-md)] border border-[var(--line-strong)] bg-[var(--surface)] placeholder:text-[var(--ink-muted)] focus:outline-none focus:border-[var(--union)]"
                   />
                 </div>
               </div>
@@ -239,9 +239,9 @@ export default function MessagesPage() {
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-[var(--ink)] truncate">{u.fullName}</p>
-                      <p className="text-[12px] text-[var(--ink-muted)] truncate">{u.schoolRole || u.role} · {u.school}</p>
+                      <p className="text-[13.5px] text-[var(--ink-muted)] truncate">{u.schoolRole || u.role} · {u.school}</p>
                       {u.phone && (
-                        <p className="text-[11px] text-[var(--ink-muted)] flex items-center gap-1 mt-0.5">
+                        <p className="text-[12.5px] text-[var(--ink-muted)] flex items-center gap-1 mt-0.5">
                           <Phone className="h-3 w-3" />{u.phone}
                         </p>
                       )}
@@ -265,14 +265,14 @@ export default function MessagesPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-[var(--ink)] truncate">{selectedUser.fullName}</p>
-                  <p className="text-[12px] text-[var(--ink-muted)] truncate">{selectedUser.schoolRole || selectedUser.role} · {selectedUser.school}</p>
+                  <p className="text-[13.5px] text-[var(--ink-muted)] truncate">{selectedUser.schoolRole || selectedUser.role} · {selectedUser.school}</p>
                 </div>
                 {selectedUser.phone && <a href={`tel:${selectedUser.phone}`} className="p-2 rounded-[var(--r-md)] text-[var(--union)] hover:bg-[var(--union-soft)] transition-colors" title={`Call ${selectedUser.phone}`}>
                   <Phone className="h-4 w-4" />
                 </a>}
               </div>
               {ccAdmin && (
-                <div className="px-4 py-2 text-[12px] bg-[var(--info-soft)] text-[var(--ink-body)] border-b border-[var(--line)]">
+                <div className="px-4 py-2 text-[13.5px] bg-[var(--info-soft)] text-[var(--ink-body)] border-b border-[var(--line)]">
                   The branch admin is copied (CC) on messages you send to {selectedUser?.fullName}.
                 </div>
               )}
@@ -302,7 +302,7 @@ export default function MessagesPage() {
                             : "bg-[var(--canvas)] border border-[var(--line)] text-[var(--ink)] rounded-bl-sm"
                         }`}>
                           {msg.body}
-                          <div className={`text-[10px] mt-1 ${isMe ? "text-white/60" : "text-[var(--ink-muted)]"}`}>
+                          <div className={`text-[12px] mt-1 ${isMe ? "text-white/60" : "text-[var(--ink-muted)]"}`}>
                             {formatRelativeTime(new Date(msg.createdAt))}
                           </div>
                         </div>
@@ -321,7 +321,7 @@ export default function MessagesPage() {
                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
                   placeholder="Type a message… (Enter to send, Shift+Enter for new line)"
                   rows={2}
-                  className="flex-1 resize-none px-3 py-2 text-[13px] rounded-[var(--r-md)] border border-[var(--line-strong)] bg-[var(--surface)] placeholder:text-[var(--ink-muted)] focus:outline-none focus:border-[var(--union)]"
+                  className="flex-1 resize-none px-3 py-2 text-[14.5px] rounded-[var(--r-md)] border border-[var(--line-strong)] bg-[var(--surface)] placeholder:text-[var(--ink-muted)] focus:outline-none focus:border-[var(--union)]"
                 />
                 <Button
                   onClick={handleSend}

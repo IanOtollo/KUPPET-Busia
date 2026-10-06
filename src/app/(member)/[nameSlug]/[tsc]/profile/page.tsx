@@ -220,7 +220,7 @@ export default function MemberProfilePage() {
           </div>
 
           {/* Full Membership Information Table */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-[14.5px]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-[16px]">
             <div>
               <Label htmlFor="fullName">Full Name (as per TSC)</Label>
               <Input id="fullName" disabled value={profile?.fullName || ""} className="bg-slate-100" />
@@ -252,7 +252,7 @@ export default function MemberProfilePage() {
                 <button
                   type="button"
                   onClick={openTransfer}
-                  className="text-[12.5px] font-medium text-[var(--union)] hover:underline inline-flex items-center gap-1 cursor-pointer"
+                  className="text-[14px] font-medium text-[var(--union)] hover:underline inline-flex items-center gap-1 cursor-pointer"
                 >
                   <Edit className="h-3 w-3" /> Change
                 </button>
@@ -266,7 +266,7 @@ export default function MemberProfilePage() {
                 <button
                   type="button"
                   onClick={openTransfer}
-                  className="text-[12.5px] font-medium text-[var(--union)] hover:underline inline-flex items-center gap-1 cursor-pointer"
+                  className="text-[14px] font-medium text-[var(--union)] hover:underline inline-flex items-center gap-1 cursor-pointer"
                 >
                   <Edit className="h-3 w-3" /> Change
                 </button>
@@ -281,7 +281,7 @@ export default function MemberProfilePage() {
           </div>
 
           <div className="p-4 rounded-lg border border-[var(--line)] bg-[var(--union-soft)]/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="text-[13px] text-[var(--ink-body)]">
+            <div className="text-[14.5px] text-[var(--ink-body)]">
               <strong className="block text-[var(--ink)]">Transferred or promoted?</strong>
               Update your school, sub-county or designation. The branch office is notified automatically.
             </div>

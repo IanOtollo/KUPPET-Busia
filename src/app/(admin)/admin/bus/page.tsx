@@ -181,7 +181,7 @@ export default function AdminBusPage() {
           <span className="font-semibold text-[var(--ink)] block">
             {item.requesterName}
           </span>
-          <span className="text-[12px] text-[var(--ink-muted)]">
+          <span className="text-[13.5px] text-[var(--ink-muted)]">
             {item.school} • {item.phone}
           </span>
         </div>
@@ -195,7 +195,7 @@ export default function AdminBusPage() {
           <span className="font-medium text-[var(--ink)] block">
             {item.destination}
           </span>
-          <span className="text-[12px] text-[var(--ink-muted)]">
+          <span className="text-[13.5px] text-[var(--ink-muted)]">
             {item.purpose} • {item.passengers} Seats
           </span>
         </div>
@@ -205,7 +205,7 @@ export default function AdminBusPage() {
       key: "departureAt",
       header: "Dates",
       render: (item) => (
-        <div className="text-[13px]">
+        <div className="text-[14.5px]">
           <div>Dep: {formatShortDate(item.departureAt)}</div>
           <div className="text-[var(--ink-muted)]">Ret: {formatShortDate(item.returnAt)}</div>
         </div>
@@ -251,7 +251,7 @@ export default function AdminBusPage() {
           <div className="flex items-center gap-2 border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] p-1">
             <button
               onClick={() => setActiveTab("queue")}
-              className={`px-3 py-1.5 rounded-[var(--r-sm)] text-[13px] font-medium transition-colors cursor-pointer ${
+              className={`px-3 py-1.5 rounded-[var(--r-sm)] text-[14.5px] font-medium transition-colors cursor-pointer ${
                 activeTab === "queue"
                   ? "bg-[var(--union)] text-white font-semibold"
                   : "text-[var(--ink-body)] hover:bg-[var(--surface-sunk)]"
@@ -261,7 +261,7 @@ export default function AdminBusPage() {
             </button>
             <button
               onClick={() => setActiveTab("calendar")}
-              className={`px-3 py-1.5 rounded-[var(--r-sm)] text-[13px] font-medium transition-colors cursor-pointer ${
+              className={`px-3 py-1.5 rounded-[var(--r-sm)] text-[14.5px] font-medium transition-colors cursor-pointer ${
                 activeTab === "calendar"
                   ? "bg-[var(--union)] text-white font-semibold"
                   : "text-[var(--ink-body)] hover:bg-[var(--surface-sunk)]"
@@ -277,7 +277,7 @@ export default function AdminBusPage() {
         <div>
           {/* Filter Bar */}
           <div className="flex items-center gap-3 p-4 rounded-[var(--r-md)] bg-[var(--surface)] border border-[var(--line)] mb-6 shadow-[var(--shadow-hair)]">
-            <span className="text-[13px] font-semibold text-[var(--ink)]">Filter Status:</span>
+            <span className="text-[14.5px] font-semibold text-[var(--ink)]">Filter Status:</span>
             <div className="w-48">
               <Select value={selectedStatus} onValueChange={setSelectedStatus}>
                 <SelectTrigger>
@@ -329,7 +329,7 @@ export default function AdminBusPage() {
             </DialogHeader>
 
             <form onSubmit={handleApplyStatus} className="space-y-4 py-2">
-              <div className="p-3 bg-[var(--surface-sunk)] border border-[var(--line)] rounded-[var(--r-md)] text-[13.5px] space-y-1">
+              <div className="p-3 bg-[var(--surface-sunk)] border border-[var(--line)] rounded-[var(--r-md)] text-[15px] space-y-1">
                 <div><strong>Requester:</strong> {selectedBooking.requesterName} ({selectedBooking.school})</div>
                 <div><strong>Passengers:</strong> {selectedBooking.passengers} seats</div>
                 <div><strong>Trip Dates:</strong> {formatDateTime(selectedBooking.departureAt)} to {formatDateTime(selectedBooking.returnAt)}</div>

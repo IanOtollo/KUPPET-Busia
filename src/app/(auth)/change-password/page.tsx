@@ -57,7 +57,7 @@ export default function ChangePasswordPage() {
   }, [authLoading, isAuthenticated, router]);
 
   if (!isAuthenticated || !profile) {
-    return <p className="text-[14px] text-[var(--ink-muted)]">Checking your account…</p>;
+    return <p className="text-[15.5px] text-[var(--ink-muted)]">Checking your account…</p>;
   }
 
   const destination = () =>
@@ -99,7 +99,7 @@ export default function ChangePasswordPage() {
         <h2 className="font-serif text-[26px] font-semibold text-[var(--ink)] leading-tight">
           {forced ? "Set a New Password" : "Change Password"}
         </h2>
-        <p className="text-[14px] text-[var(--ink-muted)] mt-1">
+        <p className="text-[15.5px] text-[var(--ink-muted)] mt-1">
           {forced
             ? "Your password was reset by the Executive Secretary. Choose a new password to continue — you can't use the portal until you do."
             : "Enter your current password and choose a new one."}
@@ -119,7 +119,7 @@ export default function ChangePasswordPage() {
             {...register("currentPassword")}
           />
           {errors.currentPassword && (
-            <p className="text-[13px] text-[var(--danger)] mt-1">{errors.currentPassword.message}</p>
+            <p className="text-[14.5px] text-[var(--danger)] mt-1">{errors.currentPassword.message}</p>
           )}
         </div>
 
@@ -146,9 +146,9 @@ export default function ChangePasswordPage() {
             {...register("newPassword")}
           />
           {errors.newPassword && (
-            <p className="text-[13px] text-[var(--danger)] mt-1">{errors.newPassword.message}</p>
+            <p className="text-[14.5px] text-[var(--danger)] mt-1">{errors.newPassword.message}</p>
           )}
-          <p className="text-[12px] text-[var(--ink-muted)] mt-1">
+          <p className="text-[13.5px] text-[var(--ink-muted)] mt-1">
             8+ characters with an uppercase letter, a lowercase letter and a number. It can&apos;t be
             your TSC number.
           </p>
@@ -164,7 +164,7 @@ export default function ChangePasswordPage() {
             {...register("confirmPassword")}
           />
           {errors.confirmPassword && (
-            <p className="text-[13px] text-[var(--danger)] mt-1">{errors.confirmPassword.message}</p>
+            <p className="text-[14.5px] text-[var(--danger)] mt-1">{errors.confirmPassword.message}</p>
           )}
         </div>
 

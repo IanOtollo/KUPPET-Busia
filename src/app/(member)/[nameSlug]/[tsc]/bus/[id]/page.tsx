@@ -61,7 +61,7 @@ export default function BusBookingDetailPage({
   if (!booking) {
     return (
       <div className="p-8 text-center bg-[var(--surface)] border border-[var(--line)] rounded-[var(--r-lg)]">
-        <p className="text-[15px] text-[var(--ink-muted)] mb-4">Reservation not found.</p>
+        <p className="text-[16px] text-[var(--ink-muted)] mb-4">Reservation not found.</p>
         <Button asChild>
           <Link href={`${basePath}/bus`}>Back to Bus Reservations</Link>
         </Button>
@@ -92,33 +92,33 @@ export default function BusBookingDetailPage({
                 Trip Specification & Schedule
               </h3>
 
-              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-[14.5px]">
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-[16px]">
                 <div>
-                  <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">
+                  <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)]">
                     Departure Time & Location
                   </dt>
                   <dd className="font-medium text-[var(--ink)] mt-0.5">
                     {formatDateTime(booking.departureAt)}
                   </dd>
-                  <dd className="text-[13px] text-[var(--ink-muted)]">
+                  <dd className="text-[14.5px] text-[var(--ink-muted)]">
                     Pickup: {booking.departurePoint}
                   </dd>
                 </div>
 
                 <div>
-                  <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">
+                  <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)]">
                     Return Time & Destination
                   </dt>
                   <dd className="font-medium text-[var(--ink)] mt-0.5">
                     {formatDateTime(booking.returnAt)}
                   </dd>
-                  <dd className="text-[13px] text-[var(--ink-muted)]">
+                  <dd className="text-[14.5px] text-[var(--ink-muted)]">
                     Destination: {booking.destination}
                   </dd>
                 </div>
 
                 <div>
-                  <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">
+                  <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)]">
                     Passenger Count
                   </dt>
                   <dd className="font-semibold text-[var(--union)] mt-0.5">
@@ -127,7 +127,7 @@ export default function BusBookingDetailPage({
                 </div>
 
                 <div>
-                  <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">
+                  <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)]">
                     On-Trip Contact
                   </dt>
                   <dd className="font-medium text-[var(--ink)] mt-0.5">
@@ -136,20 +136,20 @@ export default function BusBookingDetailPage({
                 </div>
 
                 <div className="sm:col-span-2 pt-3 border-t border-[var(--line)]">
-                  <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)] mb-1">
+                  <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)] mb-1">
                     Mandatory Purpose & Reason Provided
                   </dt>
-                  <dd className="text-[14px] leading-relaxed text-[var(--ink-body)] bg-[var(--canvas)] p-3 rounded-[var(--r-md)] border border-[var(--line)] whitespace-pre-line">
+                  <dd className="text-[15.5px] leading-relaxed text-[var(--ink-body)] bg-[var(--canvas)] p-3 rounded-[var(--r-md)] border border-[var(--line)] whitespace-pre-line">
                     {booking.reason}
                   </dd>
                 </div>
 
                 {booking.extraRequirements && (
                   <div className="sm:col-span-2">
-                    <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)] mb-1">
+                    <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)] mb-1">
                       Logistical Requirements
                     </dt>
-                    <dd className="text-[13.5px] text-[var(--ink-body)]">
+                    <dd className="text-[15px] text-[var(--ink-body)]">
                       {booking.extraRequirements}
                     </dd>
                   </div>
@@ -165,7 +165,7 @@ export default function BusBookingDetailPage({
                 <div className="flex items-center gap-2 text-[var(--ink)] font-semibold text-[16px]">
                   <Wallet className="h-5 w-5 text-[var(--brass)]" /> Your request is approved — payment required
                 </div>
-                <p className="text-[14px] text-[var(--ink-body)]">
+                <p className="text-[15.5px] text-[var(--ink-body)]">
                   Please pay{" "}
                   <strong className="mono-ref text-[18px] text-[var(--ink)]">
                     {formatKES(booking.contributionKes ?? 0)}
@@ -173,12 +173,12 @@ export default function BusBookingDetailPage({
                   to secure the bus. Once you have paid, enter the payment reference below so the branch office can verify it and release the bus.
                 </p>
                 {booking.adminRemarks && (
-                  <p className="text-[13.5px] p-3 rounded-[var(--r-md)] bg-[var(--surface)] border border-[var(--line)]">
+                  <p className="text-[15px] p-3 rounded-[var(--r-md)] bg-[var(--surface)] border border-[var(--line)]">
                     <strong>Payment details:</strong> {booking.adminRemarks}
                   </p>
                 )}
                 {booking.statusReason && (
-                  <p className="text-[13.5px] p-3 rounded-[var(--r-md)] bg-[var(--danger-soft)] border border-[var(--danger)]/30 text-[var(--ink-body)]">
+                  <p className="text-[15px] p-3 rounded-[var(--r-md)] bg-[var(--danger-soft)] border border-[var(--danger)]/30 text-[var(--ink-body)]">
                     <strong>Previous payment not accepted:</strong> {booking.statusReason}
                   </p>
                 )}
@@ -203,7 +203,7 @@ export default function BusBookingDetailPage({
 
           {booking.status === "payment_submitted" && (
             <Card className="border-[var(--info)]/40 bg-[var(--info-soft)]/40">
-              <CardContent className="pt-6 flex items-start gap-3 text-[14px] text-[var(--ink-body)]">
+              <CardContent className="pt-6 flex items-start gap-3 text-[15.5px] text-[var(--ink-body)]">
                 <Hourglass className="h-5 w-5 text-[var(--info)] shrink-0 mt-0.5" />
                 <span>
                   <strong className="text-[var(--ink)] block">Payment awaiting verification</strong>
@@ -221,9 +221,9 @@ export default function BusBookingDetailPage({
                 <div className="flex items-center gap-2 text-[var(--success)] font-semibold text-[16px]">
                   <CheckCircle2 className="h-5 w-5" /> {booking.status === "confirmed" ? "Bus released — driver & bus details" : "Assigned Driver & Bus Details"}
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[14px]">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[15.5px]">
                   <div>
-                    <span className="text-[12px] text-[var(--ink-muted)] uppercase block">
+                    <span className="text-[13.5px] text-[var(--ink-muted)] uppercase block">
                       Assigned Driver
                     </span>
                     <span className="font-medium text-[var(--ink)]">
@@ -231,7 +231,7 @@ export default function BusBookingDetailPage({
                     </span>
                   </div>
                   <div>
-                    <span className="text-[12px] text-[var(--ink-muted)] uppercase block">
+                    <span className="text-[13.5px] text-[var(--ink-muted)] uppercase block">
                       Driver Contact Phone
                     </span>
                     <a
@@ -251,20 +251,20 @@ export default function BusBookingDetailPage({
         <div className="space-y-6">
           <Card>
             <CardContent className="pt-6 space-y-4">
-              <h4 className="text-[13.5px] font-semibold uppercase tracking-wider text-[var(--ink-muted)]">
+              <h4 className="text-[15px] font-semibold uppercase tracking-wider text-[var(--ink-muted)]">
                 Reservation Status
               </h4>
 
               <div className="flex items-center justify-between">
                 <StatusBadge status={booking.status} />
-                <span className="mono-ref text-[12.5px] text-[var(--ink-muted)]">
+                <span className="mono-ref text-[14px] text-[var(--ink-muted)]">
                   {booking.reference}
                 </span>
               </div>
 
               {booking.contributionKes !== undefined && booking.contributionKes > 0 && (
                 <div className="p-3 rounded-[var(--r-md)] bg-[var(--surface-sunk)] border border-[var(--line)]">
-                  <span className="text-[11.5px] uppercase font-semibold text-[var(--ink-muted)] block">
+                  <span className="text-[13px] uppercase font-semibold text-[var(--ink-muted)] block">
                     Amount to pay
                   </span>
                   <span className="mono-ref text-[18px] font-bold text-[var(--ink)]">
@@ -274,12 +274,12 @@ export default function BusBookingDetailPage({
               )}
 
               {booking.adminRemarks && (
-                <div className="p-3 rounded-[var(--r-md)] bg-[var(--surface-sunk)] border border-[var(--line)] text-[13px] text-[var(--ink-body)]">
+                <div className="p-3 rounded-[var(--r-md)] bg-[var(--surface-sunk)] border border-[var(--line)] text-[14.5px] text-[var(--ink-body)]">
                   <strong>Branch Admin Remarks:</strong> {booking.adminRemarks}
                 </div>
               )}
 
-              <div className="border-t border-[var(--line)] pt-3 text-[13px] text-[var(--ink-muted)] space-y-1">
+              <div className="border-t border-[var(--line)] pt-3 text-[14.5px] text-[var(--ink-muted)] space-y-1">
                 <div>Requester: {booking.requesterName}</div>
                 <div>School: {booking.school}</div>
                 <div>Phone: {booking.phone}</div>

@@ -82,7 +82,7 @@ export function BusCalendar({
             Today
           </Button>
         </div>
-        <div className="flex flex-wrap items-center gap-4 text-[13px]">
+        <div className="flex flex-wrap items-center gap-4 text-[14.5px]">
           <span className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded-full bg-[var(--warning-soft)] border border-[var(--warning)]" />
             Pending / awaiting payment
@@ -100,7 +100,7 @@ export function BusCalendar({
 
       <div className="overflow-x-auto">
         <div className="min-w-[640px]">
-          <div className="grid grid-cols-7 text-center text-[12px] font-semibold uppercase tracking-wider text-[var(--ink-muted)] mb-1">
+          <div className="grid grid-cols-7 text-center text-[13.5px] font-semibold uppercase tracking-wider text-[var(--ink-muted)] mb-1">
             {WEEKDAYS.map((d) => (
               <div key={d} className="py-1">
                 {d}
@@ -121,7 +121,7 @@ export function BusCalendar({
                   }`}
                 >
                   <span
-                    className={`text-[12.5px] font-medium inline-flex h-6 w-6 items-center justify-center rounded-full ${
+                    className={`text-[14px] font-medium inline-flex h-6 w-6 items-center justify-center rounded-full ${
                       key === todayKey ? "bg-[var(--union)] text-white" : "text-[var(--ink-body)]"
                     }`}
                   >
@@ -133,20 +133,20 @@ export function BusCalendar({
                         key={s.id}
                         type="button"
                         onClick={() => onOpen(s.id)}
-                        className={`w-full truncate rounded border px-1.5 py-0.5 text-left text-[11px] cursor-pointer ${slotTone(s.status)}`}
+                        className={`w-full truncate rounded border px-1.5 py-0.5 text-left text-[12.5px] cursor-pointer ${slotTone(s.status)}`}
                       >
                         {s.destination}
                       </button>
                     ))}
                     {daySlots.length > 2 && (
-                      <span className="text-[11px] text-[var(--ink-muted)]">+{daySlots.length - 2} more</span>
+                      <span className="text-[12.5px] text-[var(--ink-muted)]">+{daySlots.length - 2} more</span>
                     )}
                   </div>
 
                   {daySlots.length > 0 && (
                     <div
                       role="tooltip"
-                      className={`pointer-events-none absolute top-full z-30 mt-1 hidden w-64 rounded-[var(--r-md)] border border-[var(--line-strong)] bg-[var(--surface)] p-3 text-[12.5px] shadow-[var(--shadow-panel)] group-hover:block ${
+                      className={`pointer-events-none absolute top-full z-30 mt-1 hidden w-64 rounded-[var(--r-md)] border border-[var(--line-strong)] bg-[var(--surface)] p-3 text-[14px] shadow-[var(--shadow-panel)] group-hover:block ${
                         column > 3 ? "right-0" : "left-0"
                       }`}
                     >
@@ -178,7 +178,7 @@ export function BusCalendar({
       </div>
 
       {slots.length === 0 && (
-        <p className="text-[14px] text-[var(--ink-muted)] pt-4 text-center">No bus bookings recorded yet.</p>
+        <p className="text-[15.5px] text-[var(--ink-muted)] pt-4 text-center">No bus bookings recorded yet.</p>
       )}
     </div>
   );

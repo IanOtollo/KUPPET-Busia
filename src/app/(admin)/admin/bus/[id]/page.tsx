@@ -37,7 +37,7 @@ export default function AdminBusDetailPage({
   if (!booking) {
     return (
       <div className="p-8 text-center bg-[var(--surface)] border border-[var(--line)] rounded-[var(--r-lg)]">
-        <p className="text-[15px] text-[var(--ink-muted)] mb-4">Bus reservation not found.</p>
+        <p className="text-[16px] text-[var(--ink-muted)] mb-4">Bus reservation not found.</p>
         <Button asChild>
           <Link href="/admin/bus">Back to Queue</Link>
         </Button>
@@ -67,33 +67,33 @@ export default function AdminBusDetailPage({
                 Reservation Facts & Schedule
               </h3>
 
-              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-[14.5px]">
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-[16px]">
                 <div>
-                  <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">
+                  <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)]">
                     Departure Time & Location
                   </dt>
                   <dd className="font-semibold text-[var(--ink)] mt-0.5">
                     {formatDateTime(booking.departureAt)}
                   </dd>
-                  <dd className="text-[13px] text-[var(--ink-muted)]">
+                  <dd className="text-[14.5px] text-[var(--ink-muted)]">
                     {booking.departurePoint}
                   </dd>
                 </div>
 
                 <div>
-                  <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">
+                  <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)]">
                     Return Time & Destination
                   </dt>
                   <dd className="font-semibold text-[var(--ink)] mt-0.5">
                     {formatDateTime(booking.returnAt)}
                   </dd>
-                  <dd className="text-[13px] text-[var(--ink-muted)]">
+                  <dd className="text-[14.5px] text-[var(--ink-muted)]">
                     {booking.destination}
                   </dd>
                 </div>
 
                 <div>
-                  <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">
+                  <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)]">
                     Passenger Count
                   </dt>
                   <dd className="font-semibold text-[var(--union)] mt-0.5">
@@ -102,27 +102,27 @@ export default function AdminBusDetailPage({
                 </div>
 
                 <div>
-                  <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">
+                  <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)]">
                     Trip Category
                   </dt>
                   <dd className="font-medium mt-0.5">{booking.purpose}</dd>
                 </div>
 
                 <div className="sm:col-span-2 pt-3 border-t border-[var(--line)]">
-                  <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)] mb-1">
+                  <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)] mb-1">
                     Mandatory Reason Provided by Member
                   </dt>
-                  <dd className="text-[14px] leading-relaxed text-[var(--ink-body)] bg-[var(--canvas)] p-3 rounded-[var(--r-md)] border border-[var(--line)] whitespace-pre-line">
+                  <dd className="text-[15.5px] leading-relaxed text-[var(--ink-body)] bg-[var(--canvas)] p-3 rounded-[var(--r-md)] border border-[var(--line)] whitespace-pre-line">
                     {booking.reason}
                   </dd>
                 </div>
 
                 {booking.extraRequirements && (
                   <div className="sm:col-span-2">
-                    <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)] mb-1">
+                    <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)] mb-1">
                       Extra Requirements
                     </dt>
-                    <dd className="text-[13.5px] text-[var(--ink-body)]">
+                    <dd className="text-[15px] text-[var(--ink-body)]">
                       {booking.extraRequirements}
                     </dd>
                   </div>
@@ -135,24 +135,24 @@ export default function AdminBusDetailPage({
         <div className="space-y-6">
           <Card>
             <CardContent className="pt-6 space-y-4">
-              <h4 className="text-[13.5px] font-semibold uppercase tracking-wider text-[var(--ink-muted)]">
+              <h4 className="text-[15px] font-semibold uppercase tracking-wider text-[var(--ink-muted)]">
                 Reservation Status
               </h4>
 
               <div className="flex items-center justify-between">
                 <StatusBadge status={booking.status} />
-                <span className="mono-ref text-[12.5px] text-[var(--ink-muted)]">
+                <span className="mono-ref text-[14px] text-[var(--ink-muted)]">
                   {booking.reference}
                 </span>
               </div>
 
               {booking.driverName && (
                 <div className="p-3 bg-[var(--success-soft)] border border-[var(--success)]/40 rounded-[var(--r-md)] space-y-1">
-                  <span className="text-[11.5px] uppercase font-semibold text-[var(--success)] block">
+                  <span className="text-[13px] uppercase font-semibold text-[var(--success)] block">
                     Assigned Driver
                   </span>
                   <div className="font-medium text-[var(--ink)]">{booking.driverName}</div>
-                  <div className="text-[12.5px] text-[var(--union)] font-medium">
+                  <div className="text-[14px] text-[var(--union)] font-medium">
                     {booking.driverPhone}
                   </div>
                 </div>
@@ -160,14 +160,14 @@ export default function AdminBusDetailPage({
 
               {booking.contributionKes !== undefined && booking.contributionKes > 0 && (
                 <div className="p-3 bg-[var(--surface-sunk)] border border-[var(--line)] rounded-[var(--r-md)]">
-                  <span className="text-[11.5px] uppercase font-semibold text-[var(--ink-muted)] block">
+                  <span className="text-[13px] uppercase font-semibold text-[var(--ink-muted)] block">
                     Amount member must pay
                   </span>
                   <span className="mono-ref text-[18px] font-bold text-[var(--ink)]">
                     {formatKES(booking.contributionKes)}
                   </span>
                   {booking.paymentReference && (
-                    <span className="block text-[12.5px] text-[var(--ink-body)] mt-1">
+                    <span className="block text-[14px] text-[var(--ink-body)] mt-1">
                       Payment ref: <span className="mono-ref font-semibold">{booking.paymentReference}</span>
                     </span>
                   )}

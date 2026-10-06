@@ -46,7 +46,7 @@ export default function BereavementDetailPage({
   if (!caseDoc) {
     return (
       <div className="p-8 text-center bg-[var(--surface)] border border-[var(--line)] rounded-[var(--r-lg)]">
-        <p className="text-[15px] text-[var(--ink-muted)] mb-4">Case record not found.</p>
+        <p className="text-[16px] text-[var(--ink-muted)] mb-4">Case record not found.</p>
         <Button asChild>
           <Link href={`${basePath}/bereavement`}>Back to Cases</Link>
         </Button>
@@ -75,7 +75,7 @@ export default function BereavementDetailPage({
       {caseDoc.status !== "declined" && (
         <Card className="mb-6">
           <CardContent className="pt-6">
-            <h4 className="text-[13px] font-semibold uppercase tracking-wider text-[var(--ink-muted)] mb-4">
+            <h4 className="text-[14.5px] font-semibold uppercase tracking-wider text-[var(--ink-muted)] mb-4">
               Welfare Processing Timeline
             </h4>
             <div className="grid grid-cols-5 gap-2 text-center">
@@ -85,7 +85,7 @@ export default function BereavementDetailPage({
                 return (
                   <div key={step.key} className="flex flex-col items-center">
                     <div
-                      className={`w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-semibold mb-1.5 transition-colors ${
+                      className={`w-7 h-7 rounded-full flex items-center justify-center text-[13.5px] font-semibold mb-1.5 transition-colors ${
                         isPassed
                           ? "bg-[var(--union)] text-white"
                           : "bg-[var(--surface-sunk)] text-[var(--ink-muted)] border border-[var(--line)]"
@@ -94,7 +94,7 @@ export default function BereavementDetailPage({
                       {idx + 1}
                     </div>
                     <span
-                      className={`text-[11.5px] ${
+                      className={`text-[13px] ${
                         isPassed ? "font-semibold text-[var(--ink)]" : "text-[var(--ink-muted)]"
                       }`}
                     >
@@ -117,15 +117,15 @@ export default function BereavementDetailPage({
                 <h3 className="font-serif text-[18px] font-semibold text-[var(--ink)] border-b border-[var(--line)] pb-3">
                   Contribution Details
                 </h3>
-                <p className="text-[14px] text-[var(--ink-body)]">
+                <p className="text-[15.5px] text-[var(--ink-body)]">
                   <strong>{caseDoc.contributionMethod}:</strong>{" "}
                   <span className="mono-ref">{caseDoc.contributionNumber}</span>
                   {caseDoc.contributionAccount ? ` (${caseDoc.contributionAccount})` : ""}
                 </p>
                 {caseDoc.contributionNote && (
-                  <p className="text-[13.5px] text-[var(--ink-muted)]">{caseDoc.contributionNote}</p>
+                  <p className="text-[15px] text-[var(--ink-muted)]">{caseDoc.contributionNote}</p>
                 )}
-                <p className="text-[12.5px] text-[var(--ink-muted)]">
+                <p className="text-[14px] text-[var(--ink-muted)]">
                   {caseDoc.contributionBroadcastAt
                     ? "All members have been notified of this bereavement and how to contribute."
                     : "Members are notified of these details once the branch office approves the claim."}
@@ -140,16 +140,16 @@ export default function BereavementDetailPage({
                 Deceased Record
               </h3>
 
-              <div className="grid grid-cols-2 gap-4 text-[14.5px]">
+              <div className="grid grid-cols-2 gap-4 text-[16px]">
                 <div>
-                  <span className="text-[12px] uppercase font-semibold text-[var(--ink-muted)] block">
+                  <span className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)] block">
                     Deceased Full Name
                   </span>
                   <span className="font-medium text-[var(--ink)]">{caseDoc.deceasedName}</span>
                 </div>
 
                 <div>
-                  <span className="text-[12px] uppercase font-semibold text-[var(--ink-muted)] block">
+                  <span className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)] block">
                     Recognised Relationship
                   </span>
                   <span className="font-semibold text-[var(--brass)] uppercase">
@@ -158,7 +158,7 @@ export default function BereavementDetailPage({
                 </div>
 
                 <div>
-                  <span className="text-[12px] uppercase font-semibold text-[var(--ink-muted)] block">
+                  <span className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)] block">
                     Date of Bereavement
                   </span>
                   <span>{formatDate(caseDoc.dateOfBereavement)}</span>
@@ -166,7 +166,7 @@ export default function BereavementDetailPage({
 
                 {caseDoc.burialDate && (
                   <div>
-                    <span className="text-[12px] uppercase font-semibold text-[var(--ink-muted)] block">
+                    <span className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)] block">
                       Burial / Service Date
                     </span>
                     <span>{formatDate(caseDoc.burialDate)}</span>
@@ -175,7 +175,7 @@ export default function BereavementDetailPage({
 
                 {caseDoc.burialPlace && (
                   <div className="col-span-2">
-                    <span className="text-[12px] uppercase font-semibold text-[var(--ink-muted)] block">
+                    <span className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)] block">
                       Funeral Location / Place of Burial
                     </span>
                     <span>{caseDoc.burialPlace}</span>
@@ -184,10 +184,10 @@ export default function BereavementDetailPage({
 
                 {caseDoc.details && (
                   <div className="col-span-2 pt-2 border-t border-[var(--line)]">
-                    <span className="text-[12px] uppercase font-semibold text-[var(--ink-muted)] block mb-1">
+                    <span className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)] block mb-1">
                       Additional Details
                     </span>
-                    <p className="text-[14px] leading-relaxed text-[var(--ink-body)]">
+                    <p className="text-[15.5px] leading-relaxed text-[var(--ink-body)]">
                       {caseDoc.details}
                     </p>
                   </div>
@@ -201,20 +201,20 @@ export default function BereavementDetailPage({
         <div className="space-y-6">
           <Card>
             <CardContent className="pt-6 space-y-4">
-              <h4 className="text-[13.5px] font-semibold uppercase tracking-wider text-[var(--ink-muted)]">
+              <h4 className="text-[15px] font-semibold uppercase tracking-wider text-[var(--ink-muted)]">
                 Case Status
               </h4>
 
               <div className="flex items-center justify-between">
                 <StatusBadge status={caseDoc.status} />
-                <span className="mono-ref text-[12.5px] text-[var(--ink-muted)]">
+                <span className="mono-ref text-[14px] text-[var(--ink-muted)]">
                   {caseDoc.reference}
                 </span>
               </div>
 
               {caseDoc.supportAmount && (
                 <div className="p-3 rounded-[var(--r-md)] bg-[var(--success-soft)] border border-[var(--success)] text-center">
-                  <span className="text-[11.5px] uppercase font-semibold text-[var(--success)] block">
+                  <span className="text-[13px] uppercase font-semibold text-[var(--success)] block">
                     Approved Welfare Support
                   </span>
                   <span className="mono-ref text-[20px] font-bold text-[var(--success)]">
@@ -224,12 +224,12 @@ export default function BereavementDetailPage({
               )}
 
               {caseDoc.statusReason && (
-                <div className="p-3 rounded-[var(--r-md)] bg-[var(--surface-sunk)] border border-[var(--line)] text-[13px] text-[var(--ink-body)]">
+                <div className="p-3 rounded-[var(--r-md)] bg-[var(--surface-sunk)] border border-[var(--line)] text-[14.5px] text-[var(--ink-body)]">
                   <strong>Branch Note:</strong> {caseDoc.statusReason}
                 </div>
               )}
 
-              <div className="border-t border-[var(--line)] pt-3 text-[13px] text-[var(--ink-muted)] space-y-2">
+              <div className="border-t border-[var(--line)] pt-3 text-[14.5px] text-[var(--ink-muted)] space-y-2">
                 <div className="flex items-center gap-2">
                   <Building className="h-4 w-4 shrink-0" />
                   <span>{caseDoc.school}</span>

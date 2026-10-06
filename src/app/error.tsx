@@ -46,16 +46,16 @@ export default function ErrorBoundary({
         <h1 className="font-serif text-[34px] sm:text-[40px] font-bold leading-[1.15] text-[var(--ink)] tracking-[-0.015em] mb-4">
           Something went wrong on our end.
         </h1>
-        <p className="text-[15px] leading-relaxed text-[var(--ink-muted)] mb-4">
+        <p className="text-[16px] leading-relaxed text-[var(--ink-muted)] mb-4">
           An unexpected system exception occurred while processing your request. Our technical secretariat has been alerted.
         </p>
 
         {refCode && (
           <div className="p-3 bg-[var(--surface-sunk)] border border-[var(--line)] rounded-[var(--r-md)] mb-6 text-left">
-            <span className="text-[11.5px] uppercase tracking-wider text-[var(--ink-muted)] block">
+            <span className="text-[13px] uppercase tracking-wider text-[var(--ink-muted)] block">
               Quote Reference Code to Branch Office:
             </span>
-            <span className="mono-ref text-[15px] font-semibold text-[var(--ink)] block mt-0.5">
+            <span className="mono-ref text-[16px] font-semibold text-[var(--ink)] block mt-0.5">
               {refCode}
             </span>
           </div>

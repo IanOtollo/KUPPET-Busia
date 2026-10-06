@@ -7,7 +7,7 @@ export default function ForbiddenPage() {
     <div className="min-h-screen bg-[var(--canvas)] flex items-center justify-center p-6 relative">
       <Link
         href="/"
-        className="absolute top-4 left-4 sm:top-8 sm:left-8 flex items-center gap-1.5 text-[13px] font-medium text-[var(--ink-muted)] hover:text-[var(--ink)] transition-colors"
+        className="absolute top-4 left-4 sm:top-8 sm:left-8 flex items-center gap-1.5 text-[14.5px] font-medium text-[var(--ink-muted)] hover:text-[var(--ink)] transition-colors"
       >
         <ArrowLeft className="h-4 w-4" /> Back to Home
       </Link>
@@ -19,7 +19,7 @@ export default function ForbiddenPage() {
         <h1 className="font-serif text-[32px] sm:text-[38px] font-bold leading-[1.2] text-[var(--ink)] mb-4">
           You don't have access to this area.
         </h1>
-        <p className="text-[15px] leading-relaxed text-[var(--ink-muted)] mb-8">
+        <p className="text-[16px] leading-relaxed text-[var(--ink-muted)] mb-8">
           This portal section requires administrative or delegated branch official privileges. Your current role does not have authorization to view this resource.
         </p>
 

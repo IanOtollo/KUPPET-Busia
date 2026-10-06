@@ -37,15 +37,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-const NAV_GROUPS = [
+type NavBadge = "notifications" | "messages";
+type NavItem = { href: string; label: string; icon: typeof Home; badge?: NavBadge };
+
+// Grouped by what the teacher is trying to do, not by how the system is built:
+// few groups, 2-3 items each, most-used first.
+const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
   {
-    title: "General",
-    items: [
-      { href: "/dashboard", label: "Dashboard", icon: Home },
-    ],
+    title: "Home",
+    items: [{ href: "/dashboard", label: "Dashboard", icon: Home }],
   },
   {
-    title: "Welfare",
+    title: "Welfare & Support",
     items: [
       { href: "/bereavement", label: "Bereavement", icon: HeartHandshake },
       { href: "/harassment", label: "Harassment Safe Report", icon: Shield },
@@ -56,15 +59,20 @@ const NAV_GROUPS = [
     items: [
       { href: "/bus", label: "Union Bus", icon: Bus },
       { href: "/transfers", label: "Transfers & Swaps", icon: ArrowRightLeft },
+    ],
+  },
+  {
+    title: "Branch Information",
+    items: [
+      { href: "/branch/officials", label: "Branch Officials", icon: Users },
       { href: "/reports", label: "Financial Reports", icon: FileText },
     ],
   },
   {
-    title: "Branch",
+    title: "Inbox",
     items: [
-      { href: "/branch/officials", label: "Branch Officials", icon: Users },
-      { href: "/messages", label: "Messages", icon: MessageSquare },
-      { href: "/notifications", label: "Notifications", icon: Bell },
+      { href: "/messages", label: "Messages", icon: MessageSquare, badge: "messages" },
+      { href: "/notifications", label: "Notifications", icon: Bell, badge: "notifications" },
     ],
   },
 ];
@@ -106,6 +114,14 @@ export default function MemberLayout({
     profile && !profile.mustChangePassword ? {} : "skip"
   );
   const unreadCount = notifications?.filter((n) => !n.isRead).length ?? 0;
+  const unreadMessages = useQuery(
+    api.messages.unreadCount,
+    profile && !profile.mustChangePassword ? {} : "skip"
+  );
+  const badgeCounts: Record<NavBadge, number> = {
+    notifications: unreadCount,
+    messages: unreadMessages ?? 0,
+  };
 
   const memberName = profile?.fullName ?? "Member";
   const memberRole = profile?.tscNumber ? `TSC ${profile.tscNumber}` : "Member";
@@ -217,10 +233,10 @@ export default function MemberLayout({
           <div className={cn("h-[72px] flex items-center gap-3 border-b border-white/10", sidebarCollapsed ? "justify-center px-0" : "px-5")}>
             <Image src="/logo.png" alt="KUPPET Logo" width={112} height={56} className="h-14 w-auto object-contain shrink-0" priority />
             <div className={cn(sidebarCollapsed && "hidden")}>
-              <span className="block text-[13px] font-semibold tracking-[0.08em] text-white uppercase">
+              <span className="block text-[14.5px] font-semibold tracking-[0.08em] text-white uppercase">
                 KUPPET BUSIA
               </span>
-              <span className="block text-[11.5px] text-[#8E9CA8]">
+              <span className="block text-[13px] text-[#8E9CA8]">
                 Members Portal
               </span>
             </div>
@@ -230,7 +246,7 @@ export default function MemberLayout({
           <nav className="p-3 space-y-6 overflow-y-auto max-h-[calc(100vh-160px)]">
             {NAV_GROUPS.map((group) => (
               <div key={group.title}>
-                <span className={cn("px-3 text-[11px] font-semibold uppercase tracking-[0.1em] text-[#8E9CA8] block mb-1.5", sidebarCollapsed && "hidden")}>
+                <span className={cn("px-3 text-[13.5px] font-semibold uppercase tracking-[0.1em] text-[#8E9CA8] block mb-1.5", sidebarCollapsed && "hidden")}>
                   {group.title}
                 </span>
                 <ul className="space-y-1">
@@ -247,7 +263,7 @@ export default function MemberLayout({
                           href={`${basePath}${item.href}`}
                           title={sidebarCollapsed ? item.label : undefined}
                           className={cn(
-                            "relative flex items-center gap-2.5 h-[40px] px-3 rounded-[var(--r-md)] text-[14.5px] font-medium transition-colors",
+                            "relative flex items-center gap-3 h-[44px] px-3 rounded-[var(--r-md)] text-[15.5px] font-medium transition-colors",
                             sidebarCollapsed && "justify-center px-0",
                             isActive
                               ? "bg-white/10 text-white font-semibold"
@@ -264,6 +280,16 @@ export default function MemberLayout({
                             )}
                           />
                           <span className={cn(sidebarCollapsed && "hidden")}>{item.label}</span>
+                          {item.badge && badgeCounts[item.badge] > 0 && (
+                            <span
+                              className={cn(
+                                "ml-auto grid h-6 min-w-6 place-items-center rounded-full bg-[var(--brass)] px-1.5 text-[14.5px] font-bold leading-none text-[var(--ink)]",
+                                sidebarCollapsed && "hidden"
+                              )}
+                            >
+                              {badgeCounts[item.badge] > 99 ? "99+" : badgeCounts[item.badge]}
+                            </span>
+                          )}
                         </Link>
                       </li>
                     );
@@ -284,7 +310,7 @@ export default function MemberLayout({
             )}
           >
             <div className={cn("flex items-center gap-2.5", sidebarCollapsed && "gap-0")}>
-              <div className="w-8 h-8 rounded-full bg-[var(--brass)] text-[var(--ink)] font-sans font-semibold text-[13px] flex items-center justify-center overflow-hidden shrink-0">
+              <div className="w-8 h-8 rounded-full bg-[var(--brass)] text-[var(--ink)] font-sans font-semibold text-[14.5px] flex items-center justify-center overflow-hidden shrink-0">
                 {profile?.photoUrl ? (
                   <img src={profile.photoUrl} alt={memberName} className="h-full w-full object-cover" />
                 ) : (
@@ -292,10 +318,10 @@ export default function MemberLayout({
                 )}
               </div>
               <div className={cn(sidebarCollapsed && "hidden")}>
-                <span className="block text-[13.5px] font-medium text-white truncate max-w-[130px]">
+                <span className="block text-[15px] font-medium text-white truncate max-w-[130px]">
                   {memberName}
                 </span>
-                <span className="block text-[11.5px] text-[#8E9CA8]">
+                <span className="block text-[13px] text-[#8E9CA8]">
                   {memberRole}
                 </span>
               </div>
@@ -308,16 +334,21 @@ export default function MemberLayout({
               <Link
                 href={`${basePath}/profile`}
                 onClick={() => setUserMenuOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2 text-[15px] text-[var(--ink-body)] hover:bg-[var(--surface-sunk)] rounded-[var(--r-sm)]"
+                className="flex items-center gap-2.5 px-3 py-2 text-[16px] text-[var(--ink-body)] hover:bg-[var(--surface-sunk)] rounded-[var(--r-sm)]"
               >
                 <User className="h-4 w-4 text-[var(--ink-muted)]" /> My Profile
               </Link>
               <Link
                 href={`${basePath}/notifications`}
                 onClick={() => setUserMenuOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2 text-[15px] text-[var(--ink-body)] hover:bg-[var(--surface-sunk)] rounded-[var(--r-sm)]"
+                className="flex items-center gap-2.5 px-3 py-2 text-[16px] text-[var(--ink-body)] hover:bg-[var(--surface-sunk)] rounded-[var(--r-sm)]"
               >
-                <Bell className="h-4 w-4 text-[var(--ink-muted)]" /> Notifications
+                <Bell className="h-5 w-5 text-[var(--ink-muted)]" /> Notifications
+              {badgeCounts.notifications > 0 && (
+                <span className="ml-auto grid h-6 min-w-6 place-items-center rounded-full bg-[var(--brass)] px-1.5 text-[14.5px] font-bold text-[var(--ink)]">
+                  {badgeCounts.notifications}
+                </span>
+              )}
               </Link>
               <div className="h-px bg-[var(--line)] my-1" />
               <button
@@ -325,7 +356,7 @@ export default function MemberLayout({
                   setUserMenuOpen(false);
                   void handleSignOut();
                 }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-[13.5px] text-[var(--danger)] hover:bg-[var(--danger-soft)] rounded-[var(--r-sm)] cursor-pointer"
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-[15px] text-[var(--danger)] hover:bg-[var(--danger-soft)] rounded-[var(--r-sm)] cursor-pointer"
               >
                 <LogOut className="h-4 w-4" /> Sign Out
               </button>
@@ -338,7 +369,7 @@ export default function MemberLayout({
       <header className="lg:hidden sticky top-0 z-30 h-[56px] bg-[var(--surface)] border-b border-[var(--line)] px-4 flex items-center justify-between">
         <Link href={`${basePath}/dashboard`} className="flex min-w-0 items-center gap-2">
           <Image src="/logo.png" alt="KUPPET Busia" width={64} height={32} className="h-8 w-auto shrink-0 object-contain" priority />
-          <span className="truncate text-[11px] font-semibold tracking-[0.04em] text-[var(--ink)] uppercase sm:text-[13px] sm:tracking-[0.08em]">
+          <span className="truncate text-[12.5px] font-semibold tracking-[0.04em] text-[var(--ink)] uppercase sm:text-[14.5px] sm:tracking-[0.08em]">
             KUPPET BUSIA
           </span>
         </Link>
@@ -350,14 +381,14 @@ export default function MemberLayout({
           >
             <Bell className="h-6 w-6" />
             {unreadCount > 0 && (
-              <span className="absolute top-0.5 right-0.5 grid h-5 min-w-5 place-items-center rounded-full bg-[var(--danger)] px-1 text-[12px] font-bold leading-none text-white">
+              <span className="absolute top-0.5 right-0.5 grid h-5 min-w-5 place-items-center rounded-full bg-[var(--danger)] px-1 text-[13.5px] font-bold leading-none text-white">
                 {unreadCount > 99 ? "99+" : unreadCount}
               </span>
             )}
           </Link>
           <button
             onClick={() => setMoreSheetOpen(true)}
-            className="w-8 h-8 rounded-full bg-[var(--union)] text-white font-sans font-semibold text-[12px] flex items-center justify-center cursor-pointer overflow-hidden"
+            className="w-8 h-8 rounded-full bg-[var(--union)] text-white font-sans font-semibold text-[13.5px] flex items-center justify-center cursor-pointer overflow-hidden"
             aria-label="User profile menu"
           >
             {profile?.photoUrl ? (
@@ -373,7 +404,7 @@ export default function MemberLayout({
       <div className={cn("flex-1 flex flex-col min-h-screen transition-[margin] duration-200", sidebarCollapsed ? "lg:ml-[76px]" : "lg:ml-[264px]")}>
         {/* Desktop-only top bar — date, notifications, profile always visible (not tucked in a menu) */}
         <header className="hidden lg:flex h-[60px] bg-[var(--surface)] border-b border-[var(--line)] px-6 items-center justify-end gap-4 sticky top-0 z-20">
-          <span className="text-[13px] text-[var(--ink-muted)]">{formatDate(new Date())}</span>
+          <span className="text-[14.5px] text-[var(--ink-muted)]">{formatDate(new Date())}</span>
           <Link
             href={`${basePath}/notifications`}
             className="relative p-2 rounded-[var(--r-md)] text-[var(--ink-muted)] hover:bg-[var(--surface-sunk)] hover:text-[var(--ink)] transition-colors"
@@ -382,14 +413,14 @@ export default function MemberLayout({
           >
             <Bell className="h-6 w-6" />
             {unreadCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 grid h-5 min-w-5 place-items-center rounded-full bg-[var(--danger)] px-1 text-[12px] font-bold leading-none text-white">
+              <span className="absolute -top-0.5 -right-0.5 grid h-5 min-w-5 place-items-center rounded-full bg-[var(--danger)] px-1 text-[13.5px] font-bold leading-none text-white">
                 {unreadCount > 99 ? "99+" : unreadCount}
               </span>
             )}
           </Link>
           <Link
             href={`${basePath}/profile`}
-            className="w-8 h-8 rounded-full bg-[var(--union)] text-white font-sans font-semibold text-[12px] flex items-center justify-center overflow-hidden shrink-0"
+            className="w-8 h-8 rounded-full bg-[var(--union)] text-white font-sans font-semibold text-[13.5px] flex items-center justify-center overflow-hidden shrink-0"
             aria-label="My Profile"
             title="My Profile"
           >
@@ -401,7 +432,7 @@ export default function MemberLayout({
           </Link>
         </header>
 
-        <main className="flex-1 pb-[88px] lg:pb-12">
+        <main id="main-content" tabIndex={-1} className="flex-1 pb-[88px] lg:pb-12 outline-none">
           <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-10 py-6 lg:py-8">
             {children}
           </div>
@@ -430,7 +461,7 @@ export default function MemberLayout({
           />
           <span
             className={cn(
-              "text-[11px] mt-1",
+              "text-[14px] mt-1",
               isHomeActive
                 ? "text-[var(--union)] font-semibold"
                 : "text-[var(--ink-muted)] font-normal"
@@ -456,7 +487,7 @@ export default function MemberLayout({
           />
           <span
             className={cn(
-              "text-[11px] mt-1",
+              "text-[14px] mt-1",
               isWelfareActive
                 ? "text-[var(--union)] font-semibold"
                 : "text-[var(--ink-muted)] font-normal"
@@ -482,7 +513,7 @@ export default function MemberLayout({
           />
           <span
             className={cn(
-              "text-[11px] mt-1",
+              "text-[14px] mt-1",
               isBusActive
                 ? "text-[var(--union)] font-semibold"
                 : "text-[var(--ink-muted)] font-normal"
@@ -508,7 +539,7 @@ export default function MemberLayout({
           />
           <span
             className={cn(
-              "text-[11px] mt-1",
+              "text-[14px] mt-1",
               isOfficialsActive
                 ? "text-[var(--union)] font-semibold"
                 : "text-[var(--ink-muted)] font-normal"
@@ -534,7 +565,7 @@ export default function MemberLayout({
           />
           <span
             className={cn(
-              "text-[11px] mt-1",
+              "text-[14px] mt-1",
               isMoreActive
                 ? "text-[var(--union)] font-semibold"
                 : "text-[var(--ink-muted)] font-normal"
@@ -560,10 +591,10 @@ export default function MemberLayout({
             >
               <HeartHandshake className="h-5 w-5 text-[var(--union)] shrink-0 mt-0.5" />
               <div>
-                <span className="block font-semibold text-[15px] text-[var(--ink)]">
+                <span className="block font-semibold text-[16px] text-[var(--ink)]">
                   Bereavement Welfare
                 </span>
-                <span className="block text-[13px] text-[var(--ink-muted)]">
+                <span className="block text-[14.5px] text-[var(--ink-muted)]">
                   File claims for deceased mother, father, spouse, or child.
                 </span>
               </div>
@@ -576,10 +607,10 @@ export default function MemberLayout({
             >
               <Shield className="h-5 w-5 text-[var(--union)] shrink-0 mt-0.5" />
               <div>
-                <span className="block font-semibold text-[15px] text-[var(--ink)]">
+                <span className="block font-semibold text-[16px] text-[var(--ink)]">
                   Harassment Safe Report
                 </span>
-                <span className="block text-[13px] text-[var(--ink-muted)]">
+                <span className="block text-[14.5px] text-[var(--ink-muted)]">
                   Confidential workplace harassment reporting with optional anonymity.
                 </span>
               </div>
@@ -596,6 +627,7 @@ export default function MemberLayout({
             <DialogTitle>Additional Services</DialogTitle>
           </DialogHeader>
           <div className="space-y-2 py-2">
+            <span className="block px-3 pt-3 pb-1 text-[13.5px] font-semibold uppercase tracking-[0.1em] text-[var(--ink-muted)]">Services</span>
             <Link
               href={`${basePath}/transfers`}
               onClick={() => setMoreSheetOpen(false)}
@@ -610,12 +642,18 @@ export default function MemberLayout({
             >
               <FileText className="h-4 w-4 text-[var(--ink-muted)]" /> Financial Reports
             </Link>
+            <span className="block px-3 pt-3 pb-1 text-[13.5px] font-semibold uppercase tracking-[0.1em] text-[var(--ink-muted)]">Inbox</span>
             <Link
               href={`${basePath}/messages`}
               onClick={() => setMoreSheetOpen(false)}
               className="flex items-center gap-3 p-3 rounded-[var(--r-md)] hover:bg-[var(--surface-sunk)] text-[16px] text-[var(--ink)] font-medium"
             >
-              <MessageSquare className="h-4 w-4 text-[var(--ink-muted)]" /> Messages
+              <MessageSquare className="h-5 w-5 text-[var(--ink-muted)]" /> Messages
+              {badgeCounts.messages > 0 && (
+                <span className="ml-auto grid h-6 min-w-6 place-items-center rounded-full bg-[var(--brass)] px-1.5 text-[14.5px] font-bold text-[var(--ink)]">
+                  {badgeCounts.messages}
+                </span>
+              )}
             </Link>
             <Link
               href={`${basePath}/notifications`}
@@ -624,6 +662,7 @@ export default function MemberLayout({
             >
               <Bell className="h-4 w-4 text-[var(--ink-muted)]" /> Notifications
             </Link>
+            <span className="block px-3 pt-3 pb-1 text-[13.5px] font-semibold uppercase tracking-[0.1em] text-[var(--ink-muted)]">Account</span>
             <Link
               href={`${basePath}/profile`}
               onClick={() => setMoreSheetOpen(false)}
@@ -644,7 +683,7 @@ export default function MemberLayout({
                 setMoreSheetOpen(false);
                 void handleSignOut();
               }}
-              className="w-full flex items-center gap-3 p-3 rounded-[var(--r-md)] text-[14.5px] text-[var(--danger)] hover:bg-[var(--danger-soft)] font-medium cursor-pointer"
+              className="w-full flex items-center gap-3 p-3 rounded-[var(--r-md)] text-[16px] text-[var(--danger)] hover:bg-[var(--danger-soft)] font-medium cursor-pointer"
             >
               <LogOut className="h-4 w-4" /> Sign Out
             </button>

@@ -28,7 +28,7 @@ export function EmptyState({
       <h3 className="font-serif text-[19px] font-semibold text-[var(--ink)] mb-2">
         {title}
       </h3>
-      <p className="text-[14px] leading-relaxed text-[var(--ink-muted)] max-w-[54ch] mb-6">
+      <p className="text-[15.5px] leading-relaxed text-[var(--ink-muted)] max-w-[54ch] mb-6">
         {description}
       </p>
 

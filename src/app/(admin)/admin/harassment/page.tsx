@@ -48,11 +48,11 @@ export default function AdminHarassmentPage() {
       header: "Anonymity",
       render: (item) =>
         item.isAnonymous ? (
-          <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-[var(--brass)] px-2 py-0.5 rounded bg-[var(--brass-soft)]">
+          <span className="inline-flex items-center gap-1 text-[13.5px] font-semibold text-[var(--brass)] px-2 py-0.5 rounded bg-[var(--brass-soft)]">
             <Lock className="h-3 w-3" /> Anonymous
           </span>
         ) : (
-          <span className="text-[12px] text-[var(--ink-muted)]">Named Report</span>
+          <span className="text-[13.5px] text-[var(--ink-muted)]">Named Report</span>
         ),
     },
     {
@@ -63,7 +63,7 @@ export default function AdminHarassmentPage() {
           <span className="font-semibold text-[var(--ink)] block">
             {item.category}
           </span>
-          <span className="text-[12px] text-[var(--ink-muted)]">
+          <span className="text-[13.5px] text-[var(--ink-muted)]">
             {item.school} • {item.subCounty}
           </span>
         </div>
@@ -73,7 +73,7 @@ export default function AdminHarassmentPage() {
       key: "involvedRole",
       header: "Involved Role",
       render: (item) => (
-        <span className="text-[13px] text-[var(--ink-body)]">{item.involvedRole}</span>
+        <span className="text-[14.5px] text-[var(--ink-body)]">{item.involvedRole}</span>
       ),
     },
     {
@@ -115,7 +115,7 @@ export default function AdminHarassmentPage() {
       {/* Security & Audit Notice */}
       <div className="p-4 rounded-[var(--r-md)] bg-[var(--brass-soft)] border border-[var(--brass)]/30 mb-6 flex items-start gap-3">
         <Lock className="h-5 w-5 text-[var(--brass)] shrink-0 mt-0.5" />
-        <div className="text-[13.5px] leading-relaxed text-[var(--ink-body)]">
+        <div className="text-[15px] leading-relaxed text-[var(--ink-body)]">
           <strong className="font-semibold text-[var(--ink)]">
             Mandatory Audit-on-View Enforcement:
           </strong>{" "}
@@ -126,7 +126,7 @@ export default function AdminHarassmentPage() {
       {/* Filter Bar */}
       <div className="flex flex-wrap items-center gap-3 p-4 rounded-[var(--r-md)] bg-[var(--surface)] border border-[var(--line)] mb-6 shadow-[var(--shadow-hair)]">
         <Filter className="h-4 w-4 text-[var(--ink-muted)]" />
-        <span className="text-[13px] font-semibold text-[var(--ink)]">Filter:</span>
+        <span className="text-[14.5px] font-semibold text-[var(--ink)]">Filter:</span>
 
         <div className="w-48">
           <Select value={selectedStatus} onValueChange={setSelectedStatus}>

@@ -253,7 +253,7 @@ function AdminMembersPageInner() {
           </div>
           <div>
             <span className="font-semibold text-[var(--ink)] block">{item.fullName}</span>
-            <span className="text-[12px] text-[var(--ink-muted)]">{item.email}</span>
+            <span className="text-[13.5px] text-[var(--ink-muted)]">{item.email}</span>
           </div>
         </div>
       ),
@@ -264,8 +264,8 @@ function AdminMembersPageInner() {
       isMono: true,
       render: (item) => (
         <div>
-          <span className="mono-ref text-[13px] font-bold text-[var(--union)] block">{item.tscNumber}</span>
-          <span className="mono-ref text-[12px] text-[var(--ink-muted)]">ID: {item.idNumber}</span>
+          <span className="mono-ref text-[14.5px] font-bold text-[var(--union)] block">{item.tscNumber}</span>
+          <span className="mono-ref text-[13.5px] text-[var(--ink-muted)]">ID: {item.idNumber}</span>
         </div>
       ),
     },
@@ -275,7 +275,7 @@ function AdminMembersPageInner() {
       render: (item) => (
         <div>
           <span className="font-medium text-[var(--ink-body)] block">{item.school}</span>
-          <span className="text-[12px] text-[var(--ink-muted)]">{item.subCounty}</span>
+          <span className="text-[13.5px] text-[var(--ink-muted)]">{item.subCounty}</span>
         </div>
       ),
     },
@@ -283,7 +283,7 @@ function AdminMembersPageInner() {
       key: "role",
       header: "Role",
       render: (item) => (
-        <span className="capitalize text-[12.5px] font-semibold text-[var(--ink)]">{item.role}</span>
+        <span className="capitalize text-[14px] font-semibold text-[var(--ink)]">{item.role}</span>
       ),
     },
     {
@@ -305,7 +305,7 @@ function AdminMembersPageInner() {
         ]}
         action={
           pendingApprovalCount > 0 ? (
-            <div className="inline-flex items-center gap-2 rounded-[var(--r-full)] border border-[var(--warning)]/30 bg-[var(--warning-soft)] px-3 py-2 text-[13px] font-semibold text-[var(--warning)]">
+            <div className="inline-flex items-center gap-2 rounded-[var(--r-full)] border border-[var(--warning)]/30 bg-[var(--warning-soft)] px-3 py-2 text-[14.5px] font-semibold text-[var(--warning)]">
               <UserCheck className="h-4 w-4" />
               {pendingApprovalCount} awaiting review
             </div>
@@ -320,7 +320,7 @@ function AdminMembersPageInner() {
             const firstPending = pending?.members[0];
             if (firstPending) void openMemberById(firstPending._id);
           }}
-          className="mb-6 flex w-full items-center gap-3 rounded-[var(--r-md)] border border-[var(--warning)]/30 bg-[var(--warning-soft)] p-4 text-left text-[13.5px] text-[var(--ink-body)] transition-colors hover:bg-[var(--brass-soft)]"
+          className="mb-6 flex w-full items-center gap-3 rounded-[var(--r-md)] border border-[var(--warning)]/30 bg-[var(--warning-soft)] p-4 text-left text-[15px] text-[var(--ink-body)] transition-colors hover:bg-[var(--brass-soft)]"
         >
           <UserCheck className="h-5 w-5 shrink-0 text-[var(--warning)]" />
           <span><strong>{pendingApprovalCount} membership application{pendingApprovalCount === 1 ? "" : "s"} need review.</strong> Open each teacher record to verify their details before approving access.</span>
@@ -329,16 +329,16 @@ function AdminMembersPageInner() {
 
       {pendingTransfers.length > 0 && (
         <div className="mb-6 rounded-[var(--r-md)] border border-[var(--line)] bg-[var(--surface)]">
-          <div className="flex items-center gap-2 border-b border-[var(--line)] px-4 py-3 text-[13.5px] font-semibold text-[var(--ink)]">
+          <div className="flex items-center gap-2 border-b border-[var(--line)] px-4 py-3 text-[15px] font-semibold text-[var(--ink)]">
             <ArrowRightLeft className="h-4 w-4 text-[var(--union)]" />
             Transfers & promotions reported by teachers ({pendingTransfers.length})
           </div>
           <ul className="divide-y divide-[var(--line)]">
             {pendingTransfers.map((t) => (
               <li key={t._id} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="text-[13.5px] text-[var(--ink-body)]">
+                <div className="text-[15px] text-[var(--ink-body)]">
                   <span className="font-semibold text-[var(--ink)]">{t.memberName}</span>{" "}
-                  <span className="mono-ref text-[12px] text-[var(--ink-muted)]">TSC {t.tscNumber}</span>
+                  <span className="mono-ref text-[13.5px] text-[var(--ink-muted)]">TSC {t.tscNumber}</span>
                   {t.fromSchool.trim().toLowerCase() !== t.toSchool.trim().toLowerCase() || t.fromSubCounty !== t.toSubCounty ? (
                     <div>{t.fromSchool} ({t.fromSubCounty}) → <strong>{t.toSchool} ({t.toSubCounty})</strong></div>
                   ) : null}
@@ -346,11 +346,11 @@ function AdminMembersPageInner() {
                     <div>{t.fromDesignation} → <strong>{t.toDesignation}</strong></div>
                   )}
                   {(t.effectiveDate || t.reason) && (
-                    <div className="text-[12px] text-[var(--ink-muted)]">
+                    <div className="text-[13.5px] text-[var(--ink-muted)]">
                       {[t.effectiveDate && `Effective ${t.effectiveDate}`, t.reason].filter(Boolean).join(" • ")}
                     </div>
                   )}
-                  <div className="text-[11px] text-[var(--ink-muted)]">{formatShortDate(t.createdAt)}</div>
+                  <div className="text-[12.5px] text-[var(--ink-muted)]">{formatShortDate(t.createdAt)}</div>
                 </div>
                 <Button variant="secondary" size="sm" onClick={() => handleAcknowledge(t._id)}>
                   <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Mark reviewed
@@ -378,7 +378,7 @@ function AdminMembersPageInner() {
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search by teacher name, school, TSC or ID…"
                 aria-label="Search members"
-                className="h-[40px] w-full rounded-[var(--r-md)] border border-[var(--line-strong)] bg-[var(--surface)] pl-9 pr-9 text-[13.5px] placeholder:text-[var(--ink-muted)] focus:border-[var(--union)] focus:outline-none focus:ring-2 focus:ring-[rgba(31,61,92,0.12)]"
+                className="h-[40px] w-full rounded-[var(--r-md)] border border-[var(--line-strong)] bg-[var(--surface)] pl-9 pr-9 text-[15px] placeholder:text-[var(--ink-muted)] focus:border-[var(--union)] focus:outline-none focus:ring-2 focus:ring-[rgba(31,61,92,0.12)]"
               />
               {query && (
                 <button
@@ -394,7 +394,7 @@ function AdminMembersPageInner() {
 
             <div className="flex flex-wrap items-center gap-2">
               <Select value={jobGroupFilter} onValueChange={setJobGroupFilter}>
-                <SelectTrigger aria-label="Filter by job group" className="h-[40px] w-[180px] text-[13.5px]">
+                <SelectTrigger aria-label="Filter by job group" className="h-[40px] w-[180px] text-[15px]">
                   <SelectValue placeholder="All job groups" />
                 </SelectTrigger>
                 <SelectContent>
@@ -417,14 +417,14 @@ function AdminMembersPageInner() {
                   role="tab"
                   aria-selected={statusTab === t.value}
                   onClick={() => setStatusTab(t.value)}
-                  className={`inline-flex items-center gap-1.5 rounded-[var(--r-full)] border px-3 py-1.5 text-[13px] font-medium transition-colors cursor-pointer ${
+                  className={`inline-flex items-center gap-1.5 rounded-[var(--r-full)] border px-3 py-1.5 text-[14.5px] font-medium transition-colors cursor-pointer ${
                     statusTab === t.value
                       ? "border-[var(--union)] bg-[var(--union)] text-white"
                       : "border-[var(--line)] bg-[var(--surface)] text-[var(--ink-body)] hover:bg-[var(--surface-sunk)]"
                   }`}
                 >
                   {t.label}
-                  <span className={`text-[11px] ${statusTab === t.value ? "text-white/80" : "text-[var(--ink-muted)]"}`}>
+                  <span className={`text-[12.5px] ${statusTab === t.value ? "text-white/80" : "text-[var(--ink-muted)]"}`}>
                     {tabCounts[t.value] ?? "…"}
                   </span>
                 </button>
@@ -432,14 +432,14 @@ function AdminMembersPageInner() {
             </div>
           </div>
 
-          <p className="mb-3 text-[12.5px] text-[var(--ink-muted)]">
+          <p className="mb-3 text-[14px] text-[var(--ink-muted)]">
             Showing {visibleMembers.length} teacher{visibleMembers.length === 1 ? "" : "s"}
             {listStatus === "CanLoadMore" && "+"}
             {jobGroupFilter !== "all" && ` · ${jobGroupFilter === "none" ? "no job group set" : `Job Group ${jobGroupFilter}`}`} · sorted A–Z by name
           </p>
 
           {visibleMembers.length === 0 ? (
-            <div className="rounded-[var(--r-md)] border border-dashed border-[var(--line-strong)] bg-[var(--surface)] p-10 text-center text-[13.5px] text-[var(--ink-muted)]">
+            <div className="rounded-[var(--r-md)] border border-dashed border-[var(--line-strong)] bg-[var(--surface)] p-10 text-center text-[15px] text-[var(--ink-muted)]">
               {q ? `No teachers match "${query.trim()}".` : "No members in this view yet."}
             </div>
           ) : (
@@ -459,7 +459,7 @@ function AdminMembersPageInner() {
             </div>
           )}
           {listStatus === "LoadingMore" && (
-            <p className="mt-4 text-center text-[14px] text-[var(--ink-muted)]">Loading…</p>
+            <p className="mt-4 text-center text-[15.5px] text-[var(--ink-muted)]">Loading…</p>
           )}
 
         </>
@@ -542,7 +542,7 @@ function AdminMembersPageInner() {
 function Detail({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) {
   return (
     <div className={`rounded-[var(--r-md)] border border-[var(--line)] bg-[var(--surface)] p-3 ${className}`}>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--ink-muted)]">{label}</p>
+      <p className="text-[12.5px] font-semibold uppercase tracking-[0.06em] text-[var(--ink-muted)]">{label}</p>
       <div className="mt-1 text-sm text-[var(--ink-body)]">{children}</div>
     </div>
   );

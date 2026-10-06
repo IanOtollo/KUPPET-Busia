@@ -24,7 +24,7 @@ export default function ContactPage() {
           </Button>
           <Link href="/" className="flex items-center gap-3 min-w-0">
             <Image src="/logo.png" alt="KUPPET Logo" width={112} height={56} className="h-14 w-auto object-contain shrink-0" priority />
-            <span className="text-[13px] font-semibold tracking-[0.08em] text-[var(--ink)] uppercase truncate">
+            <span className="text-[14.5px] font-semibold tracking-[0.08em] text-[var(--ink)] uppercase truncate">
               KUPPET BUSIA
             </span>
           </Link>
@@ -45,7 +45,7 @@ export default function ContactPage() {
             <div className="p-5 rounded-[var(--r-lg)] bg-[var(--surface)] border border-[var(--line)]">
               <MapPin className="h-5 w-5 text-[var(--union)] mb-3" />
               <h3 className="font-serif text-[17px] font-semibold mb-1">Secretariat Office</h3>
-              <p className="text-[14px] text-[var(--ink-muted)] leading-relaxed">
+              <p className="text-[15.5px] text-[var(--ink-muted)] leading-relaxed">
                 KUPPET Busia Branch Secretariat<br />
                 Teachers Plaza, 2nd Floor<br />
                 Off Kisumu-Busia Highway<br />
@@ -56,7 +56,7 @@ export default function ContactPage() {
             <div className="p-5 rounded-[var(--r-lg)] bg-[var(--surface)] border border-[var(--line)]">
               <Phone className="h-5 w-5 text-[var(--union)] mb-3" />
               <h3 className="font-serif text-[17px] font-semibold mb-1">Telephone & Hotlines</h3>
-              <p className="text-[14px] text-[var(--ink-muted)] leading-relaxed">
+              <p className="text-[15.5px] text-[var(--ink-muted)] leading-relaxed">
                 {executiveSecretary?.phone ? (
                   <>
                     Executive Secretary: <a href={`tel:${executiveSecretary.phone}`} className="text-[var(--union)] font-medium">{executiveSecretary.phone}</a><br />
@@ -76,7 +76,7 @@ export default function ContactPage() {
             <div className="p-5 rounded-[var(--r-lg)] bg-[var(--surface)] border border-[var(--line)]">
               <Mail className="h-5 w-5 text-[var(--union)] mb-3" />
               <h3 className="font-serif text-[17px] font-semibold mb-1">Email Enquiries</h3>
-              <p className="text-[14px] text-[var(--ink-muted)] leading-relaxed">
+              <p className="text-[15.5px] text-[var(--ink-muted)] leading-relaxed">
                 {executiveSecretary?.email ? (
                   <>
                     Executive Desk: <a href={`mailto:${executiveSecretary.email}`} className="text-[var(--union)]">{executiveSecretary.email}</a>
@@ -90,7 +90,7 @@ export default function ContactPage() {
             <div className="p-5 rounded-[var(--r-lg)] bg-[var(--surface)] border border-[var(--line)]">
               <Clock className="h-5 w-5 text-[var(--union)] mb-3" />
               <h3 className="font-serif text-[17px] font-semibold mb-1">Office Working Hours</h3>
-              <p className="text-[14px] text-[var(--ink-muted)] leading-relaxed">
+              <p className="text-[15.5px] text-[var(--ink-muted)] leading-relaxed">
                 Monday – Friday: 8:00 AM – 5:00 PM<br />
                 Saturday: 9:00 AM – 1:00 PM (Emergency Desk)<br />
                 Sundays & Public Holidays: Closed

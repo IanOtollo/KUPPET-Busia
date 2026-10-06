@@ -218,17 +218,17 @@ function LoginForm() {
         <h2 className="font-serif text-[26px] font-semibold text-[var(--ink)] leading-tight">
           Sign In
         </h2>
-        <p className="text-[14px] text-[var(--ink-muted)] mt-1">
+        <p className="text-[15.5px] text-[var(--ink-muted)] mt-1">
           Use your TSC number and password.
         </p>
-        <p className="text-[13px] text-[var(--ink-muted)] mt-1">
+        <p className="text-[14.5px] text-[var(--ink-muted)] mt-1">
           First time signing in with a new account? Enter only your TSC number and press Sign In to create your password.
         </p>
       </div>
 
       {setupTsc ? (
         <form onSubmit={onCreatePassword} className="space-y-4">
-          <div className="rounded-[var(--r-md)] border border-[var(--union)]/30 bg-[var(--union-soft)]/40 p-4 text-[14px] text-[var(--ink-body)]">
+          <div className="rounded-[var(--r-md)] border border-[var(--union)]/30 bg-[var(--union-soft)]/40 p-4 text-[15.5px] text-[var(--ink-body)]">
             <strong className="block text-[var(--ink)]">Create your password</strong>
             TSC {setupTsc} has no password yet. Confirm the mobile number on your account, then choose a password.
           </div>
@@ -270,7 +270,7 @@ function LoginForm() {
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="text-[13px] text-[var(--union)] hover:underline cursor-pointer"
+            className="text-[14.5px] text-[var(--union)] hover:underline cursor-pointer"
           >
             {showPassword ? "Hide passwords" : "Show passwords"}
           </button>
@@ -280,7 +280,7 @@ function LoginForm() {
           <button
             type="button"
             onClick={() => setSetupTsc(null)}
-            className="block w-full text-center text-[13.5px] text-[var(--ink-muted)] hover:underline cursor-pointer"
+            className="block w-full text-center text-[15px] text-[var(--ink-muted)] hover:underline cursor-pointer"
           >
             Back
           </button>
@@ -298,7 +298,7 @@ function LoginForm() {
             {...register("tscNumber")}
           />
           {errors.tscNumber && (
-            <p className="text-[13px] text-[var(--danger)] mt-1">
+            <p className="text-[14.5px] text-[var(--danger)] mt-1">
               {errors.tscNumber.message}
             </p>
           )}
@@ -309,7 +309,7 @@ function LoginForm() {
             <Label htmlFor="password">Password</Label>
             <Link
               href="/forgot-password"
-              className="text-[12.5px] text-[var(--union)] hover:underline"
+              className="text-[14px] text-[var(--union)] hover:underline"
             >
               Forgot password?
             </Link>
@@ -337,7 +337,7 @@ function LoginForm() {
             </button>
           </div>
           {errors.password && (
-            <p className="text-[13px] text-[var(--danger)] mt-1">
+            <p className="text-[14.5px] text-[var(--danger)] mt-1">
               {errors.password.message}
             </p>
           )}
@@ -355,7 +355,7 @@ function LoginForm() {
       </form>
       )}
 
-      <div className="mt-6 pt-6 border-t border-[var(--line)] text-center text-[13.5px] text-[var(--ink-muted)]">
+      <div className="mt-6 pt-6 border-t border-[var(--line)] text-center text-[15px] text-[var(--ink-muted)]">
         New teacher?{" "}
         <Link
           href="/register"

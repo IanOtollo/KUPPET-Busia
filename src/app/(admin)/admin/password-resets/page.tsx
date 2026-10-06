@@ -57,7 +57,7 @@ export default function PasswordResetsPage() {
         <h1 className="font-serif text-[26px] font-semibold text-[var(--ink)] leading-tight">
           Password Resets
         </h1>
-        <p className="text-[14px] text-[var(--ink-muted)] mt-1 max-w-2xl">
+        <p className="text-[15.5px] text-[var(--ink-muted)] mt-1 max-w-2xl">
           Teachers who forgot their password appear here, having proved their TSC and National ID
           numbers. Approving sets that one teacher&apos;s password to their TSC number and forces
           them to choose a new one on first sign-in. The temporary password expires after 48 hours.
@@ -70,7 +70,7 @@ export default function PasswordResetsPage() {
           <Skeleton className="h-20" />
         </div>
       ) : rows.length === 0 ? (
-        <div className="rounded-[var(--r-lg)] border border-[var(--line)] bg-[var(--surface)] p-8 text-center text-[14px] text-[var(--ink-muted)]">
+        <div className="rounded-[var(--r-lg)] border border-[var(--line)] bg-[var(--surface)] p-8 text-center text-[15.5px] text-[var(--ink-muted)]">
           No open password reset requests.
         </div>
       ) : (
@@ -81,11 +81,11 @@ export default function PasswordResetsPage() {
               className="rounded-[var(--r-lg)] border border-[var(--line)] bg-[var(--surface)] p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4 justify-between"
             >
               <div className="min-w-0">
-                <p className="text-[15px] font-semibold text-[var(--ink)] truncate">{r.memberName}</p>
-                <p className="text-[13px] text-[var(--ink-muted)]">
+                <p className="text-[16px] font-semibold text-[var(--ink)] truncate">{r.memberName}</p>
+                <p className="text-[14.5px] text-[var(--ink-muted)]">
                   TSC {r.tscNumber} • {r.school || "—"}
                 </p>
-                <p className="text-[12px] text-[var(--ink-muted)] mt-1 flex items-center gap-1.5">
+                <p className="text-[13.5px] text-[var(--ink-muted)] mt-1 flex items-center gap-1.5">
                   {r.status === "requested" ? (
                     <>
                       <Clock className="h-3.5 w-3.5" /> Requested {formatRelativeTime(r.requestedAt)}

@@ -118,7 +118,7 @@ export default function AdminMessagesPage() {
               placeholder="Search teachers…"
               value={searchQ}
               onChange={(e) => setSearchQ(e.target.value)}
-              className="w-full pl-9 pr-3 h-[38px] text-[13px] rounded-[var(--r-md)] border border-[var(--line-strong)] bg-[var(--surface)] placeholder:text-[var(--ink-muted)] focus:outline-none focus:border-[var(--union)]"
+              className="w-full pl-9 pr-3 h-[38px] text-[14.5px] rounded-[var(--r-md)] border border-[var(--line-strong)] bg-[var(--surface)] placeholder:text-[var(--ink-muted)] focus:outline-none focus:border-[var(--union)]"
             />
           </div>
 
@@ -145,21 +145,21 @@ export default function AdminMessagesPage() {
                       </span>
                       <div className="flex items-center gap-1.5 shrink-0">
                         {t.unreadCount > 0 && (
-                          <span className="w-4 h-4 rounded-full bg-[var(--danger)] text-white text-[10px] font-bold flex items-center justify-center">
+                          <span className="w-4 h-4 rounded-full bg-[var(--danger)] text-white text-[12px] font-bold flex items-center justify-center">
                             {t.unreadCount}
                           </span>
                         )}
-                        <span className="text-[11px] text-[var(--ink-muted)]">
+                        <span className="text-[12.5px] text-[var(--ink-muted)]">
                           {formatRelativeTime(new Date(t.lastAt))}
                         </span>
                       </div>
                     </div>
-                    <p className="text-[12px] text-[var(--ink-muted)] truncate">
+                    <p className="text-[13.5px] text-[var(--ink-muted)] truncate">
                       {t.isMine ? "You: " : ""}{t.lastMessage}
                     </p>
                     <div className="flex items-center gap-1 mt-0.5">
                       <School className="h-3 w-3 text-[var(--ink-muted)]" />
-                      <p className="text-[11px] text-[var(--ink-muted)] truncate">{t.otherUser.school}</p>
+                      <p className="text-[12.5px] text-[var(--ink-muted)] truncate">{t.otherUser.school}</p>
                     </div>
                   </button>
                 ))
@@ -188,7 +188,7 @@ export default function AdminMessagesPage() {
                     placeholder="Search by name or school…"
                     value={userSearchQ}
                     onChange={(e) => setUserSearchQ(e.target.value)}
-                    className="w-full pl-9 pr-3 h-[38px] text-[13px] rounded-[var(--r-md)] border border-[var(--line-strong)] bg-[var(--surface)] placeholder:text-[var(--ink-muted)] focus:outline-none focus:border-[var(--union)]"
+                    className="w-full pl-9 pr-3 h-[38px] text-[14.5px] rounded-[var(--r-md)] border border-[var(--line-strong)] bg-[var(--surface)] placeholder:text-[var(--ink-muted)] focus:outline-none focus:border-[var(--union)]"
                   />
                 </div>
               </div>
@@ -204,8 +204,8 @@ export default function AdminMessagesPage() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-[var(--ink)] truncate">{u.fullName}</p>
-                      <p className="text-[12px] text-[var(--ink-muted)] truncate">{u.schoolRole || u.role} · {u.school}</p>
-                      <p className="text-[11px] text-[var(--ink-muted)] flex items-center gap-1 mt-0.5">
+                      <p className="text-[13.5px] text-[var(--ink-muted)] truncate">{u.schoolRole || u.role} · {u.school}</p>
+                      <p className="text-[12.5px] text-[var(--ink-muted)] flex items-center gap-1 mt-0.5">
                         <Phone className="h-3 w-3" />{u.phone}
                       </p>
                     </div>
@@ -235,11 +235,11 @@ export default function AdminMessagesPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-[var(--ink)] truncate">{selectedUser.fullName}</p>
-                  <p className="text-[12px] text-[var(--ink-muted)] truncate">{selectedUser.schoolRole || selectedUser.role} · {selectedUser.school}</p>
+                  <p className="text-[13.5px] text-[var(--ink-muted)] truncate">{selectedUser.schoolRole || selectedUser.role} · {selectedUser.school}</p>
                 </div>
                 <a
                   href={`tel:${selectedUser.phone}`}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--r-md)] bg-[var(--success-soft)] text-[var(--success)] text-[12px] font-medium hover:bg-[var(--success)] hover:text-white transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--r-md)] bg-[var(--success-soft)] text-[var(--success)] text-[13.5px] font-medium hover:bg-[var(--success)] hover:text-white transition-colors"
                   title={`Call ${selectedUser.phone}`}
                 >
                   <Phone className="h-3.5 w-3.5" />
@@ -271,7 +271,7 @@ export default function AdminMessagesPage() {
                             : "bg-[var(--canvas)] border border-[var(--line)] text-[var(--ink)] rounded-bl-sm"
                         }`}>
                           {msg.body}
-                          <div className={`text-[10px] mt-1 ${isMe ? "text-white/60" : "text-[var(--ink-muted)]"}`}>
+                          <div className={`text-[12px] mt-1 ${isMe ? "text-white/60" : "text-[var(--ink-muted)]"}`}>
                             {formatRelativeTime(new Date(msg.createdAt))}
                           </div>
                         </div>
@@ -289,7 +289,7 @@ export default function AdminMessagesPage() {
                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
                   placeholder="Type a message… (Enter to send)"
                   rows={2}
-                  className="flex-1 resize-none px-3 py-2 text-[13px] rounded-[var(--r-md)] border border-[var(--line-strong)] bg-[var(--surface)] placeholder:text-[var(--ink-muted)] focus:outline-none focus:border-[var(--union)]"
+                  className="flex-1 resize-none px-3 py-2 text-[14.5px] rounded-[var(--r-md)] border border-[var(--line-strong)] bg-[var(--surface)] placeholder:text-[var(--ink-muted)] focus:outline-none focus:border-[var(--union)]"
                 />
                 <Button
                   onClick={handleSend}

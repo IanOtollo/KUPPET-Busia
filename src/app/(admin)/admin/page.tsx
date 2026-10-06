@@ -95,14 +95,14 @@ export default function AdminDashboardPage() {
           <Link href="/admin/members" className="group block h-full">
             <CardContent className="relative pt-6 pb-11 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">
+                <span className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)]">
                   Total Members
                 </span>
               </div>
               <div className="mono-ref text-[36px] font-bold text-[var(--ink)]">
                 {stats ? stats.total : "…"}
               </div>
-              <p className="text-[12.5px] text-[var(--ink-muted)]">
+              <p className="text-[14px] text-[var(--ink-muted)]">
                 {pendingMembers.length > 0
                   ? `${pendingMembers.length} awaiting TSC verification`
                   : "All registered teacher members"}
@@ -118,7 +118,7 @@ export default function AdminDashboardPage() {
           <Link href="/admin/bereavement" className="group block h-full">
             <CardContent className="relative pt-6 pb-11 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">
+                <span className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)]">
                   Pending Bereavement
                 </span>
                 {pendingBereavement.length > 0 && (
@@ -128,7 +128,7 @@ export default function AdminDashboardPage() {
               <div className="mono-ref text-[36px] font-bold text-[var(--ink)]">
                 {pendingBereavement.length}
               </div>
-              <p className="text-[12.5px] text-[var(--ink-muted)]">
+              <p className="text-[14px] text-[var(--ink-muted)]">
                 Awaiting welfare review
               </p>
               <span aria-hidden className="absolute -bottom-2 -right-2 grid h-10 w-10 place-items-center rounded-tl-[var(--r-md)] rounded-br-[var(--r-md)] bg-[var(--union)] text-white shadow-[0_4px_12px_rgba(31,61,92,0.28)] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
@@ -142,7 +142,7 @@ export default function AdminDashboardPage() {
           <Link href="/admin/harassment" className="group block h-full">
             <CardContent className="relative pt-6 pb-11 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">
+                <span className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)]">
                   Pending Harassment
                 </span>
                 {pendingHarassment.length > 0 && (
@@ -152,7 +152,7 @@ export default function AdminDashboardPage() {
               <div className="mono-ref text-[36px] font-bold text-[var(--ink)]">
                 {pendingHarassment.length}
               </div>
-              <p className="text-[12.5px] text-[var(--ink-muted)]">
+              <p className="text-[14px] text-[var(--ink-muted)]">
                 Confidential grievance queue
               </p>
               <span aria-hidden className="absolute -bottom-2 -right-2 grid h-10 w-10 place-items-center rounded-tl-[var(--r-md)] rounded-br-[var(--r-md)] bg-[var(--union)] text-white shadow-[0_4px_12px_rgba(31,61,92,0.28)] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
@@ -166,7 +166,7 @@ export default function AdminDashboardPage() {
           <Link href="/admin/bus" className="group block h-full">
             <CardContent className="relative pt-6 pb-11 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">
+                <span className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)]">
                   Pending Bus Requests
                 </span>
                 {pendingBus.length > 0 && (
@@ -176,7 +176,7 @@ export default function AdminDashboardPage() {
               <div className="mono-ref text-[36px] font-bold text-[var(--ink)]">
                 {pendingBus.length}
               </div>
-              <p className="text-[12.5px] text-[var(--ink-muted)]">
+              <p className="text-[14px] text-[var(--ink-muted)]">
                 Fleet schedule requests
               </p>
               <span aria-hidden className="absolute -bottom-2 -right-2 grid h-10 w-10 place-items-center rounded-tl-[var(--r-md)] rounded-br-[var(--r-md)] bg-[var(--union)] text-white shadow-[0_4px_12px_rgba(31,61,92,0.28)] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
@@ -199,13 +199,13 @@ export default function AdminDashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2 text-[14px]">
+            <div className="space-y-2 text-[15.5px]">
               {needsAttentionBereavement.map((c: any) => (
                 <div key={c._id} className="flex items-center justify-between p-3 rounded-[var(--r-md)] bg-[var(--surface)] border border-[var(--line)]">
                   <div>
                     <span className="mono-ref font-bold text-[var(--union)] mr-2">{c.reference}</span>
                     <span className="font-semibold text-[var(--ink)]">{c.memberNameSnapshot}</span>
-                    <span className="text-[12.5px] text-[var(--ink-muted)] ml-2">({c.relationship} - {c.deceasedName})</span>
+                    <span className="text-[14px] text-[var(--ink-muted)] ml-2">({c.relationship} - {c.deceasedName})</span>
                   </div>
                   <Button variant="secondary" size="sm" asChild>
                     <Link href={`/admin/bereavement/${c._id}`}>Review Now</Link>
@@ -229,7 +229,7 @@ export default function AdminDashboardPage() {
                 const percentage = Math.round((sc.count / maxSubCountyCount) * 100);
                 return (
                   <div key={sc.name} className="space-y-1">
-                    <div className="flex justify-between text-[13.5px]">
+                    <div className="flex justify-between text-[15px]">
                       <span className="font-medium text-[var(--ink)]">{sc.name}</span>
                       <span className="mono-ref text-[var(--ink-muted)]">{sc.count} members</span>
                     </div>
@@ -255,7 +255,7 @@ export default function AdminDashboardPage() {
                 <CardTitle className="text-[17px]">Recent Submissions</CardTitle>
               </div>
             </CardHeader>
-            <CardContent className="space-y-3 text-[13px]">
+            <CardContent className="space-y-3 text-[14.5px]">
               {inbox === undefined ? (
                 <Skeleton className="h-40 w-full" />
               ) : recentSubmissions.length === 0 ? (
@@ -268,7 +268,7 @@ export default function AdminDashboardPage() {
                     className="flex items-center justify-between gap-3 pb-3 border-b border-[var(--line)] last:border-0 last:pb-0 hover:text-[var(--union)] transition-colors"
                   >
                     <span className="text-[var(--ink-body)]">{item.text}</span>
-                    <span className="shrink-0 text-[11.5px] text-[var(--ink-muted)]">{formatRelativeTime(item.createdAt)}</span>
+                    <span className="shrink-0 text-[13px] text-[var(--ink-muted)]">{formatRelativeTime(item.createdAt)}</span>
                   </Link>
                 ))
               )}

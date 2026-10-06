@@ -17,11 +17,11 @@ export default function AuthLayout({
           <div>
             <Link
               href="/"
-              className="text-[13px] font-semibold tracking-[0.1em] text-white uppercase block"
+              className="text-[14.5px] font-semibold tracking-[0.1em] text-white uppercase block"
             >
               KUPPET BUSIA BRANCH
             </Link>
-            <span className="text-[11.5px] text-white/70 block">
+            <span className="text-[13px] text-white/70 block">
               Official Members & Administration Portal
             </span>
           </div>
@@ -39,19 +39,19 @@ export default function AuthLayout({
           <div className="w-12 h-[2px] bg-[var(--brass)] mb-6" />
 
           <ul className="space-y-3.5">
-            <li className="flex items-center gap-3 text-[15px] text-white/90">
+            <li className="flex items-center gap-3 text-[16px] text-white/90">
               <span className="w-5 h-5 rounded-full bg-white/15 flex items-center justify-center text-white shrink-0">
                 <Check className="h-3.5 w-3.5 stroke-[2.5]" />
               </span>
               <span>Bereavement support (Mother, Father, Spouse, Child)</span>
             </li>
-            <li className="flex items-center gap-3 text-[15px] text-white/90">
+            <li className="flex items-center gap-3 text-[16px] text-white/90">
               <span className="w-5 h-5 rounded-full bg-white/15 flex items-center justify-center text-white shrink-0">
                 <Check className="h-3.5 w-3.5 stroke-[2.5]" />
               </span>
               <span>Safe, confidential workplace harassment reporting</span>
             </li>
-            <li className="flex items-center gap-3 text-[15px] text-white/90">
+            <li className="flex items-center gap-3 text-[16px] text-white/90">
               <span className="w-5 h-5 rounded-full bg-white/15 flex items-center justify-center text-white shrink-0">
                 <Check className="h-3.5 w-3.5 stroke-[2.5]" />
               </span>
@@ -61,7 +61,7 @@ export default function AuthLayout({
         </div>
 
         {/* Pinned Bottom */}
-        <div className="hidden lg:block text-[12.5px] text-white/55 pt-4">
+        <div className="hidden lg:block text-[14px] text-white/55 pt-4">
           © 2026 KUPPET Busia Branch. Kenya Union of Post Primary Education Teachers.
         </div>
       </div>
@@ -69,7 +69,7 @@ export default function AuthLayout({
       {/* Right Form Panel */}
       <div className="flex items-center justify-center p-4 sm:p-6 lg:p-12 overflow-y-auto relative">
         <div className="absolute top-4 left-4 sm:top-8 sm:left-8 lg:hidden">
-           <Link href="/" className="text-[13px] text-[var(--ink-muted)] hover:text-[var(--ink)] flex items-center gap-1.5 transition-colors font-medium">
+           <Link href="/" className="text-[14.5px] text-[var(--ink-muted)] hover:text-[var(--ink)] flex items-center gap-1.5 transition-colors font-medium">
              <ArrowLeft className="h-4 w-4" /> Back to Home
            </Link>
         </div>

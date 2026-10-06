@@ -63,7 +63,7 @@ export default function AdminBereavementDetailPage({
   if (!caseDoc) {
     return (
       <div className="p-8 text-center bg-[var(--surface)] border border-[var(--line)] rounded-[var(--r-lg)]">
-        <p className="text-[15px] text-[var(--ink-muted)] mb-4">Case not found.</p>
+        <p className="text-[16px] text-[var(--ink-muted)] mb-4">Case not found.</p>
         <Button asChild>
           <Link href="/admin/bereavement">Back to Queue</Link>
         </Button>
@@ -185,9 +185,9 @@ export default function AdminBereavementDetailPage({
               <CardTitle>Bereavement Claim Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-[14.5px]">
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-[16px]">
                 <div>
-                  <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">
+                  <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)]">
                     Deceased Full Name
                   </dt>
                   <dd className="font-semibold text-[var(--ink)] mt-0.5">
@@ -196,7 +196,7 @@ export default function AdminBereavementDetailPage({
                 </div>
 
                 <div>
-                  <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">
+                  <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)]">
                     Union Recognised Relationship
                   </dt>
                   <dd className="font-bold text-[var(--brass)] uppercase mt-0.5">
@@ -205,14 +205,14 @@ export default function AdminBereavementDetailPage({
                 </div>
 
                 <div>
-                  <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">
+                  <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)]">
                     Date of Bereavement
                   </dt>
                   <dd className="mt-0.5">{formatDate(caseDoc.dateOfBereavement)}</dd>
                 </div>
 
                 <div>
-                  <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">
+                  <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)]">
                     Burial / Service Date
                   </dt>
                   <dd className="mt-0.5">
@@ -221,7 +221,7 @@ export default function AdminBereavementDetailPage({
                 </div>
 
                 <div className="sm:col-span-2">
-                  <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">
+                  <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)]">
                     Place of Burial / Funeral Home
                   </dt>
                   <dd className="mt-0.5">{caseDoc.burialPlace || "Not specified"}</dd>
@@ -229,10 +229,10 @@ export default function AdminBereavementDetailPage({
 
                 {caseDoc.details && (
                   <div className="sm:col-span-2 pt-2 border-t border-[var(--line)]">
-                    <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)] mb-1">
+                    <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)] mb-1">
                       Member's Additional Narrative
                     </dt>
-                    <dd className="text-[14px] leading-relaxed text-[var(--ink-body)] whitespace-pre-line bg-[var(--canvas)] p-3 rounded-[var(--r-md)] border border-[var(--line)]">
+                    <dd className="text-[15.5px] leading-relaxed text-[var(--ink-body)] whitespace-pre-line bg-[var(--canvas)] p-3 rounded-[var(--r-md)] border border-[var(--line)]">
                       {caseDoc.details}
                     </dd>
                   </div>
@@ -247,9 +247,9 @@ export default function AdminBereavementDetailPage({
               <CardTitle>Member Profile Snapshot</CardTitle>
             </CardHeader>
             <CardContent>
-              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-[14px]">
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-[15.5px]">
                 <div>
-                  <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">
+                  <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)]">
                     Member Full Name
                   </dt>
                   <dd className="font-medium text-[var(--ink)] mt-0.5">
@@ -257,7 +257,7 @@ export default function AdminBereavementDetailPage({
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">
+                  <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)]">
                     TSC Number
                   </dt>
                   <dd className="mono-ref font-medium text-[var(--ink)] mt-0.5">
@@ -265,19 +265,19 @@ export default function AdminBereavementDetailPage({
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">
+                  <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)]">
                     School / Station
                   </dt>
                   <dd className="mt-0.5">{caseDoc.school}</dd>
                 </div>
                 <div>
-                  <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">
+                  <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)]">
                     Sub-County
                   </dt>
                   <dd className="mt-0.5">{caseDoc.subCounty}</dd>
                 </div>
                 <div>
-                  <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">
+                  <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)]">
                     Contact Phone
                   </dt>
                   <dd className="mt-0.5 font-medium">
@@ -287,7 +287,7 @@ export default function AdminBereavementDetailPage({
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-[12px] uppercase font-semibold text-[var(--ink-muted)]">
+                  <dt className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)]">
                     Submitted Date
                   </dt>
                   <dd className="mt-0.5">{formatDateTime(caseDoc.createdAt)}</dd>
@@ -302,15 +302,15 @@ export default function AdminBereavementDetailPage({
                 <h3 className="font-serif text-[18px] font-semibold text-[var(--ink)] border-b border-[var(--line)] pb-3">
                   Contribution Details
                 </h3>
-                <p className="text-[14px] text-[var(--ink-body)]">
+                <p className="text-[15.5px] text-[var(--ink-body)]">
                   <strong>{caseDoc.contributionMethod}:</strong>{" "}
                   <span className="mono-ref">{caseDoc.contributionNumber}</span>
                   {caseDoc.contributionAccount ? ` (${caseDoc.contributionAccount})` : ""}
                 </p>
                 {caseDoc.contributionNote && (
-                  <p className="text-[13.5px] text-[var(--ink-muted)]">{caseDoc.contributionNote}</p>
+                  <p className="text-[15px] text-[var(--ink-muted)]">{caseDoc.contributionNote}</p>
                 )}
-                <p className="text-[12.5px] text-[var(--ink-muted)]">
+                <p className="text-[14px] text-[var(--ink-muted)]">
                   {caseDoc.contributionBroadcastAt
                     ? "All members have been notified of this bereavement and how to contribute."
                     : "Members are notified of these details once the branch office approves the claim."}
@@ -341,12 +341,12 @@ export default function AdminBereavementDetailPage({
                           href={d.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 text-[13.5px] font-medium text-[var(--union)] hover:underline"
+                          className="inline-flex items-center gap-2 text-[15px] font-medium text-[var(--union)] hover:underline"
                         >
                           <Paperclip className="h-3.5 w-3.5" /> {d.label}
                         </a>
                       ) : (
-                        <span className="text-[13.5px] text-[var(--ink-muted)]">{d.label} (unavailable)</span>
+                        <span className="text-[15px] text-[var(--ink-muted)]">{d.label} (unavailable)</span>
                       )}
                     </li>
                   ))}
@@ -360,18 +360,18 @@ export default function AdminBereavementDetailPage({
                           href={doc.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 text-[13.5px] text-[var(--union)] hover:underline"
+                          className="inline-flex items-center gap-2 text-[15px] text-[var(--union)] hover:underline"
                         >
                           <Paperclip className="h-3.5 w-3.5" /> Other document {idx + 1}
                         </a>
                       ) : (
-                        <span className="text-[13.5px] text-[var(--ink-muted)]">Document {idx + 1} (unavailable)</span>
+                        <span className="text-[15px] text-[var(--ink-muted)]">Document {idx + 1} (unavailable)</span>
                       )}
                     </li>
                   ))}
                 </ul>
               ) : !caseDoc.burialPermitId && !caseDoc.payslipId ? (
-                <p className="text-[13px] text-[var(--ink-muted)] italic">
+                <p className="text-[14.5px] text-[var(--ink-muted)] italic">
                   No supporting documents were attached to this claim.
                 </p>
               ) : null}
@@ -387,7 +387,7 @@ export default function AdminBereavementDetailPage({
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-[12.5px] text-[var(--ink-muted)]">
+              <p className="text-[14px] text-[var(--ink-muted)]">
                 Internal notes are strictly confidential to branch officials and are never visible to the teacher.
               </p>
 
@@ -406,9 +406,9 @@ export default function AdminBereavementDetailPage({
                     ) => (
                     <div
                       key={idx}
-                      className="p-3 rounded-[var(--r-md)] bg-[var(--surface-sunk)] border border-[var(--line)] text-[13.5px]"
+                      className="p-3 rounded-[var(--r-md)] bg-[var(--surface-sunk)] border border-[var(--line)] text-[15px]"
                     >
-                      <div className="flex items-center justify-between text-[11.5px] text-[var(--ink-muted)] mb-1">
+                      <div className="flex items-center justify-between text-[13px] text-[var(--ink-muted)] mb-1">
                         <span className="font-semibold text-[var(--ink)]">
                           {note.authorName}
                         </span>
@@ -419,7 +419,7 @@ export default function AdminBereavementDetailPage({
                   ))}
                 </div>
               ) : (
-                <p className="text-[13px] text-[var(--ink-muted)] italic">
+                <p className="text-[14.5px] text-[var(--ink-muted)] italic">
                   No internal notes recorded on this file yet.
                 </p>
               )}
@@ -455,7 +455,7 @@ export default function AdminBereavementDetailPage({
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <span className="text-[12px] uppercase font-semibold text-[var(--ink-muted)] block mb-1">
+                <span className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)] block mb-1">
                   Current Status
                 </span>
                 <StatusBadge status={caseDoc.status} />
@@ -463,7 +463,7 @@ export default function AdminBereavementDetailPage({
 
               {caseDoc.supportAmount && (
                 <div className="p-3 bg-[var(--success-soft)] border border-[var(--success)] rounded-[var(--r-md)]">
-                  <span className="text-[11.5px] uppercase font-semibold text-[var(--success)] block">
+                  <span className="text-[13px] uppercase font-semibold text-[var(--success)] block">
                     Approved Welfare Amount
                   </span>
                   <span className="mono-ref text-[18px] font-bold text-[var(--success)]">
@@ -473,7 +473,7 @@ export default function AdminBereavementDetailPage({
               )}
 
               {(BEREAVEMENT_TRANSITIONS[caseDoc.status] ?? []).length === 0 ? (
-                <div className="pt-4 border-t border-[var(--line)] text-[13.5px] text-[var(--ink-muted)] space-y-2">
+                <div className="pt-4 border-t border-[var(--line)] text-[15px] text-[var(--ink-muted)] space-y-2">
                   <p>
                     This case is <strong className="text-[var(--ink)]">{caseDoc.status.replace(/_/g, " ")}</strong> and
                     can no longer be changed.
@@ -529,7 +529,7 @@ export default function AdminBereavementDetailPage({
                     }
                   />
                   {newStatus === "declined" && (
-                    <p className="text-[11.5px] text-[var(--danger)] mt-1 flex items-center gap-1">
+                    <p className="text-[13px] text-[var(--danger)] mt-1 flex items-center gap-1">
                       <AlertCircle className="h-3.5 w-3.5" />
                       A decline reason is required.
                     </p>

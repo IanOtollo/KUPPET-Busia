@@ -42,7 +42,7 @@ export default function MemberReportsPage() {
           <span className="font-semibold text-[var(--ink)] block">
             {item.title}
           </span>
-          <span className="text-[12px] text-[var(--brass)] font-medium">
+          <span className="text-[13.5px] text-[var(--brass)] font-medium">
             Period: {item.period}
           </span>
         </div>

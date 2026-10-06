@@ -33,7 +33,7 @@ export default function BereavementListPage() {
           <span className="font-medium text-[var(--ink)] block">
             {item.deceasedName}
           </span>
-          <span className="text-[12px] uppercase tracking-wider text-[var(--brass)] font-semibold">
+          <span className="text-[13.5px] uppercase tracking-wider text-[var(--brass)] font-semibold">
             {item.relationship}
           </span>
         </div>
@@ -89,7 +89,7 @@ export default function BereavementListPage() {
       {/* Policy Helper Banner */}
       <div className="p-4 rounded-[var(--r-md)] bg-[var(--info-soft)] border border-[var(--info)]/20 mb-6 flex items-start gap-3">
         <Info className="h-5 w-5 text-[var(--info)] shrink-0 mt-0.5" />
-        <div className="text-[13.5px] leading-relaxed text-[var(--ink-body)]">
+        <div className="text-[15px] leading-relaxed text-[var(--ink-body)]">
           <p className="font-semibold text-[var(--ink)]">
             Branch Welfare Policy (Sera ya Ustawi wa Tawi):
           </p>

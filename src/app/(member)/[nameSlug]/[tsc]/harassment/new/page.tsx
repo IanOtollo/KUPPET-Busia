@@ -208,18 +208,18 @@ export default function NewHarassmentPage() {
           <h2 className="font-serif text-[26px] sm:text-[32px] font-bold text-[var(--ink)] mb-2">
             Safe Harassment Report Received
           </h2>
-          <p className="text-[15px] text-[var(--ink-muted)] mb-6">
+          <p className="text-[16px] text-[var(--ink-muted)] mb-6">
             Your report has been encrypted and assigned strictly to authorized branch grievance officers.
           </p>
 
           <div className="p-4 rounded-[var(--r-md)] bg-[var(--surface-sunk)] border border-[var(--line)] mb-6 text-center">
-            <span className="text-[12px] uppercase tracking-wider text-[var(--ink-muted)] font-semibold block">
+            <span className="text-[13.5px] uppercase tracking-wider text-[var(--ink-muted)] font-semibold block">
               Unique Tracking Reference Code
             </span>
             <span className="mono-ref text-[22px] sm:text-[26px] font-bold text-[var(--union)] block mt-1">
               {createdReference}
             </span>
-            <p className="text-[12px] text-[var(--ink-muted)] mt-1.5">
+            <p className="text-[13.5px] text-[var(--ink-muted)] mt-1.5">
               Keep this reference code safe. You can use it anytime on the protection portal to track your investigation status.
             </p>
           </div>
@@ -257,8 +257,8 @@ export default function NewHarassmentPage() {
       {/* Confidentiality & Immediate Danger Helpline Panel (§15) */}
       <div className="p-5 rounded-[var(--r-lg)] bg-[var(--brass-soft)] border border-[var(--brass)]/40 mb-8 flex items-start gap-4">
         <Lock className="h-6 w-6 text-[var(--brass)] shrink-0 mt-0.5" />
-        <div className="text-[14px] leading-relaxed text-[var(--ink-body)] space-y-1">
-          <p className="font-semibold text-[var(--ink)] text-[15px]">
+        <div className="text-[15.5px] leading-relaxed text-[var(--ink-body)] space-y-1">
+          <p className="font-semibold text-[var(--ink)] text-[16px]">
             Confidentiality Guarantee & Immediate Danger Hotline:
           </p>
           <p className="text-[var(--ink-muted)]">
@@ -284,7 +284,7 @@ export default function NewHarassmentPage() {
                   <h4 className="font-serif text-[16px] font-semibold text-[var(--ink)]">
                     Report Anonymously?
                   </h4>
-                  <p className="text-[13px] text-[var(--ink-muted)] mt-0.5">
+                  <p className="text-[14.5px] text-[var(--ink-muted)] mt-0.5">
                     When toggled ON, your name, email, and phone are completely omitted from the database record.
                   </p>
                 </div>
@@ -349,7 +349,7 @@ export default function NewHarassmentPage() {
                     {...register("school")}
                   />
                   {errors.school && (
-                    <p className="text-[13px] text-[var(--danger)] mt-1">
+                    <p className="text-[14.5px] text-[var(--danger)] mt-1">
                       {errors.school.message}
                     </p>
                   )}
@@ -379,7 +379,7 @@ export default function NewHarassmentPage() {
                     </SelectContent>
                   </Select>
                   {errors.subCounty && (
-                    <p className="text-[13px] text-[var(--danger)] mt-1">
+                    <p className="text-[14.5px] text-[var(--danger)] mt-1">
                       {errors.subCounty.message}
                     </p>
                   )}
@@ -409,7 +409,7 @@ export default function NewHarassmentPage() {
                     </SelectContent>
                   </Select>
                   {errors.category && (
-                    <p className="text-[13px] text-[var(--danger)] mt-1">
+                    <p className="text-[14.5px] text-[var(--danger)] mt-1">
                       {errors.category.message}
                     </p>
                   )}
@@ -484,7 +484,7 @@ export default function NewHarassmentPage() {
                 <Label htmlFor="narrative">
                   Detailed Incident Narrative <span className="text-[var(--danger)]">*</span>
                 </Label>
-                <span className="text-[12px] text-[var(--ink-muted)]">
+                <span className="text-[13.5px] text-[var(--ink-muted)]">
                   {narrativeValue.length} / 2500 chars
                 </span>
               </div>
@@ -496,11 +496,11 @@ export default function NewHarassmentPage() {
                 error={!!errors.narrative}
                 {...register("narrative")}
               />
-              <p className="text-[11.5px] text-[var(--ink-muted)] mt-1">
+              <p className="text-[13px] text-[var(--ink-muted)] mt-1">
                 Hapa ana report ka anaharasiwa kwa shule yenye anafunza na the kind of harassment anapitia.
               </p>
               {errors.narrative && (
-                <p className="text-[13px] text-[var(--danger)] mt-1">
+                <p className="text-[14.5px] text-[var(--danger)] mt-1">
                   {errors.narrative.message}
                 </p>
               )}
@@ -513,7 +513,7 @@ export default function NewHarassmentPage() {
               <h3 className="font-serif text-[18px] font-semibold text-[var(--ink)] mb-2">
                 3. What Support Do You Need from the Branch? <span className="text-[var(--danger)]">*</span>
               </h3>
-              <p className="text-[13px] text-[var(--ink-muted)] mb-3">
+              <p className="text-[14.5px] text-[var(--ink-muted)] mb-3">
                 Select all options that apply to your situation:
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -530,13 +530,13 @@ export default function NewHarassmentPage() {
                       }`}
                     >
                       <Checkbox checked={checked} />
-                      <span className="text-[13.5px]">{opt}</span>
+                      <span className="text-[15px]">{opt}</span>
                     </div>
                   );
                 })}
               </div>
               {errors.supportNeeded && (
-                <p className="text-[13px] text-[var(--danger)] mt-1">
+                <p className="text-[14.5px] text-[var(--danger)] mt-1">
                   {errors.supportNeeded.message}
                 </p>
               )}
@@ -547,12 +547,12 @@ export default function NewHarassmentPage() {
             {/* Optional Evidence Upload */}
             <div>
               <Label optional>Supporting Evidence (Screenshots, Letters, Recordings)</Label>
-              <p className="text-[12.5px] text-[var(--ink-muted)] mb-2">
+              <p className="text-[14px] text-[var(--ink-muted)] mb-2">
                 Optional. Uploaded files are only visible to authorised grievance officers.
               </p>
               <label
                 htmlFor="evidence"
-                className="flex cursor-pointer items-center gap-2 rounded-[var(--r-md)] border border-dashed border-[var(--line-strong)] bg-[var(--surface-sunk)] p-3 text-[13.5px] text-[var(--ink-muted)] hover:bg-[var(--surface)]"
+                className="flex cursor-pointer items-center gap-2 rounded-[var(--r-md)] border border-dashed border-[var(--line-strong)] bg-[var(--surface-sunk)] p-3 text-[15px] text-[var(--ink-muted)] hover:bg-[var(--surface)]"
               >
                 <Paperclip className="h-4 w-4 shrink-0" />
                 Attach files (PDF, JPG, PNG, audio)
@@ -570,7 +570,7 @@ export default function NewHarassmentPage() {
                   {evidenceFiles.map((file, idx) => (
                     <li
                       key={`${file.name}-${idx}`}
-                      className="flex items-center justify-between rounded-[var(--r-sm)] bg-[var(--surface-sunk)] px-3 py-1.5 text-[13px] text-[var(--ink-body)]"
+                      className="flex items-center justify-between rounded-[var(--r-sm)] bg-[var(--surface-sunk)] px-3 py-1.5 text-[14.5px] text-[var(--ink-body)]"
                     >
                       <span className="truncate">{file.name}</span>
                       <button
@@ -597,13 +597,13 @@ export default function NewHarassmentPage() {
                 />
                 <label
                   htmlFor="confidentialityConsent"
-                  className="text-[13px] leading-relaxed text-[var(--ink-body)] cursor-pointer"
+                  className="text-[14.5px] leading-relaxed text-[var(--ink-body)] cursor-pointer"
                 >
                   I acknowledge that this report will be processed confidentially by authorized KUPPET Busia Branch grievance officers to provide union representation and welfare protection.
                 </label>
               </div>
               {errors.confidentialityConsent && (
-                <p className="text-[13px] text-[var(--danger)] mt-1">
+                <p className="text-[14.5px] text-[var(--danger)] mt-1">
                   {errors.confidentialityConsent.message}
                 </p>
               )}

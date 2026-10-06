@@ -139,7 +139,7 @@ export default function AdminAnnouncementsPage() {
       render: (item) => (
         <div>
           <span className="font-semibold text-[16px] text-[var(--ink)] block">{item.title}</span>
-          <span className="capitalize text-[14px] text-[var(--brass)] font-semibold">
+          <span className="capitalize text-[15.5px] text-[var(--brass)] font-semibold">
             Priority: {item.priority}
           </span>
         </div>
@@ -153,7 +153,7 @@ export default function AdminAnnouncementsPage() {
       render: (item) => {
         const { label, expired } = describeExpiry(item.expiresAt);
         return (
-          <span className={`text-[14px] font-semibold ${expired ? "text-[var(--danger)]" : "text-[var(--ink-body)]"}`}>
+          <span className={`text-[15.5px] font-semibold ${expired ? "text-[var(--danger)]" : "text-[var(--ink-body)]"}`}>
             {label}
           </span>
         );
@@ -319,7 +319,7 @@ export default function AdminAnnouncementsPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="mt-1.5 text-[13px] text-[var(--ink-muted)]">
+              <p className="mt-1.5 text-[14.5px] text-[var(--ink-muted)]">
                 The notice is removed from members&apos; dashboards automatically when the time is up.
               </p>
             </div>

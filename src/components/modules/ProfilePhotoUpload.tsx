@@ -77,8 +77,8 @@ export function ProfilePhotoUpload() {
       </div>
       <div className="min-w-0 flex-1 space-y-2">
         <div>
-          <p className="text-[13.5px] font-medium text-[var(--ink)]">Profile Photo</p>
-          <p className="text-[11.5px] text-[var(--ink-muted)]">JPG, PNG, or WebP up to 5 MB.</p>
+          <p className="text-[15px] font-medium text-[var(--ink)]">Profile Photo</p>
+          <p className="text-[13px] text-[var(--ink-muted)]">JPG, PNG, or WebP up to 5 MB.</p>
         </div>
         <div className="flex items-center gap-2">
           <input

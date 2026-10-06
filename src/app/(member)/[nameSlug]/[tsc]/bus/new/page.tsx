@@ -157,7 +157,7 @@ export default function NewBusBookingPage() {
       {/* Mandatory Disclaimer Banner */}
       <div className="p-4 rounded-[var(--r-md)] bg-[var(--brass-soft)] border border-[var(--brass)]/30 mb-8 flex items-start gap-3.5">
         <Info className="h-5 w-5 text-[var(--brass)] shrink-0 mt-0.5" />
-        <div className="text-[14px] leading-relaxed text-[var(--ink-body)]">
+        <div className="text-[15.5px] leading-relaxed text-[var(--ink-body)]">
           <p className="font-semibold text-[var(--ink)]">
             Branch Bus Policy & Capacity Notice:
           </p>
@@ -204,7 +204,7 @@ export default function NewBusBookingPage() {
                     {...register("passengers")}
                   />
                   {errors.passengers && (
-                    <p className="text-[13px] text-[var(--danger)] mt-1">
+                    <p className="text-[14.5px] text-[var(--danger)] mt-1">
                       {errors.passengers.message}
                     </p>
                   )}
@@ -244,7 +244,7 @@ export default function NewBusBookingPage() {
                     </SelectContent>
                   </Select>
                   {errors.purpose && (
-                    <p className="text-[13px] text-[var(--danger)] mt-1">
+                    <p className="text-[14.5px] text-[var(--danger)] mt-1">
                       {errors.purpose.message}
                     </p>
                   )}
@@ -261,7 +261,7 @@ export default function NewBusBookingPage() {
                     {...register("destination")}
                   />
                   {errors.destination && (
-                    <p className="text-[13px] text-[var(--danger)] mt-1">
+                    <p className="text-[14.5px] text-[var(--danger)] mt-1">
                       {errors.destination.message}
                     </p>
                   )}
@@ -273,7 +273,7 @@ export default function NewBusBookingPage() {
                     <Label htmlFor="reason">
                       Reason for Requesting the Union Bus <span className="text-[var(--danger)]">*</span>
                     </Label>
-                    <span className="text-[12px] text-[var(--ink-muted)]">
+                    <span className="text-[13.5px] text-[var(--ink-muted)]">
                       {reasonValue.length} / 1000 chars
                     </span>
                   </div>
@@ -285,11 +285,11 @@ export default function NewBusBookingPage() {
                     error={!!errors.reason}
                     {...register("reason")}
                   />
-                  <p className="text-[11.5px] text-[var(--ink-muted)] mt-1">
+                  <p className="text-[13px] text-[var(--ink-muted)] mt-1">
                     Eleza kwa ufupi sababu ya kuomba bus la tawi. A reason is required, but it can be short.
                   </p>
                   {errors.reason && (
-                    <p className="text-[13px] text-[var(--danger)] mt-1">
+                    <p className="text-[14.5px] text-[var(--danger)] mt-1">
                       {errors.reason.message}
                     </p>
                   )}
@@ -316,7 +316,7 @@ export default function NewBusBookingPage() {
                     {...register("departureAt")}
                   />
                   {errors.departureAt && (
-                    <p className="text-[13px] text-[var(--danger)] mt-1">
+                    <p className="text-[14.5px] text-[var(--danger)] mt-1">
                       {errors.departureAt.message}
                     </p>
                   )}
@@ -333,7 +333,7 @@ export default function NewBusBookingPage() {
                     {...register("returnAt")}
                   />
                   {errors.returnAt && (
-                    <p className="text-[13px] text-[var(--danger)] mt-1">
+                    <p className="text-[14.5px] text-[var(--danger)] mt-1">
                       {errors.returnAt.message}
                     </p>
                   )}

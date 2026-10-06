@@ -28,7 +28,7 @@ export function DataTable<T extends Record<string, any>>({
 }: DataTableProps<T>) {
   if (data.length === 0) {
     return (
-      <div className="p-8 text-center text-[14px] text-[var(--ink-muted)] bg-[var(--surface)] border border-[var(--line)] rounded-[var(--r-md)]">
+      <div className="p-8 text-center text-[15.5px] text-[var(--ink-muted)] bg-[var(--surface)] border border-[var(--line)] rounded-[var(--r-md)]">
         {emptyMessage}
       </div>
     );
@@ -45,7 +45,7 @@ export function DataTable<T extends Record<string, any>>({
                 <th
                   key={col.key}
                   className={cn(
-                    "px-4 text-[12px] font-semibold uppercase tracking-[0.06em] text-[var(--ink-muted)]",
+                    "px-4 text-[13.5px] font-semibold uppercase tracking-[0.06em] text-[var(--ink-muted)]",
                     col.className
                   )}
                 >
@@ -68,8 +68,8 @@ export function DataTable<T extends Record<string, any>>({
                   <td
                     key={col.key}
                     className={cn(
-                      "px-4 text-[14.5px] text-[var(--ink-body)]",
-                      col.isMono && "mono-ref text-[13px] font-medium text-[var(--ink)]",
+                      "px-4 text-[16px] text-[var(--ink-body)]",
+                      col.isMono && "mono-ref text-[14.5px] font-medium text-[var(--ink)]",
                       col.className
                     )}
                   >
@@ -96,15 +96,15 @@ export function DataTable<T extends Record<string, any>>({
             {columns.map((col) => (
               <div
                 key={col.key}
-                className="flex items-center justify-between text-[13.5px] border-b border-[var(--line)] last:border-0 pb-1.5 last:pb-0"
+                className="flex items-center justify-between text-[15px] border-b border-[var(--line)] last:border-0 pb-1.5 last:pb-0"
               >
-                <span className="text-[11.5px] uppercase font-semibold text-[var(--ink-muted)] tracking-wider">
+                <span className="text-[13px] uppercase font-semibold text-[var(--ink-muted)] tracking-wider">
                   {col.header}
                 </span>
                 <span
                   className={cn(
                     "text-right text-[var(--ink-body)]",
-                    col.isMono && "mono-ref text-[13px] font-medium text-[var(--ink)]"
+                    col.isMono && "mono-ref text-[14.5px] font-medium text-[var(--ink)]"
                   )}
                 >
                   {col.render ? col.render(item) : item[col.key]}

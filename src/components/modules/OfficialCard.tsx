@@ -48,21 +48,21 @@ export function OfficialCard({ official }: { official: OfficialProps }) {
           <h3 className="font-serif text-[19px] font-semibold text-[var(--ink)] leading-tight mb-1">
             {official.fullName}
           </h3>
-          <p className="text-[13px] font-semibold tracking-[0.06em] text-[var(--union)] uppercase mb-4">
+          <p className="text-[14.5px] font-semibold tracking-[0.06em] text-[var(--union)] uppercase mb-4">
             {official.position}
           </p>
 
           <div className="h-px bg-[var(--line)] w-full mb-4" />
 
           {/* Responsibilities with 3-line clamp */}
-          <p className="text-[14px] leading-[1.6] text-[var(--ink-muted)] line-clamp-3 mb-2">
+          <p className="text-[15.5px] leading-[1.6] text-[var(--ink-muted)] line-clamp-3 mb-2">
             {official.responsibilities}
           </p>
 
           {official.responsibilities.length > 140 && (
             <button
               onClick={() => setShowModal(true)}
-              className="text-[12.5px] font-medium text-[var(--union)] hover:underline inline-flex items-center gap-0.5 mb-4 cursor-pointer"
+              className="text-[14px] font-medium text-[var(--union)] hover:underline inline-flex items-center gap-0.5 mb-4 cursor-pointer"
             >
               Read full mandate <ChevronRight className="h-3.5 w-3.5" />
             </button>
@@ -70,7 +70,7 @@ export function OfficialCard({ official }: { official: OfficialProps }) {
         </div>
 
         {/* Contact Links */}
-        <div className="pt-4 border-t border-[var(--line)] flex flex-wrap items-center gap-4 text-[13px] text-[var(--ink-body)] mt-auto">
+        <div className="pt-4 border-t border-[var(--line)] flex flex-wrap items-center gap-4 text-[14.5px] text-[var(--ink-body)] mt-auto">
           {official.phone && (
             <a
               href={`tel:${official.phone}`}
@@ -101,20 +101,20 @@ export function OfficialCard({ official }: { official: OfficialProps }) {
             <span className="eyebrow block mb-1">{official.position}</span>
             <DialogTitle>{official.fullName}</DialogTitle>
             {official.portfolioArea && (
-              <DialogDescription className="text-[13px] text-[var(--brass)] font-medium">
+              <DialogDescription className="text-[14.5px] text-[var(--brass)] font-medium">
                 Portfolio: {official.portfolioArea}
               </DialogDescription>
             )}
           </DialogHeader>
 
-          <div className="py-2 text-[15px] leading-[1.65] text-[var(--ink-body)]">
-            <h4 className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)] tracking-wider mb-2">
+          <div className="py-2 text-[16px] leading-[1.65] text-[var(--ink-body)]">
+            <h4 className="text-[15px] uppercase font-semibold text-[var(--ink-muted)] tracking-wider mb-2">
               Official Responsibilities & Portfolio:
             </h4>
             <p className="whitespace-pre-line">{official.responsibilities}</p>
           </div>
 
-          <div className="pt-4 border-t border-[var(--line)] flex gap-4 text-[13.5px]">
+          <div className="pt-4 border-t border-[var(--line)] flex gap-4 text-[15px]">
             {official.phone && (
               <a
                 href={`tel:${official.phone}`}

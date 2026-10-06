@@ -203,7 +203,7 @@ export default function AdminOfficialsPage() {
           <span className="font-semibold text-[var(--ink)] block">
             {item.fullName}
           </span>
-          <span className="text-[12px] text-[var(--ink-muted)]">
+          <span className="text-[13.5px] text-[var(--ink-muted)]">
             {item.email || "No email"}
           </span>
         </div>
@@ -218,7 +218,7 @@ export default function AdminOfficialsPage() {
             {item.position}
           </span>
           {item.portfolioArea && (
-            <span className="text-[12px] text-[var(--brass)] font-medium">
+            <span className="text-[13.5px] text-[var(--brass)] font-medium">
               {item.portfolioArea}
             </span>
           )}
@@ -229,7 +229,7 @@ export default function AdminOfficialsPage() {
       key: "tier",
       header: "Tier",
       render: (item) => (
-        <span className="capitalize text-[13px] px-2 py-0.5 rounded bg-[var(--surface-sunk)] border border-[var(--line)]">
+        <span className="capitalize text-[14.5px] px-2 py-0.5 rounded bg-[var(--surface-sunk)] border border-[var(--line)]">
           {item.tier}
         </span>
       ),
@@ -239,11 +239,11 @@ export default function AdminOfficialsPage() {
       header: "Harassment Handler",
       render: (item) =>
         item.canHandleHarassment ? (
-          <span className="inline-flex items-center gap-1 text-[12.5px] text-[var(--success)] font-medium">
+          <span className="inline-flex items-center gap-1 text-[14px] text-[var(--success)] font-medium">
             <ShieldCheck className="h-4 w-4" /> Authorized
           </span>
         ) : (
-          <span className="text-[12.5px] text-[var(--ink-muted)]">Standard</span>
+          <span className="text-[14px] text-[var(--ink-muted)]">Standard</span>
         ),
     },
     {
@@ -482,7 +482,7 @@ export default function AdminOfficialsPage() {
                 />
                 <label
                   htmlFor="harassment"
-                  className="text-[13px] leading-snug text-[var(--ink-body)] cursor-pointer select-none"
+                  className="text-[14.5px] leading-snug text-[var(--ink-body)] cursor-pointer select-none"
                 >
                   <strong>Designated Harassment Grievance Officer:</strong> Grant this official authorization to view and manage sensitive workplace harassment reports under §15.
                 </label>

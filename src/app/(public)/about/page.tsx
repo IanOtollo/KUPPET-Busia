@@ -15,7 +15,7 @@ export default function AboutPage() {
           </Button>
           <Link href="/" className="flex items-center gap-3 min-w-0">
             <Image src="/logo.png" alt="KUPPET Logo" width={112} height={56} className="h-14 w-auto object-contain shrink-0" priority />
-            <span className="text-[13px] font-semibold tracking-[0.08em] text-[var(--ink)] uppercase truncate">
+            <span className="text-[14.5px] font-semibold tracking-[0.08em] text-[var(--ink)] uppercase truncate">
               KUPPET BUSIA
             </span>
           </Link>
@@ -32,7 +32,7 @@ export default function AboutPage() {
             The Kenya Union of Post Primary Education Teachers (KUPPET) Busia County Branch represents secondary school teachers, junior secondary educators, tertiary college tutors, and technical trainers throughout Busia County.
           </p>
 
-          <div className="space-y-6 text-[15px] leading-relaxed text-[var(--ink-body)] border-t border-[var(--line)] pt-8">
+          <div className="space-y-6 text-[16px] leading-relaxed text-[var(--ink-body)] border-t border-[var(--line)] pt-8">
             <h2 className="font-serif text-[22px] font-semibold text-[var(--ink)]">
               Our Institutional Mandate
             </h2>
@@ -43,22 +43,22 @@ export default function AboutPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
               <div className="p-4 rounded-[var(--r-md)] bg-[var(--surface)] border border-[var(--line)]">
                 <Shield className="h-5 w-5 text-[var(--union)] mb-2" />
-                <h4 className="font-semibold text-[15px] mb-1">Teacher Welfare</h4>
-                <p className="text-[13px] text-[var(--ink-muted)]">
+                <h4 className="font-semibold text-[16px] mb-1">Teacher Welfare</h4>
+                <p className="text-[14.5px] text-[var(--ink-muted)]">
                   Immediate bereavement assistance and mutual distress interventions.
                 </p>
               </div>
               <div className="p-4 rounded-[var(--r-md)] bg-[var(--surface)] border border-[var(--line)]">
                 <Award className="h-5 w-5 text-[var(--union)] mb-2" />
-                <h4 className="font-semibold text-[15px] mb-1">Labor Rights</h4>
-                <p className="text-[13px] text-[var(--ink-muted)]">
+                <h4 className="font-semibold text-[16px] mb-1">Labor Rights</h4>
+                <p className="text-[14.5px] text-[var(--ink-muted)]">
                   Legal representation before TSC tribunals and labor dispute arbitration.
                 </p>
               </div>
               <div className="p-4 rounded-[var(--r-md)] bg-[var(--surface)] border border-[var(--line)]">
                 <Users className="h-5 w-5 text-[var(--union)] mb-2" />
-                <h4 className="font-semibold text-[15px] mb-1">Community Asset</h4>
-                <p className="text-[13px] text-[var(--ink-muted)]">
+                <h4 className="font-semibold text-[16px] mb-1">Community Asset</h4>
+                <p className="text-[14.5px] text-[var(--ink-muted)]">
                   Branch 62-passenger bus service for educational excursions and member events.
                 </p>
               </div>

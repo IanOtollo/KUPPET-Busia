@@ -15,7 +15,7 @@ export default function PrivacyPage() {
           </Button>
           <Link href="/" className="flex items-center gap-3 min-w-0">
             <Image src="/logo.png" alt="KUPPET Logo" width={112} height={56} className="h-14 w-auto object-contain shrink-0" priority />
-            <span className="text-[13px] font-semibold tracking-[0.08em] text-[var(--ink)] uppercase truncate">
+            <span className="text-[14.5px] font-semibold tracking-[0.08em] text-[var(--ink)] uppercase truncate">
               KUPPET BUSIA
             </span>
           </Link>
@@ -28,11 +28,11 @@ export default function PrivacyPage() {
           <h1 className="font-serif text-[34px] sm:text-[42px] font-bold leading-[1.15] text-[var(--ink)] mb-4">
             Data Protection & Privacy Policy
           </h1>
-          <p className="text-[15px] leading-relaxed text-[var(--ink-muted)]">
+          <p className="text-[16px] leading-relaxed text-[var(--ink-muted)]">
             Last updated: September 2026. Conforming to the <strong>Kenya Data Protection Act, 2019</strong>.
           </p>
 
-          <div className="space-y-6 text-[15px] leading-relaxed text-[var(--ink-body)] border-t border-[var(--line)] pt-6">
+          <div className="space-y-6 text-[16px] leading-relaxed text-[var(--ink-body)] border-t border-[var(--line)] pt-6">
             <section className="space-y-2">
               <h2 className="font-serif text-[20px] font-semibold text-[var(--ink)]">
                 1. Data Controller and Principles
@@ -49,7 +49,7 @@ export default function PrivacyPage() {
               <p>
                 We limit collection strictly to information required for membership verification and welfare claims:
               </p>
-              <ul className="list-disc pl-5 space-y-1 text-[14.5px]">
+              <ul className="list-disc pl-5 space-y-1 text-[16px]">
                 <li>Official full name and National Identity Card number</li>
                 <li>Teachers Service Commission (TSC) registration number</li>
                 <li>Contact phone number and institutional email address</li>

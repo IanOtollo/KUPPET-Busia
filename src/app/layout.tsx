@@ -46,6 +46,9 @@ export default function RootLayout({
       className={`${sourceSerif.variable} ${inter.variable} ${ibmPlexMono.variable}`}
     >
       <body className="min-h-screen bg-[var(--canvas)] text-[var(--ink-body)] antialiased">
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
         <ConvexClientProvider>
           <PageTitle />
           {children}

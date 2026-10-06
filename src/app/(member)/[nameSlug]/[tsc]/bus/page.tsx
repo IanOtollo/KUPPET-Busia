@@ -36,7 +36,7 @@ export default function MemberBusPage() {
           <span className="font-semibold text-[var(--ink)] block">
             {item.destination}
           </span>
-          <span className="text-[12px] text-[var(--ink-muted)]">
+          <span className="text-[13.5px] text-[var(--ink-muted)]">
             {item.purpose} • {item.passengers} Passengers
           </span>
         </div>
@@ -93,7 +93,7 @@ export default function MemberBusPage() {
       {/* Admin final approval disclaimer */}
       <div className="p-4 rounded-[var(--r-md)] bg-[var(--brass-soft)] border border-[var(--brass)]/30 mb-8 flex items-start gap-3">
         <Info className="h-5 w-5 text-[var(--brass)] shrink-0 mt-0.5" />
-        <div className="text-[13.5px] leading-relaxed text-[var(--ink-body)]">
+        <div className="text-[15px] leading-relaxed text-[var(--ink-body)]">
           <strong className="font-semibold text-[var(--ink)]">
             Booking & Availability Notice:
           </strong>{" "}
@@ -110,7 +110,7 @@ export default function MemberBusPage() {
               Branch Bus Calendar Status
             </h3>
           </div>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[12.5px]">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[14px]">
             <span className="flex items-center gap-1.5">
               <span className="w-3 h-3 rounded-full bg-[var(--surface-sunk)] border border-[var(--line-strong)]" />
               Available
@@ -129,7 +129,7 @@ export default function MemberBusPage() {
         {/* 14-day upcoming slot preview */}
         {calendarData && calendarData.length > 0 ? (
           <div className="space-y-2">
-            <span className="text-[12px] uppercase font-semibold text-[var(--ink-muted)] block">
+            <span className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)] block">
               Upcoming Reserved Schedules:
             </span>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -144,14 +144,14 @@ export default function MemberBusPage() {
                 }) => (
                   <div
                   key={slot.id}
-                  className={`p-3 rounded-[var(--r-md)] border text-[13px] ${
+                  className={`p-3 rounded-[var(--r-md)] border text-[14.5px] ${
                     ["approved", "confirmed"].includes(slot.status)
                       ? "bg-[var(--danger-soft)] border-[var(--danger)]/30 text-[var(--danger)]"
                       : "bg-[var(--warning-soft)] border-[var(--warning)]/30 text-[var(--warning)]"
                   }`}
                 >
                   <div className="font-semibold">{slot.destination}</div>
-                  <div className="text-[12px] opacity-90 mt-0.5">
+                  <div className="text-[13.5px] opacity-90 mt-0.5">
                     {formatShortDate(slot.departureAt)} – {formatShortDate(slot.returnAt)}
                   </div>
                 </div>
@@ -159,7 +159,7 @@ export default function MemberBusPage() {
             </div>
           </div>
         ) : (
-          <p className="text-[13.5px] text-[var(--ink-muted)]">
+          <p className="text-[15px] text-[var(--ink-muted)]">
             The union bus is currently unreserved for the upcoming period. Submit your booking request early.
           </p>
         )}

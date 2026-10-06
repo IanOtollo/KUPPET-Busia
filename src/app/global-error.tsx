@@ -11,7 +11,7 @@ export default function GlobalError({
       <body className="min-h-screen bg-[#F7F6F3] text-[#101A24] flex items-center justify-center p-6 font-sans">
         <div className="w-full max-w-[480px] text-center">
           <h1 className="text-[28px] font-bold mb-4">Critical System Error</h1>
-          <p className="text-[15px] text-[#66727F] mb-6">
+          <p className="text-[16px] text-[#66727F] mb-6">
             A critical application error prevented loading. Please try reloading the page.
           </p>
           <button

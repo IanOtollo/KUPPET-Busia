@@ -216,7 +216,7 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-[var(--canvas)] py-12 px-4 sm:px-6 lg:px-8 relative">
       <div className="absolute top-4 left-4 sm:top-8 sm:left-8">
-        <Link href="/" className="text-[13px] text-[var(--ink-muted)] hover:text-[var(--union)] flex items-center gap-1.5 transition-colors font-medium">
+        <Link href="/" className="text-[14.5px] text-[var(--ink-muted)] hover:text-[var(--union)] flex items-center gap-1.5 transition-colors font-medium">
           <ArrowLeft className="h-4 w-4" /> Back to Home
         </Link>
       </div>
@@ -285,7 +285,7 @@ export default function RegisterPage() {
                     {...register("fullName")}
                   />
                   {errors.fullName && (
-                    <p className="text-[13px] text-[var(--danger)] mt-1">
+                    <p className="text-[14.5px] text-[var(--danger)] mt-1">
                       {errors.fullName.message}
                     </p>
                   )}
@@ -302,7 +302,7 @@ export default function RegisterPage() {
                       {...register("idNumber")}
                     />
                     {errors.idNumber && (
-                      <p className="text-[13px] text-[var(--danger)] mt-1">
+                      <p className="text-[14.5px] text-[var(--danger)] mt-1">
                         {errors.idNumber.message}
                       </p>
                     )}
@@ -318,7 +318,7 @@ export default function RegisterPage() {
                       {...register("tscNumber")}
                     />
                     {errors.tscNumber && (
-                      <p className="text-[13px] text-[var(--danger)] mt-1">
+                      <p className="text-[14.5px] text-[var(--danger)] mt-1">
                         {errors.tscNumber.message}
                       </p>
                     )}
@@ -336,7 +336,7 @@ export default function RegisterPage() {
                       {...register("phone")}
                     />
                     {errors.phone && (
-                      <p className="text-[13px] text-[var(--danger)] mt-1">
+                      <p className="text-[14.5px] text-[var(--danger)] mt-1">
                         {errors.phone.message}
                       </p>
                     )}
@@ -352,7 +352,7 @@ export default function RegisterPage() {
                       {...register("email")}
                     />
                     {errors.email && (
-                      <p className="text-[13px] text-[var(--danger)] mt-1">
+                      <p className="text-[14.5px] text-[var(--danger)] mt-1">
                         {errors.email.message}
                       </p>
                     )}
@@ -368,7 +368,7 @@ export default function RegisterPage() {
                     {...register("school")}
                   />
                   {errors.school && (
-                    <p className="text-[13px] text-[var(--danger)] mt-1">
+                    <p className="text-[14.5px] text-[var(--danger)] mt-1">
                       {errors.school.message}
                     </p>
                   )}
@@ -396,7 +396,7 @@ export default function RegisterPage() {
                       </SelectContent>
                     </Select>
                     {errors.subCounty && (
-                      <p className="text-[13px] text-[var(--danger)] mt-1">
+                      <p className="text-[14.5px] text-[var(--danger)] mt-1">
                         {errors.subCounty.message}
                       </p>
                     )}
@@ -423,7 +423,7 @@ export default function RegisterPage() {
                       </SelectContent>
                     </Select>
                     {errors.designation && (
-                      <p className="text-[13px] text-[var(--danger)] mt-1">
+                      <p className="text-[14.5px] text-[var(--danger)] mt-1">
                         {errors.designation.message}
                       </p>
                     )}
@@ -452,7 +452,7 @@ export default function RegisterPage() {
                       </SelectContent>
                     </Select>
                     {errors.jobGroup && (
-                      <p className="text-[13px] text-[var(--danger)] mt-1">{errors.jobGroup.message}</p>
+                      <p className="text-[14.5px] text-[var(--danger)] mt-1">{errors.jobGroup.message}</p>
                     )}
                   </div>
 
@@ -466,7 +466,7 @@ export default function RegisterPage() {
                       {...register("schoolStartDate")}
                     />
                     {errors.schoolStartDate && (
-                      <p className="text-[13px] text-[var(--danger)] mt-1">{errors.schoolStartDate.message}</p>
+                      <p className="text-[14.5px] text-[var(--danger)] mt-1">{errors.schoolStartDate.message}</p>
                     )}
                   </div>
                 </div>
@@ -488,7 +488,7 @@ export default function RegisterPage() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-[11.5px] text-[var(--ink-muted)] mt-1">
+                  <p className="text-[13px] text-[var(--ink-muted)] mt-1">
                     e.g. Games Master, HOD, Deputy Principal
                   </p>
                 </div>
@@ -498,7 +498,7 @@ export default function RegisterPage() {
                   <Label className="flex items-center gap-1.5 mb-1">
                     <BookOpen className="h-4 w-4 text-[var(--union)]" /> Teaching Subject(s)
                   </Label>
-                  <p className="text-[11.5px] text-[var(--ink-muted)] mb-2">
+                  <p className="text-[13px] text-[var(--ink-muted)] mb-2">
                     Select all that apply
                   </p>
                   <div className="flex flex-wrap gap-2 p-3 bg-slate-50 border border-slate-200 rounded-lg">
@@ -543,7 +543,7 @@ export default function RegisterPage() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="text-[12px] text-[var(--union)] hover:underline flex items-center gap-1 cursor-pointer"
+                      className="text-[13.5px] text-[var(--union)] hover:underline flex items-center gap-1 cursor-pointer"
                     >
                       {showPassword ? (
                         <>
@@ -577,11 +577,11 @@ export default function RegisterPage() {
                       />
                     ))}
                   </div>
-                  <p className="text-[11.5px] text-[var(--ink-muted)] mt-1.5">
+                  <p className="text-[13px] text-[var(--ink-muted)] mt-1.5">
                     Must contain at least 8 characters, including uppercase, lowercase, and a digit.
                   </p>
                   {errors.password && (
-                    <p className="text-[13px] text-[var(--danger)] mt-1">
+                    <p className="text-[14.5px] text-[var(--danger)] mt-1">
                       {errors.password.message}
                     </p>
                   )}
@@ -597,7 +597,7 @@ export default function RegisterPage() {
                     {...register("confirmPassword")}
                   />
                   {errors.confirmPassword && (
-                    <p className="text-[13px] text-[var(--danger)] mt-1">
+                    <p className="text-[14.5px] text-[var(--danger)] mt-1">
                       {errors.confirmPassword.message}
                     </p>
                   )}
@@ -621,7 +621,7 @@ export default function RegisterPage() {
                     </div>
                   </div>
                   {errors.consent && (
-                    <p className="text-[13px] text-[var(--danger)] mt-1">
+                    <p className="text-[14.5px] text-[var(--danger)] mt-1">
                       {errors.consent.message}
                     </p>
                   )}
@@ -651,7 +651,7 @@ export default function RegisterPage() {
         </div>
         
         <div className="mt-6 text-center">
-          <p className="text-[13px] text-[var(--ink-muted)]">
+          <p className="text-[14.5px] text-[var(--ink-muted)]">
             Already have an account?{" "}
             <Link href="/login" className="font-medium text-[var(--union)] hover:underline">
               Sign in here

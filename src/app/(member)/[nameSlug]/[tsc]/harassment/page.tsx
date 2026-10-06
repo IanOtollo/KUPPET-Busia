@@ -48,7 +48,7 @@ export default function HarassmentListPage() {
           <span className="font-semibold text-[var(--ink)] block">
             {item.category}
           </span>
-          <span className="text-[12px] text-[var(--ink-muted)]">
+          <span className="text-[13.5px] text-[var(--ink-muted)]">
             {item.school} • {item.subCounty}
           </span>
         </div>
@@ -100,7 +100,7 @@ export default function HarassmentListPage() {
       {/* Confidentiality Commitment Banner */}
       <div className="p-4 rounded-[var(--r-md)] bg-[var(--brass-soft)] border border-[var(--brass)]/30 mb-8 flex items-start gap-3.5">
         <Lock className="h-5 w-5 text-[var(--brass)] shrink-0 mt-0.5" />
-        <div className="text-[14px] leading-relaxed text-[var(--ink-body)]">
+        <div className="text-[15.5px] leading-relaxed text-[var(--ink-body)]">
           <strong className="font-semibold text-[var(--ink)]">Strict Confidentiality Guarantee:</strong>{" "}
           Your safety is protected under Section 15 of branch governance. You may submit reports anonymously. Anonymous cases can be tracked anytime using your unique reference code below.
         </div>
@@ -111,7 +111,7 @@ export default function HarassmentListPage() {
         <h3 className="font-serif text-[17px] font-semibold text-[var(--ink)] mb-2">
           Track Anonymous Report by Reference Code
         </h3>
-        <p className="text-[13.5px] text-[var(--ink-muted)] mb-4">
+        <p className="text-[15px] text-[var(--ink-muted)] mb-4">
           If you submitted an anonymous report, enter your reference code (e.g. <code>HAR-2026-0012-K7QX3M</code>) to check the investigation status.
         </p>
 
@@ -128,7 +128,7 @@ export default function HarassmentListPage() {
         </form>
 
         {trackingResult && (
-          <div className="mt-4 p-4 rounded-[var(--r-md)] bg-[var(--surface-sunk)] border border-[var(--line)] text-[14px] space-y-2">
+          <div className="mt-4 p-4 rounded-[var(--r-md)] bg-[var(--surface-sunk)] border border-[var(--line)] text-[15.5px] space-y-2">
             <div className="flex items-center justify-between">
               <span className="mono-ref font-bold text-[var(--union)]">{trackingResult.reference}</span>
               <StatusBadge status={trackingResult.status} />
@@ -137,7 +137,7 @@ export default function HarassmentListPage() {
             <div><strong>Sub-County:</strong> {trackingResult.subCounty}</div>
             <div><strong>Incident Date:</strong> {formatShortDate(trackingResult.occurredAt)}</div>
             {trackingResult.statusReason && (
-              <div className="pt-2 border-t border-[var(--line)] text-[13px] text-[var(--ink-muted)]">
+              <div className="pt-2 border-t border-[var(--line)] text-[14.5px] text-[var(--ink-muted)]">
                 <strong>Officer Remark:</strong> {trackingResult.statusReason}
               </div>
             )}
