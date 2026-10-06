@@ -1,4 +1,4 @@
-import { query, mutation, QueryCtx, MutationCtx } from "./_generated/server";
+import { query, mutation, internalMutation, QueryCtx, MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { requireRole } from "./lib/auth";
 import { writeAudit } from "./lib/audit";
@@ -66,6 +66,39 @@ export const roster = query({
         subjects: t.subjects || [],
         status: t.status,
       }));
+  },
+});
+
+/**
+ * Called when a teacher registers. Returns the directory's spelling of their
+ * school, and adds the school to the directory (flagged as teacher-added) when
+ * it isn't there yet, so the admin's School Directory grows as teachers join.
+ */
+export const ensureFromRegistration = internalMutation({
+  args: { name: v.string(), subCounty: subCountyValidator },
+  handler: async (ctx: MutationCtx, args) => {
+    // Tidy spacing only; keep the teacher's capitalisation.
+    const name = args.name.replace(/\s+/g, " ").trim();
+    if (name.length < 3 || name.length > 120 || !/^[\p{L}\p{N} .,'&()\/-]+$/u.test(name)) {
+      throw new ConvexError({
+        code: "INVALID_SCHOOL",
+        message: "Enter your school's name using letters and numbers only (3–120 characters).",
+      });
+    }
+
+    const key = name.toLowerCase();
+    const existing = await ctx.db.query("schools").take(3000);
+    const match = existing.find((s) => s.name.toLowerCase().replace(/\s+/g, " ").trim() === key);
+    if (match) return { name: match.name, created: false };
+
+    await ctx.db.insert("schools", {
+      name,
+      subCounty: args.subCounty,
+      isActive: true,
+      addedBy: "teacher",
+      addedAt: Date.now(),
+    });
+    return { name, created: true };
   },
 });
 

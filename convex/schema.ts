@@ -376,6 +376,10 @@ export default defineSchema({
     name: v.string(),
     subCounty: subCountyValidator,
     isActive: v.boolean(),
+    // "teacher" when the school was added automatically by a teacher registering
+    // under a name that wasn't in the directory yet; absent for admin-added schools.
+    addedBy: v.optional(v.literal("teacher")),
+    addedAt: v.optional(v.number()),
   })
     .index("by_subCounty", ["subCounty"])
     .index("by_name", ["name"]),

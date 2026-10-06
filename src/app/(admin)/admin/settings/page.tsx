@@ -321,6 +321,11 @@ export default function AdminSettingsPage() {
                       <span className="ml-2.5 text-xs text-[var(--ink-muted)] px-2 py-0.5 bg-[var(--surface-sunk)] rounded-full">
                         {sch.subCounty}
                       </span>
+                      {sch.addedBy === "teacher" && (
+                        <span className="ml-2 text-xs font-semibold text-[var(--brass)] px-2 py-0.5 bg-[var(--brass-soft)] rounded-full">
+                          New · added by a teacher
+                        </span>
+                      )}
                     </div>
                     <Button
                       variant="ghost"

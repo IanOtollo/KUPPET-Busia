@@ -182,6 +182,12 @@ export const registerMember = action({
       });
     }
 
+    // Match the school to the directory (fixing spelling/case), or add it.
+    const school: { name: string } = await ctx.runMutation(internal.schools.ensureFromRegistration, {
+      name: args.school,
+      subCounty: args.subCounty,
+    });
+
     const now = Date.now();
 
     await createAccount(ctx as any, {
@@ -193,7 +199,7 @@ export const registerMember = action({
         idNumber,
         tscNumber,
         phone,
-        school: args.school.trim(),
+        school: school.name,
         subCounty: args.subCounty,
         designation: args.designation,
         ...(args.schoolRole ? { schoolRole: args.schoolRole } : {}),

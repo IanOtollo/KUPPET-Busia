@@ -27,7 +27,7 @@ import {
   GENDERS,
   JOB_GROUPS,
 } from "@/lib/constants";
-import { useConvex } from "convex/react";
+import { useConvex, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { toast } from "sonner";
 import { Eye, EyeOff, ArrowLeft, ArrowRight, ShieldCheck, BookOpen, Check } from "lucide-react";
@@ -106,6 +106,7 @@ export default function RegisterPage() {
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
 
   const convex = useConvex();
+  const directorySchools = useQuery(api.schools.list);
 
   const {
     register,
@@ -363,10 +364,22 @@ export default function RegisterPage() {
                   <Label htmlFor="school">Current School / Institution</Label>
                   <Input
                     id="school"
-                    placeholder="e.g. Busia Girls Secondary School"
+                    placeholder="Start typing, e.g. Busia Girls Secondary School"
+                    list="school-suggestions"
+                    autoComplete="off"
                     error={!!errors.school}
                     {...register("school")}
                   />
+                  <datalist id="school-suggestions">
+                    {(directorySchools ?? [])
+                      .filter((s) => s.isActive)
+                      .map((s) => (
+                        <option key={s._id} value={s.name} />
+                      ))}
+                  </datalist>
+                  <p className="text-[14.5px] text-[var(--ink-muted)] mt-1">
+                    Pick your school from the suggestions. If it isn&apos;t listed, type its full name and it will be added to the branch directory.
+                  </p>
                   {errors.school && (
                     <p className="text-[14.5px] text-[var(--danger)] mt-1">
                       {errors.school.message}
