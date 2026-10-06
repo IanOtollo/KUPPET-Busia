@@ -398,10 +398,10 @@ export const assignRole = mutation({
     }
     // The branch has exactly one administrator (the Executive Chairman, set up
     // by adminSetup.setupChairman). Nobody else can be made admin or superadmin.
-    if (args.role === "admin" || args.role === "superadmin") {
+    if (args.role !== "member") {
       throw new ConvexError({
         code: "ADMIN_LOCKED",
-        message: "The branch has a single administrator. Admin roles can't be assigned to other accounts.",
+        message: "The Executive Chairman is the only staff account. Everyone else stays a normal teacher account.",
       });
     }
     // Prevents a superadmin demoting themselves and locking everyone out.

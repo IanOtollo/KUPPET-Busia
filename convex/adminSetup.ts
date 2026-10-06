@@ -131,3 +131,68 @@ export const setupChairman = internalAction({
     return result;
   },
 });
+
+/** Deletes one leftover admin-level account (never the chairman, never a non-admin). */
+export const deleteStrayAdmin = internalMutation({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+    if (!user || user.tscNumber === CHAIRMAN_TSC || !["admin", "superadmin"].includes(user.role)) {
+      return { deleted: false };
+    }
+    const accounts = await ctx.db
+      .query("authAccounts")
+      .withIndex("userIdAndProvider", (q) => q.eq("userId", args.userId))
+      .collect();
+    for (const a of accounts) await ctx.db.delete(a._id);
+    const notifications = await ctx.db
+      .query("notifications")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .take(500);
+    for (const n of notifications) await ctx.db.delete(n._id);
+    await ctx.db.delete(args.userId);
+    return { deleted: true };
+  },
+});
+
+/**
+ * Enforces "the Executive Chairman is the only admin": removes every other
+ * admin / superadmin account and ends its sessions.
+ *   npx convex run adminSetup:removeOtherAdmins '{}'
+ */
+export const removeOtherAdmins = internalAction({
+  args: {},
+  handler: async (ctx: ActionCtx) => {
+    const admins = await ctx.runQuery(internal.adminSetup.listAdminAccounts, {});
+    const removed: { tscNumber: string; fullName: string }[] = [];
+    for (const a of admins) {
+      if (a.tscNumber === CHAIRMAN_TSC) continue;
+      await invalidateSessions(ctx, { userId: a.id as Id<"users"> });
+      const res = await ctx.runMutation(internal.adminSetup.deleteStrayAdmin, { userId: a.id as Id<"users"> });
+      if (res.deleted) removed.push({ tscNumber: a.tscNumber, fullName: a.fullName });
+    }
+    return { removed };
+  },
+});
+
+/**
+ * Officials are ordinary teacher accounts: only the Executive Chairman holds a
+ * staff role. Turns every "official" login into a normal member.
+ *   npx convex run adminSetup:demoteOfficialsToMembers '{}'
+ */
+export const demoteOfficialsToMembers = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const officials = await ctx.db
+      .query("users")
+      .withIndex("by_role", (q) => q.eq("role", "official"))
+      .take(500);
+    for (const u of officials) {
+      await ctx.db.patch(u._id, { role: "member", updatedAt: Date.now() });
+    }
+    if (officials.length === 500) {
+      await ctx.scheduler.runAfter(0, internal.adminSetup.demoteOfficialsToMembers, {});
+    }
+    return { demoted: officials.map((u) => ({ tscNumber: u.tscNumber, fullName: u.fullName })) };
+  },
+});
