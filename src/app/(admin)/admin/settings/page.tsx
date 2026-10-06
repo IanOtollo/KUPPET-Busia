@@ -18,7 +18,8 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/ui/confirm-dialog";
-import { Settings, Save, Plus, School, Building2, CheckCircle2, XCircle, UserCircle } from "lucide-react";
+import { Save, Plus, School, CheckCircle2, XCircle, UserCircle, KeyRound } from "lucide-react";
+import Link from "next/link";
 import { ProfilePhotoUpload } from "@/components/modules/ProfilePhotoUpload";
 
 export default function AdminSettingsPage() {
@@ -26,6 +27,35 @@ export default function AdminSettingsPage() {
   const [newSubCounty, setNewSubCounty] = useState<string>("");
   const [isAddingSchool, setIsAddingSchool] = useState(false);
   const [isSavingConfig, setIsSavingConfig] = useState(false);
+
+  // On phones the two sections are tabs; from lg up they sit side by side.
+  const [tab, setTab] = useState<"account" | "branch">("account");
+
+  const profile = useQuery(api.users.getMyProfile);
+  const updateProfile = useMutation(api.users.updateMyProfile);
+  const [accountForm, setAccountForm] = useState({ fullName: "", phone: "", email: "" });
+  const [isSavingAccount, setIsSavingAccount] = useState(false);
+  useEffect(() => {
+    if (profile) setAccountForm({ fullName: profile.fullName, phone: profile.phone, email: profile.email });
+  }, [profile]);
+
+  const handleSaveAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!profile) return;
+    setIsSavingAccount(true);
+    try {
+      await updateProfile({
+        fullName: accountForm.fullName.trim(),
+        phone: accountForm.phone.trim(),
+        email: accountForm.email.trim(),
+      });
+      toast.success("Your details were updated.");
+    } catch (err: any) {
+      toast.error(err.data?.message || "Couldn't update your details.");
+    } finally {
+      setIsSavingAccount(false);
+    }
+  };
 
   const schools = useQuery(api.schools.list);
   const addSchool = useMutation(api.schools.create);
@@ -127,32 +157,104 @@ export default function AdminSettingsPage() {
   };
 
   return (
-    <div className="max-w-[800px] space-y-6">
+    <div className="max-w-6xl space-y-6">
       <PageHeader
         eyebrow="SYSTEM CONFIGURATION"
-        title="Branch Portal Settings"
-        lead="Manage school directory, branch secretariat contacts, and bus advance notice rules."
+        title="Settings"
+        lead="Your own account on the left, and the branch portal's school directory and rules on the right."
         breadcrumbs={[
           { label: "Admin Operations", href: "/admin" },
           { label: "Settings" },
         ]}
       />
 
-      {/* My Profile Card */}
+      {/* Phone-width switcher (hidden on desktop where both panels show) */}
+      <div role="tablist" className="grid grid-cols-2 gap-1 rounded-[var(--r-md)] bg-[var(--surface-sunk)] p-1 lg:hidden">
+        {(
+          [
+            ["account", "My Account"],
+            ["branch", "Branch Settings"],
+          ] as const
+        ).map(([value, label]) => (
+          <button
+            key={value}
+            role="tab"
+            aria-selected={tab === value}
+            onClick={() => setTab(value)}
+            className={`rounded-[var(--r-sm)] px-3 py-2.5 text-[15px] font-semibold transition-colors cursor-pointer ${
+              tab === value ? "bg-[var(--surface)] text-[var(--union)] shadow-sm" : "text-[var(--ink-muted)]"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+      {/* LEFT: My Account */}
+      <div className={`space-y-6 ${tab === "account" ? "block" : "hidden lg:block"}`}>
       <Card>
         <CardHeader>
           <div className="flex items-center space-x-2">
             <UserCircle className="h-5 w-5 text-[var(--union)]" />
             <div>
-              <CardTitle>My Profile</CardTitle>
-              <CardDescription>Manage your own account's profile photo.</CardDescription>
+              <CardTitle>My Account</CardTitle>
+              <CardDescription>Your own name, contacts, photo and password.</CardDescription>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
           <ProfilePhotoUpload />
+
+          <form onSubmit={handleSaveAccount} className="space-y-4">
+            <div>
+              <Label htmlFor="acctName">Full name</Label>
+              <Input
+                id="acctName"
+                value={accountForm.fullName}
+                onChange={(e) => setAccountForm({ ...accountForm, fullName: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="acctTsc">TSC number</Label>
+              <Input id="acctTsc" value={profile?.tscNumber ?? ""} disabled />
+            </div>
+            <div>
+              <Label htmlFor="acctPhone">Mobile number</Label>
+              <Input
+                id="acctPhone"
+                inputMode="tel"
+                value={accountForm.phone}
+                onChange={(e) => setAccountForm({ ...accountForm, phone: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="acctEmail">Email</Label>
+              <Input
+                id="acctEmail"
+                type="email"
+                value={accountForm.email}
+                onChange={(e) => setAccountForm({ ...accountForm, email: e.target.value })}
+              />
+            </div>
+            <Button type="submit" className="w-full sm:w-auto" loading={isSavingAccount} loadingText="Saving…" disabled={!profile}>
+              <Save className="h-4 w-4 mr-1.5" /> Save my details
+            </Button>
+          </form>
+
+          <div className="border-t border-[var(--line)] pt-4">
+            <Button asChild variant="secondary" className="w-full sm:w-auto">
+              <Link href="/change-password">
+                <KeyRound className="h-4 w-4 mr-1.5" /> Change my password
+              </Link>
+            </Button>
+          </div>
         </CardContent>
       </Card>
+      </div>
+
+      {/* RIGHT: Branch Portal Settings */}
+      <div className={`space-y-6 ${tab === "branch" ? "block" : "hidden lg:block"}`}>
 
       {/* School Roster Management Card */}
       <Card>
@@ -307,6 +409,8 @@ export default function AdminSettingsPage() {
           </form>
         </CardContent>
       </Card>
+      </div>
+      </div>
     </div>
   );
 }

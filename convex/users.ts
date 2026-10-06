@@ -439,11 +439,14 @@ export const updateMyProfile = mutation({
     subjects: v.optional(v.array(v.string())),
     phone: v.optional(v.string()),
     email: v.optional(v.string()),
+    // Staff only: teachers' names are verified against TSC records.
+    fullName: v.optional(v.string()),
     gender: v.optional(v.string()),
     photoStorageId: v.optional(v.id("_storage")),
   },
   handler: async (ctx: MutationCtx, args) => {
     const currentUser = await requireUser(ctx);
+    const isStaff = currentUser.role !== "member";
 
     const updates: Partial<typeof currentUser> = {
       updatedAt: Date.now(),
@@ -468,11 +471,35 @@ export const updateMyProfile = mutation({
     // The email doubles as the sign-in account identifier, so it can't be
     // edited here — changing it would lock the teacher out. Admins handle
     // email corrections.
+    if (args.fullName !== undefined) {
+      const name = args.fullName.trim();
+      if (!isStaff) {
+        throw new ConvexError({
+          code: "NAME_LOCKED",
+          message: "Your name is verified against TSC records. Please contact the branch office to change it.",
+        });
+      }
+      if (name.length < 3 || name.length > 80) {
+        throw new ConvexError({ code: "INVALID_NAME", message: "Enter a full name (3–80 characters)." });
+      }
+      updates.fullName = name;
+    }
     if (args.email !== undefined && args.email.toLowerCase().trim() !== currentUser.email) {
-      throw new ConvexError({
-        code: "EMAIL_LOCKED",
-        message: "Email can't be changed here. Please contact the branch office.",
-      });
+      const email = args.email.toLowerCase().trim();
+      if (!isStaff) {
+        throw new ConvexError({
+          code: "EMAIL_LOCKED",
+          message: "Email can't be changed here. Please contact the branch office.",
+        });
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        throw new ConvexError({ code: "INVALID_EMAIL", message: "Enter a valid email address." });
+      }
+      const taken = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", email)).first();
+      if (taken && taken._id !== currentUser._id) {
+        throw new ConvexError({ code: "DUPLICATE_EMAIL", message: "That email is already used by another account." });
+      }
+      updates.email = email;
     }
     if (args.gender !== undefined) updates.gender = args.gender;
     if (args.photoStorageId !== undefined) {
