@@ -9,13 +9,14 @@
  */
 
 import type * as adminInbox from "../adminInbox.js";
+import type * as adminSearch from "../adminSearch.js";
 import type * as adminSetup from "../adminSetup.js";
 import type * as announcements from "../announcements.js";
 import type * as auditLog from "../auditLog.js";
 import type * as auth from "../auth.js";
-import type * as crons from "../crons.js";
 import type * as bereavement from "../bereavement.js";
 import type * as busBookings from "../busBookings.js";
+import type * as crons from "../crons.js";
 import type * as financialReports from "../financialReports.js";
 import type * as harassment from "../harassment.js";
 import type * as http from "../http.js";
@@ -28,18 +29,17 @@ import type * as lib_rateLimit from "../lib/rateLimit.js";
 import type * as lib_refs from "../lib/refs.js";
 import type * as lib_uploads from "../lib/uploads.js";
 import type * as lib_validators from "../lib/validators.js";
+import type * as memberDirectory from "../memberDirectory.js";
 import type * as messages from "../messages.js";
 import type * as migrations from "../migrations.js";
 import type * as notifications from "../notifications.js";
 import type * as officials from "../officials.js";
 import type * as passwordResets from "../passwordResets.js";
 import type * as passwordSetup from "../passwordSetup.js";
-import type * as memberDirectory from "../memberDirectory.js";
-import type * as stats from "../stats.js";
-import type * as adminSearch from "../adminSearch.js";
 import type * as schools from "../schools.js";
 import type * as seed from "../seed.js";
 import type * as settings from "../settings.js";
+import type * as stats from "../stats.js";
 import type * as swaps from "../swaps.js";
 import type * as transfers from "../transfers.js";
 import type * as users from "../users.js";
@@ -52,13 +52,14 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   adminInbox: typeof adminInbox;
+  adminSearch: typeof adminSearch;
   adminSetup: typeof adminSetup;
   announcements: typeof announcements;
   auditLog: typeof auditLog;
   auth: typeof auth;
-  crons: typeof crons;
   bereavement: typeof bereavement;
   busBookings: typeof busBookings;
+  crons: typeof crons;
   financialReports: typeof financialReports;
   harassment: typeof harassment;
   http: typeof http;
@@ -71,18 +72,17 @@ declare const fullApi: ApiFromModules<{
   "lib/refs": typeof lib_refs;
   "lib/uploads": typeof lib_uploads;
   "lib/validators": typeof lib_validators;
+  memberDirectory: typeof memberDirectory;
   messages: typeof messages;
   migrations: typeof migrations;
   notifications: typeof notifications;
   officials: typeof officials;
   passwordResets: typeof passwordResets;
   passwordSetup: typeof passwordSetup;
-  memberDirectory: typeof memberDirectory;
-  stats: typeof stats;
-  adminSearch: typeof adminSearch;
   schools: typeof schools;
   seed: typeof seed;
   settings: typeof settings;
+  stats: typeof stats;
   swaps: typeof swaps;
   transfers: typeof transfers;
   users: typeof users;
