@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,7 +15,13 @@ import { useMemberBasePath } from "@/lib/memberPath";
 
 export default function MemberNotificationsPage() {
   const basePath = useMemberBasePath();
-  const notifications = useQuery(api.notifications.listMine);
+  const allNotifications = useQuery(api.notifications.listMine);
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNowMs(Date.now()), 60_000);
+    return () => clearInterval(t);
+  }, []);
+  const notifications = allNotifications?.filter((n) => nowMs - n.createdAt < 24 * 3600_000);
   const markRead = useMutation(api.notifications.markAsRead);
 
   return (
@@ -39,7 +46,7 @@ export default function MemberNotificationsPage() {
         <EmptyState
           icon={Bell}
           title="No notifications"
-          description="You will receive alerts here whenever your welfare claims or bus requests are updated by the branch office."
+          description="You will receive alerts here whenever your welfare claims or bus requests are updated by the branch office. Notifications are removed automatically after 24 hours."
         />
       ) : (
         <div className="space-y-3">
@@ -55,25 +62,25 @@ export default function MemberNotificationsPage() {
                       <Link
                         href={`${basePath}${n.link}`}
                         onClick={() => !n.isRead && markRead({ id: n._id })}
-                        className="font-semibold text-[15px] text-[var(--ink)] hover:text-[var(--union)] hover:underline"
+                        className="font-semibold text-[18px] text-[var(--ink)] hover:text-[var(--union)] hover:underline"
                       >
                         {n.title}
                       </Link>
                     ) : (
-                      <span className="font-semibold text-[15px] text-[var(--ink)]">
+                      <span className="font-semibold text-[18px] text-[var(--ink)]">
                         {n.title}
                       </span>
                     )}
                     {!n.isRead && (
-                      <span className="px-2 py-0.5 rounded-full bg-[var(--union)] text-white text-[10px] font-bold">
+                      <span className="px-2 py-0.5 rounded-full bg-[var(--union)] text-white text-[12px] font-bold">
                         NEW
                       </span>
                     )}
                   </div>
-                  <p className="text-[14px] text-[var(--ink-body)] leading-relaxed">
+                  <p className="text-[16.5px] text-[var(--ink-body)] leading-relaxed">
                     {n.body}
                   </p>
-                  <span className="text-[12px] text-[var(--ink-muted)] block">
+                  <span className="text-[14px] text-[var(--ink-muted)] block">
                     {formatRelativeTime(n.createdAt)}
                   </span>
                 </div>
@@ -81,7 +88,7 @@ export default function MemberNotificationsPage() {
                 {!n.isRead && (
                   <button
                     onClick={() => markRead({ id: n._id })}
-                    className="text-[12.5px] text-[var(--union)] hover:underline flex items-center gap-1 shrink-0 cursor-pointer"
+                    className="text-[14.5px] text-[var(--union)] hover:underline flex items-center gap-1 shrink-0 cursor-pointer"
                   >
                     <CheckCircle2 className="h-4 w-4" /> Mark read
                   </button>

@@ -173,7 +173,7 @@ export const myOverview = query({
     const history = await ctx.db
       .query("transfers")
       .withIndex("by_member", (q) => q.eq("memberId", user._id))
-      .collect();
+      .take(200);
 
     return {
       school: user.school,

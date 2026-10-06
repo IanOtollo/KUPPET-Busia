@@ -10,7 +10,7 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
        *
        * Accounts are only ever created server-side by `users.registerMember`
        * (which enforces uniqueness and password rules) and
-       * `adminSetup.createDefaultAdmin`, both of which call `createAccount`
+       * `adminSetup.setupChairman`, both of which call `createAccount`
        * directly and never pass through this callback. A client calling
        * `signIn("password", { flow: "signUp" })` would bypass all of that, so
        * sign-up through the provider is refused outright.

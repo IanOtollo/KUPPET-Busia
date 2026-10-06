@@ -106,11 +106,11 @@ export const listOpen = query({
     const requested = await ctx.db
       .query("passwordResets")
       .withIndex("by_status", (q) => q.eq("status", "requested"))
-      .collect();
+      .take(300);
     const approved = await ctx.db
       .query("passwordResets")
       .withIndex("by_status", (q) => q.eq("status", "approved"))
-      .collect();
+      .take(300);
 
     const rows = [...requested, ...approved].sort((a, b) => b.requestedAt - a.requestedAt);
     return await Promise.all(

@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { requireRole } from "./lib/auth";
 import { writeAudit } from "./lib/audit";
 import { subCountyValidator } from "./lib/validators";
+import { readMemberStats, schoolKey } from "./stats";
 import { ConvexError } from "convex/values";
 
 /**
@@ -11,69 +12,60 @@ import { ConvexError } from "convex/values";
 export const list = query({
   args: {},
   handler: async (ctx: QueryCtx) => {
-    return await ctx.db.query("schools").collect();
+    return await ctx.db.query("schools").take(2000);
   },
 });
 
 /**
- * Returns all schools with calculated staff rosters, principal, deputy principal, and total teacher counts.
+ * Schools with head / deputy contacts and staff counts for the directory.
+ *
+ * The counts and contacts come from the pre-computed membership summary
+ * (see stats.ts), so this no longer reads every user for every school. The full
+ * staff list of one school is fetched on demand with `roster`.
  */
 export const listWithRosters = query({
   args: {},
   handler: async (ctx: QueryCtx) => {
     await requireRole(ctx, ["official", "admin", "superadmin"]);
-    const schools = await ctx.db.query("schools").collect();
-    const allUsers = await ctx.db.query("users").collect();
+    const schools = await ctx.db.query("schools").take(2000);
+    const row = await readMemberStats(ctx);
+    const bySchool = row?.data.bySchool ?? {};
 
     return schools.map((school) => {
-      const schoolTeachers = allUsers.filter(
-        (u) => u.school.toLowerCase().trim() === school.name.toLowerCase().trim()
-      );
-
-      const headTeacher = schoolTeachers.find(
-        (u) =>
-          u.schoolRole === "Principal / Headteacher" ||
-          u.designation === "Principal"
-      );
-
-      const deputyHead = schoolTeachers.find(
-        (u) =>
-          u.schoolRole === "Deputy Principal" ||
-          u.designation === "Deputy Principal"
-      );
-
+      const stat = bySchool[schoolKey(school.name)];
       return {
         ...school,
-        totalTeachers: schoolTeachers.length,
-        headTeacher: headTeacher
-          ? {
-              fullName: headTeacher.fullName,
-              tscNumber: headTeacher.tscNumber,
-              phone: headTeacher.phone,
-              email: headTeacher.email,
-            }
-          : null,
-        deputyHead: deputyHead
-          ? {
-              fullName: deputyHead.fullName,
-              tscNumber: deputyHead.tscNumber,
-              phone: deputyHead.phone,
-              email: deputyHead.email,
-            }
-          : null,
-        teachers: schoolTeachers.map((t) => ({
-          _id: t._id,
-          fullName: t.fullName,
-          tscNumber: t.tscNumber,
-          phone: t.phone,
-          email: t.email,
-          designation: t.designation,
-          schoolRole: t.schoolRole || t.designation,
-          subjects: t.subjects || [],
-          status: t.status,
-        })),
+        totalTeachers: stat?.count ?? 0,
+        headTeacher: stat?.head ?? null,
+        deputyHead: stat?.deputy ?? null,
       };
     });
+  },
+});
+
+/** Staff roster of a single school (index lookup, capped). */
+export const roster = query({
+  args: { schoolName: v.string() },
+  handler: async (ctx: QueryCtx, args) => {
+    await requireRole(ctx, ["official", "admin", "superadmin"]);
+    const staff = await ctx.db
+      .query("users")
+      .withIndex("by_school", (q) => q.eq("school", args.schoolName))
+      .take(500);
+    return staff
+      .filter((u) => u.role === "member" && u.status === "active")
+      .sort((x, y) => x.fullName.localeCompare(y.fullName))
+      .map((t) => ({
+        _id: t._id,
+        fullName: t.fullName,
+        tscNumber: t.tscNumber,
+        phone: t.phone,
+        email: t.email,
+        designation: t.designation,
+        schoolRole: t.schoolRole || t.designation,
+        subjects: t.subjects || [],
+        status: t.status,
+      }));
   },
 });
 

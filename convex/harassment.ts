@@ -208,7 +208,7 @@ export const listMine = query({
       const reports = await ctx.db
         .query("harassmentReports")
         .withIndex("by_member", (q) => q.eq("memberId", user._id))
-        .collect();
+        .take(200);
 
       return reports.map((r) => ({
         _id: r._id,

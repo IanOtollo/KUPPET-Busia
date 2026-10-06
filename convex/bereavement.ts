@@ -33,7 +33,7 @@ async function loadLocks(ctx: QueryCtx | MutationCtx, memberId: Id<"users">) {
   const cases = await ctx.db
     .query("bereavementCases")
     .withIndex("by_member", (q) => q.eq("memberId", memberId))
-    .collect();
+    .take(500);
 
   return cases
     .filter((c) => c.status !== "declined")
@@ -251,7 +251,7 @@ export const listMine = query({
       const cases = await ctx.db
         .query("bereavementCases")
         .withIndex("by_member", (q) => q.eq("memberId", user._id))
-        .collect();
+        .take(200);
 
       return cases
         .sort((a, b) => b.createdAt - a.createdAt)

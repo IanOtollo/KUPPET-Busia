@@ -28,7 +28,7 @@ export const create = mutation({
     const mine = await ctx.db
       .query("swapRequests")
       .withIndex("by_member", (q) => q.eq("memberId", user._id))
-      .collect();
+      .take(200);
     if (mine.some((r) => r.status === "open")) {
       throw new ConvexError({
         code: "ALREADY_OPEN",

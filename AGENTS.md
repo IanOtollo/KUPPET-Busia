@@ -54,7 +54,8 @@ Placeholders live in `.env.base44-defaults` (listed FIRST in `env_file`); `/run/
   layer but is immediately signed back out by the member layout guard, which redirects to
   `/login?blocked=pending_approval` with an explanatory message (also handles `suspended`
   and `rejected`).
-- The default bootstrap superadmin (see below) has TSC `000000`.
+- There is exactly one administrator: the Executive Chairman, TSC `520283` (role `superadmin`). The old `000000` bootstrap account has been removed. `users.assignRole` refuses to grant `admin`/`superadmin` to anyone else.
+- His account is created with no usable password. The first time he types his TSC on `/login` and presses Sign In with the password left blank, the page asks for the mobile number on file plus a new password (`passwordSetup.completeFirstSetup`, one-time, rate-limited).
 
 ### `@convex-dev/auth` gotchas (learned the hard way)
 
@@ -62,7 +63,7 @@ Placeholders live in `.env.base44-defaults` (listed FIRST in `env_file`); `/run/
   returns a Promise and fails with "Promise {} is not a supported Convex type".
 - The credentials provider runs in an **action** context — there is no `ctx.db`, use
   `ctx.runQuery`. This is why account creation goes through `users.registerMember` /
-  `adminSetup.createDefaultAdmin`.
+  `adminSetup.setupChairman`.
 - The Convex auth client stores its tokens in **localStorage, not cookies**, so
   `src/middleware.ts` cannot read the session. Route protection lives in the member/admin
   layouts (client-side redirect) and, authoritatively, in `requireUser`/`requireRole`.
@@ -87,13 +88,13 @@ Placeholders live in `.env.base44-defaults` (listed FIRST in `env_file`); `/run/
    ```bash
    npx convex run seed:seedDatabase
    ```
-3. Create the first superadmin — idempotent, no arguments needed. Signs in with
-   **TSC `000000`** and the password held in the Convex env var `DEFAULT_ADMIN_PASSWORD`
-   (never in source; it is an internal action, so it can only be run from the CLI):
+3. Set up the one administrator (idempotent, internal, CLI only). Creates the Executive Chairman
+   (TSC `520283`, no password yet), permanently deletes the old `000000` account, and lists any
+   other admin-level account for review:
    ```bash
-   npx convex env set DEFAULT_ADMIN_PASSWORD <password>
-   npx convex run adminSetup:createDefaultAdmin '{}'
+   npx convex run adminSetup:setupChairman '{}'
    ```
+   Then have the chairman open `/login` and press Sign In with only his TSC number to create his password.
 
 ## Verifying it works
 

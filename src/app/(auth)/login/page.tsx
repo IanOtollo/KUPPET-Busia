@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useAuthActions } from "@convex-dev/auth/react";
-import { useConvex } from "convex/react";
+import { useConvex, useAction } from "convex/react";
 import { loginAliasForTsc } from "../../../../convex/lib/loginAlias";
 import { api } from "../../../../convex/_generated/api";
 import { buildMemberPrefix } from "@/lib/memberPath";
@@ -30,7 +30,8 @@ const BLOCKED_MESSAGES: Record<string, string> = {
 
 const loginSchema = z.object({
   tscNumber: z.string().min(1, "Enter your TSC number"),
-  password: z.string().min(1, "Enter your password"),
+  // May be left blank on a first-ever sign-in: the portal then offers to create one.
+  password: z.string(),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -50,6 +51,12 @@ function LoginForm() {
   const { signIn, signOut } = useAuthActions();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const completeFirstSetup = useAction(api.passwordSetup.completeFirstSetup);
+  // First-ever sign-in for an account that has no password yet.
+  const [setupTsc, setSetupTsc] = useState<string | null>(null);
+  const [setupPhone, setSetupPhone] = useState("");
+  const [setupPassword, setSetupPassword] = useState("");
+  const [setupConfirm, setSetupConfirm] = useState("");
 
   const {
     register,
@@ -69,6 +76,52 @@ function LoginForm() {
   }, []);
 
   const onSubmit = async (data: LoginFormData) => {
+    if (!data.password) {
+      const tsc = data.tscNumber.toUpperCase().trim();
+      setIsLoading(true);
+      try {
+        const pending = await convex.query(api.passwordSetup.needsSetup, { tscNumber: tsc });
+        if (pending) {
+          setSetupTsc(tsc);
+        } else {
+          toast.error("Enter your password.");
+        }
+      } catch {
+        toast.error("Couldn't check that. Please try again.");
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+    await performLogin(data.tscNumber, data.password);
+  };
+
+  const onCreatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!setupTsc) return;
+    if (setupPassword !== setupConfirm) {
+      toast.error("The two passwords don't match.");
+      return;
+    }
+    setIsLoading(true);
+    try {
+      await completeFirstSetup({ tscNumber: setupTsc, phone: setupPhone, newPassword: setupPassword });
+    } catch (err: any) {
+      toast.error(err?.data?.message || "Couldn't create your password. Please try again.");
+      setIsLoading(false);
+      return;
+    }
+    toast.success("Password created. Signing you in…");
+    const tsc = setupTsc;
+    const pwd = setupPassword;
+    setSetupTsc(null);
+    setSetupPassword("");
+    setSetupConfirm("");
+    await performLogin(tsc, pwd);
+  };
+
+  const performLogin = async (tscInput: string, passwordInput: string) => {
+    const data = { tscNumber: tscInput, password: passwordInput };
     setIsLoading(true);
     try {
       // Never let a previous session (e.g. an admin who signed in earlier in
@@ -168,8 +221,71 @@ function LoginForm() {
         <p className="text-[14px] text-[var(--ink-muted)] mt-1">
           Use your TSC number and password.
         </p>
+        <p className="text-[13px] text-[var(--ink-muted)] mt-1">
+          First time signing in with a new account? Enter only your TSC number and press Sign In to create your password.
+        </p>
       </div>
 
+      {setupTsc ? (
+        <form onSubmit={onCreatePassword} className="space-y-4">
+          <div className="rounded-[var(--r-md)] border border-[var(--union)]/30 bg-[var(--union-soft)]/40 p-4 text-[14px] text-[var(--ink-body)]">
+            <strong className="block text-[var(--ink)]">Create your password</strong>
+            TSC {setupTsc} has no password yet. Confirm the mobile number on your account, then choose a password.
+          </div>
+          <div>
+            <Label htmlFor="setupPhone">Mobile number on your account</Label>
+            <Input
+              id="setupPhone"
+              inputMode="tel"
+              placeholder="e.g. 0712345678"
+              autoComplete="tel"
+              value={setupPhone}
+              onChange={(e) => setSetupPhone(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="setupPassword">New password</Label>
+            <Input
+              id="setupPassword"
+              type={showPassword ? "text" : "password"}
+              autoComplete="new-password"
+              placeholder="8+ characters, upper and lower case, a number"
+              value={setupPassword}
+              onChange={(e) => setSetupPassword(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="setupConfirm">Confirm password</Label>
+            <Input
+              id="setupConfirm"
+              type={showPassword ? "text" : "password"}
+              autoComplete="new-password"
+              value={setupConfirm}
+              onChange={(e) => setSetupConfirm(e.target.value)}
+              required
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="text-[13px] text-[var(--union)] hover:underline cursor-pointer"
+          >
+            {showPassword ? "Hide passwords" : "Show passwords"}
+          </button>
+          <Button type="submit" className="w-full" loading={isLoading} loadingText="Saving…">
+            Create password and sign in
+          </Button>
+          <button
+            type="button"
+            onClick={() => setSetupTsc(null)}
+            className="block w-full text-center text-[13.5px] text-[var(--ink-muted)] hover:underline cursor-pointer"
+          >
+            Back
+          </button>
+        </form>
+      ) : (
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
           <Label htmlFor="tscNumber">TSC Number</Label>
@@ -237,6 +353,7 @@ function LoginForm() {
           Sign In
         </Button>
       </form>
+      )}
 
       <div className="mt-6 pt-6 border-t border-[var(--line)] text-center text-[13.5px] text-[var(--ink-muted)]">
         New teacher?{" "}

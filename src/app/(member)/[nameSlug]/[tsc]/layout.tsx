@@ -308,14 +308,14 @@ export default function MemberLayout({
               <Link
                 href={`${basePath}/profile`}
                 onClick={() => setUserMenuOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2 text-[13.5px] text-[var(--ink-body)] hover:bg-[var(--surface-sunk)] rounded-[var(--r-sm)]"
+                className="flex items-center gap-2.5 px-3 py-2 text-[15px] text-[var(--ink-body)] hover:bg-[var(--surface-sunk)] rounded-[var(--r-sm)]"
               >
                 <User className="h-4 w-4 text-[var(--ink-muted)]" /> My Profile
               </Link>
               <Link
                 href={`${basePath}/notifications`}
                 onClick={() => setUserMenuOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2 text-[13.5px] text-[var(--ink-body)] hover:bg-[var(--surface-sunk)] rounded-[var(--r-sm)]"
+                className="flex items-center gap-2.5 px-3 py-2 text-[15px] text-[var(--ink-body)] hover:bg-[var(--surface-sunk)] rounded-[var(--r-sm)]"
               >
                 <Bell className="h-4 w-4 text-[var(--ink-muted)]" /> Notifications
               </Link>
@@ -348,9 +348,11 @@ export default function MemberLayout({
             className="relative p-2 text-[var(--ink-muted)] hover:text-[var(--ink)] rounded-[var(--r-md)]"
             aria-label="Notifications"
           >
-            <Bell className="h-5 w-5" />
+            <Bell className="h-6 w-6" />
             {unreadCount > 0 && (
-              <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-[var(--danger)]" />
+              <span className="absolute top-0.5 right-0.5 grid h-5 min-w-5 place-items-center rounded-full bg-[var(--danger)] px-1 text-[12px] font-bold leading-none text-white">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
             )}
           </Link>
           <button
@@ -378,9 +380,9 @@ export default function MemberLayout({
             aria-label="Notifications"
             title="Notifications"
           >
-            <Bell className="h-5 w-5" />
+            <Bell className="h-6 w-6" />
             {unreadCount > 0 && (
-              <span className="absolute top-0.5 right-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-[var(--danger)] px-1 text-[9px] font-bold text-white">
+              <span className="absolute -top-0.5 -right-0.5 grid h-5 min-w-5 place-items-center rounded-full bg-[var(--danger)] px-1 text-[12px] font-bold leading-none text-white">
                 {unreadCount > 99 ? "99+" : unreadCount}
               </span>
             )}
@@ -597,42 +599,42 @@ export default function MemberLayout({
             <Link
               href={`${basePath}/transfers`}
               onClick={() => setMoreSheetOpen(false)}
-              className="flex items-center gap-3 p-3 rounded-[var(--r-md)] hover:bg-[var(--surface-sunk)] text-[14.5px] text-[var(--ink)] font-medium"
+              className="flex items-center gap-3 p-3 rounded-[var(--r-md)] hover:bg-[var(--surface-sunk)] text-[16px] text-[var(--ink)] font-medium"
             >
               <ArrowRightLeft className="h-4 w-4 text-[var(--ink-muted)]" /> Transfers &amp; Swaps
             </Link>
             <Link
               href={`${basePath}/reports`}
               onClick={() => setMoreSheetOpen(false)}
-              className="flex items-center gap-3 p-3 rounded-[var(--r-md)] hover:bg-[var(--surface-sunk)] text-[14.5px] text-[var(--ink)] font-medium"
+              className="flex items-center gap-3 p-3 rounded-[var(--r-md)] hover:bg-[var(--surface-sunk)] text-[16px] text-[var(--ink)] font-medium"
             >
               <FileText className="h-4 w-4 text-[var(--ink-muted)]" /> Financial Reports
             </Link>
             <Link
               href={`${basePath}/messages`}
               onClick={() => setMoreSheetOpen(false)}
-              className="flex items-center gap-3 p-3 rounded-[var(--r-md)] hover:bg-[var(--surface-sunk)] text-[14.5px] text-[var(--ink)] font-medium"
+              className="flex items-center gap-3 p-3 rounded-[var(--r-md)] hover:bg-[var(--surface-sunk)] text-[16px] text-[var(--ink)] font-medium"
             >
               <MessageSquare className="h-4 w-4 text-[var(--ink-muted)]" /> Messages
             </Link>
             <Link
               href={`${basePath}/notifications`}
               onClick={() => setMoreSheetOpen(false)}
-              className="flex items-center gap-3 p-3 rounded-[var(--r-md)] hover:bg-[var(--surface-sunk)] text-[14.5px] text-[var(--ink)] font-medium"
+              className="flex items-center gap-3 p-3 rounded-[var(--r-md)] hover:bg-[var(--surface-sunk)] text-[16px] text-[var(--ink)] font-medium"
             >
-              <Bell className="h-4 w-4 text-[var(--ink-muted)]" /> Branch Announcements
+              <Bell className="h-4 w-4 text-[var(--ink-muted)]" /> Notifications
             </Link>
             <Link
               href={`${basePath}/profile`}
               onClick={() => setMoreSheetOpen(false)}
-              className="flex items-center gap-3 p-3 rounded-[var(--r-md)] hover:bg-[var(--surface-sunk)] text-[14.5px] text-[var(--ink)] font-medium"
+              className="flex items-center gap-3 p-3 rounded-[var(--r-md)] hover:bg-[var(--surface-sunk)] text-[16px] text-[var(--ink)] font-medium"
             >
               <User className="h-4 w-4 text-[var(--ink-muted)]" /> My Account & Profile
             </Link>
             <Link
               href={`${basePath}/branch/contact`}
               onClick={() => setMoreSheetOpen(false)}
-              className="flex items-center gap-3 p-3 rounded-[var(--r-md)] hover:bg-[var(--surface-sunk)] text-[14.5px] text-[var(--ink)] font-medium"
+              className="flex items-center gap-3 p-3 rounded-[var(--r-md)] hover:bg-[var(--surface-sunk)] text-[16px] text-[var(--ink)] font-medium"
             >
               <LifeBuoy className="h-4 w-4 text-[var(--ink-muted)]" /> Help & Branch Desk
             </Link>

@@ -44,6 +44,19 @@ const ANNOUNCEMENT_CATEGORIES = [
   "Training & Development",
 ];
 
+const DURATION_OPTIONS = [24, 48, 72, 96] as const;
+
+function describeExpiry(expiresAt?: string): { label: string; expired: boolean } {
+  if (!expiresAt) return { label: "No expiry", expired: false };
+  const end = expiresAt.length <= 10 ? new Date(expiresAt + "T23:59:59").getTime() : new Date(expiresAt).getTime();
+  const msLeft = end - Date.now();
+  if (msLeft <= 0) return { label: "Expired", expired: true };
+  const hours = Math.floor(msLeft / 3600_000);
+  if (hours >= 24) return { label: `${Math.floor(hours / 24)}d ${hours % 24}h left`, expired: false };
+  if (hours >= 1) return { label: `${hours}h ${Math.floor((msLeft % 3600_000) / 60_000)}m left`, expired: false };
+  return { label: `${Math.max(1, Math.floor(msLeft / 60_000))}m left`, expired: false };
+}
+
 type AudienceType = "all" | "sub_county" | "designation";
 
 export default function AdminAnnouncementsPage() {
@@ -61,7 +74,7 @@ export default function AdminAnnouncementsPage() {
     priority: "normal" as AnnouncementPriority,
     audienceType: "all" as AudienceType,
     audienceValue: "",
-    expiresAt: "",
+    durationHours: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -71,13 +84,18 @@ export default function AdminAnnouncementsPage() {
       return;
     }
 
+    if (!formData.durationHours) {
+      toast.error("Set how long this notice stays visible before sending.");
+      return;
+    }
+
     const ok = await confirm({
       title: "Publish this announcement?",
       description: (
         <p>
           It appears at the top of{" "}
           {formData.audienceType === "all" ? "every member's" : "the targeted members'"} dashboard straight away.
-          Re-read the title and message for mistakes.
+          It disappears automatically after {formData.durationHours} hours. Re-read the title and message for mistakes.
         </p>
       ),
       confirmLabel: "Yes, publish",
@@ -93,7 +111,7 @@ export default function AdminAnnouncementsPage() {
         priority: formData.priority,
         audienceType: formData.audienceType,
         audienceValue: formData.audienceType === "all" ? undefined : formData.audienceValue,
-        expiresAt: formData.expiresAt || undefined,
+        durationHours: Number(formData.durationHours),
       });
 
       toast.success("Announcement broadcast published.");
@@ -105,7 +123,7 @@ export default function AdminAnnouncementsPage() {
         priority: "normal",
         audienceType: "all",
         audienceValue: "",
-        expiresAt: "",
+        durationHours: "",
       });
     } catch {
       toast.error("Failed to publish announcement.");
@@ -120,8 +138,8 @@ export default function AdminAnnouncementsPage() {
       header: "Title & Priority",
       render: (item) => (
         <div>
-          <span className="font-semibold text-[var(--ink)] block">{item.title}</span>
-          <span className="capitalize text-[12px] text-[var(--brass)] font-semibold">
+          <span className="font-semibold text-[16px] text-[var(--ink)] block">{item.title}</span>
+          <span className="capitalize text-[14px] text-[var(--brass)] font-semibold">
             Priority: {item.priority}
           </span>
         </div>
@@ -129,6 +147,18 @@ export default function AdminAnnouncementsPage() {
     },
     { key: "category", header: "Category" },
     { key: "publishedAt", header: "Published", render: (item) => formatShortDate(item.publishedAt) },
+    {
+      key: "expiresAt",
+      header: "Visible for",
+      render: (item) => {
+        const { label, expired } = describeExpiry(item.expiresAt);
+        return (
+          <span className={`text-[14px] font-semibold ${expired ? "text-[var(--danger)]" : "text-[var(--ink-body)]"}`}>
+            {label}
+          </span>
+        );
+      },
+    },
   ];
 
   return (
@@ -273,13 +303,25 @@ export default function AdminAnnouncementsPage() {
             </div>
 
             <div>
-              <Label htmlFor="expiresAt" optional>Expires On</Label>
-              <Input
-                id="expiresAt"
-                type="date"
-                value={formData.expiresAt}
-                onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
-              />
+              <Label htmlFor="durationHours">Show this notice for</Label>
+              <Select
+                value={formData.durationHours}
+                onValueChange={(val: string) => setFormData({ ...formData, durationHours: val })}
+              >
+                <SelectTrigger id="durationHours">
+                  <SelectValue placeholder="Choose duration…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {DURATION_OPTIONS.map((h) => (
+                    <SelectItem key={h} value={String(h)}>
+                      {h} hours ({h / 24} day{h === 24 ? "" : "s"})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="mt-1.5 text-[13px] text-[var(--ink-muted)]">
+                The notice is removed from members&apos; dashboards automatically when the time is up.
+              </p>
             </div>
 
             <DialogFooter>

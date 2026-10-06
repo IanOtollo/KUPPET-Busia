@@ -22,15 +22,21 @@ import { api } from "../../../../convex/_generated/api";
 import { SUB_COUNTIES } from "@/lib/constants";
 
 export default function AdminDashboardPage() {
-  const members = useQuery(api.users.listMembers, {});
-  const bereavementCases = useQuery(api.bereavement.listAllAdmin, {});
-  const harassmentReports = useQuery(api.harassment.listAllAdmin, {});
-  const busBookings = useQuery(api.busBookings.listAllAdmin, {});
+  // Everything here is read from two small, bounded sources — the live "needs
+  // attention" feed and a pre-computed membership summary — so the dashboard
+  // costs the same whether the branch has 500 members or 50,000.
+  const stats = useQuery(api.stats.members, {});
+  const inbox = useQuery(api.adminInbox.pending, {});
 
-  const pendingMembers = members?.filter((m: { status: string }) => m.status === "pending_approval" || m.status === "pending_verification") ?? [];
-  const pendingBereavement = bereavementCases?.filter((c: { status: string }) => c.status === "submitted" || c.status === "under_review") ?? [];
-  const pendingHarassment = harassmentReports?.filter((r: { status: string }) => r.status === "submitted" || r.status === "acknowledged") ?? [];
-  const pendingBus = busBookings?.filter((b: { status: string }) => b.status === "requested" || b.status === "under_review") ?? [];
+  const members = inbox?.members;
+  const bereavementCases = inbox?.bereavement;
+  const harassmentReports = inbox?.harassment;
+  const busBookings = inbox?.bus;
+
+  const pendingMembers = members ?? [];
+  const pendingBereavement = bereavementCases?.filter((c) => c.status === "submitted" || c.status === "under_review") ?? [];
+  const pendingHarassment = harassmentReports?.filter((r) => r.status === "submitted" || r.status === "acknowledged") ?? [];
+  const pendingBus = busBookings?.filter((b) => b.status === "requested" || b.status === "under_review") ?? [];
 
   // Needs attention: submitted > 48h ago
   const now = Date.now();
@@ -40,33 +46,32 @@ export default function AdminDashboardPage() {
   ) || [];
 
   // Active members grouped by sub-county for the welfare distribution chart.
-  const activeMembers = members?.filter((m: { status: string }) => m.status === "active") ?? [];
   const subCountyDistribution = SUB_COUNTIES.map((name) => ({
     name,
-    count: activeMembers.filter((m: { subCounty: string }) => m.subCounty === name).length,
+    count: stats?.activeBySubCounty?.[name] ?? 0,
   }));
   const maxSubCountyCount = Math.max(1, ...subCountyDistribution.map((sc) => sc.count));
 
   const recentSubmissions = [
-    ...(members ?? []).map((m) => ({
+    ...pendingMembers.map((m) => ({
       id: `member-${m._id}`,
       text: `New membership application: ${m.fullName}`,
       href: "/admin/members",
       createdAt: m.createdAt,
     })),
-    ...(bereavementCases ?? []).map((c) => ({
+    ...pendingBereavement.map((c) => ({
       id: `ber-${c._id}`,
       text: `New bereavement claim: ${c.deceasedName} (${c.memberNameSnapshot})`,
       href: `/admin/bereavement/${c._id}`,
       createdAt: c.createdAt,
     })),
-    ...(harassmentReports ?? []).map((r) => ({
+    ...pendingHarassment.map((r) => ({
       id: `har-${r._id}`,
       text: `New harassment report: ${r.reference}`,
       href: `/admin/harassment/${r._id}`,
       createdAt: r.createdAt,
     })),
-    ...(busBookings ?? []).map((b) => ({
+    ...pendingBus.map((b) => ({
       id: `bus-${b._id}`,
       text: `New bus request: ${b.requesterName} to ${b.destination}`,
       href: `/admin/bus/${b._id}`,
@@ -95,7 +100,7 @@ export default function AdminDashboardPage() {
                 </span>
               </div>
               <div className="mono-ref text-[36px] font-bold text-[var(--ink)]">
-                {members?.length ?? 0}
+                {stats ? stats.total : "…"}
               </div>
               <p className="text-[12.5px] text-[var(--ink-muted)]">
                 {pendingMembers.length > 0
@@ -251,7 +256,7 @@ export default function AdminDashboardPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-3 text-[13px]">
-              {members === undefined ? (
+              {inbox === undefined ? (
                 <Skeleton className="h-40 w-full" />
               ) : recentSubmissions.length === 0 ? (
                 <p className="text-[var(--ink-muted)]">Nothing has been submitted yet.</p>

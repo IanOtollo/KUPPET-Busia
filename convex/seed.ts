@@ -7,7 +7,7 @@ import { SUB_COUNTIES, OFFICIAL_POSITIONS } from "../src/lib/constants";
  * - Branch official structure with positions & portfolio descriptions
  *
  * The first superadmin account is bootstrapped separately via
- * `adminSetup:createDefaultAdmin` — that flow goes through an action so it can
+ * `adminSetup:setupChairman` — that flow goes through an action so it can
  * create a real sign-in credential, which a plain mutation like this cannot do.
  */
 export const seedDatabase = internalMutation({

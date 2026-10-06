@@ -27,8 +27,10 @@ export const pending = query({
       .map((c) => ({
         _id: c._id,
         deceasedName: c.deceasedName,
+        memberNameSnapshot: c.memberNameSnapshot,
         reference: c.reference,
         relationship: c.relationship,
+        status: c.status,
         createdAt: c.createdAt,
       }));
 
@@ -48,6 +50,7 @@ export const pending = query({
         destination: b.destination,
         reference: b.reference,
         requesterName: b.requesterName,
+        status: b.status,
         createdAt: b.createdAt,
       }));
 
@@ -82,6 +85,7 @@ export const pending = query({
         _id: r._id,
         reference: r.reference,
         category: r.category,
+        status: r.status,
         createdAt: r.createdAt,
       }));
 

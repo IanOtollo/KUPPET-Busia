@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,8 +20,9 @@ import {
   Megaphone,
   ArrowRightLeft,
 } from "lucide-react";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../../convex/_generated/api";
+import { Id } from "../../../../../../convex/_generated/dataModel";
 import { useMemberBasePath } from "@/lib/memberPath";
 
 type AttentionItem = {
@@ -51,6 +53,13 @@ const BUS_NEXT: Record<string, string> = {
   confirmed: "Confirmed. Check the date and pick-up details.",
 };
 
+function formatTimeLeft(msLeft: number): string {
+  const hours = Math.floor(msLeft / 3600_000);
+  if (hours >= 24) return `${Math.floor(hours / 24)}d ${hours % 24}h left`;
+  if (hours >= 1) return `${hours}h left`;
+  return `${Math.max(1, Math.floor(msLeft / 60_000))}m left`;
+}
+
 export default function MemberDashboardPage() {
   const basePath = useMemberBasePath();
   const profile = useQuery(api.users.getMyProfile);
@@ -58,6 +67,7 @@ export default function MemberDashboardPage() {
   const busBookings = useQuery(api.busBookings.listMine);
   const announcements = useQuery(api.announcements.listActive);
   const notifications = useQuery(api.notifications.listMine);
+  const markRead = useMutation(api.notifications.markAsRead);
   const unreadMessages = useQuery(api.messages.unreadCount);
   const officials = useQuery(api.officials.listActive);
   const leadershipContacts = officials
@@ -76,9 +86,23 @@ export default function MemberDashboardPage() {
   const isPendingApproval =
     profile?.status === "pending_approval" || profile?.status === "pending_verification";
 
+  // Convex only re-runs the query when data changes, so re-check expiry every minute
+  // to make timed notices disappear on schedule without a page refresh.
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNowMs(Date.now()), 60_000);
+    return () => clearInterval(t);
+  }, []);
+
   // Every current announcement, most important first, then newest.
   const PRIORITY_RANK: Record<string, number> = { urgent: 0, important: 1, normal: 2 };
-  const sortedAnnouncements = [...(announcements ?? [])].sort(
+  const sortedAnnouncements = [...(announcements ?? [])]
+    .filter((a: { expiresAt?: string }) => {
+      // Legacy date-only expiries are handled by the server query.
+      if (!a.expiresAt || a.expiresAt.length <= 10) return true;
+      return new Date(a.expiresAt).getTime() > nowMs;
+    })
+    .sort(
     (a: { priority: string; publishedAt: string }, b: { priority: string; publishedAt: string }) =>
       (PRIORITY_RANK[a.priority] ?? 2) - (PRIORITY_RANK[b.priority] ?? 2) ||
       b.publishedAt.localeCompare(a.publishedAt)
@@ -125,7 +149,16 @@ export default function MemberDashboardPage() {
     });
   }
 
-  const unreadNotifications = (notifications ?? []).filter((n: { isRead: boolean }) => !n.isRead);
+  const CONTRIBUTION_VISIBLE_MS = 24 * 3600_000;
+  const contributionCalls = (notifications ?? []).filter(
+    (n: { type: string; isRead: boolean; createdAt: number }) =>
+      n.type === "bereavement_contribution" && !n.isRead && nowMs - n.createdAt < CONTRIBUTION_VISIBLE_MS
+  );
+
+  const unreadNotifications = (notifications ?? []).filter(
+    (n: { isRead: boolean; type: string; createdAt: number }) =>
+      !n.isRead && n.type !== "bereavement_contribution" && nowMs - n.createdAt < CONTRIBUTION_VISIBLE_MS
+  );
   if (unreadNotifications.length > 0) {
     const latest = unreadNotifications[0];
     attention.push({
@@ -160,18 +193,18 @@ export default function MemberDashboardPage() {
       {/* 2. Branch announcements: the first thing every member sees */}
       {sortedAnnouncements.length > 0 && (
         <section aria-label="Branch announcements">
-          <h2 className="font-serif text-[20px] font-semibold text-[var(--ink)] mb-4 flex items-center gap-2">
-            <Megaphone className="h-5 w-5 text-[var(--brass)]" /> Branch Announcements
+          <h2 className="font-serif text-[24px] font-semibold text-[var(--ink)] mb-4 flex items-center gap-2">
+            <Megaphone className="h-6 w-6 text-[var(--brass)]" /> Branch Announcements
           </h2>
           <div className="space-y-3">
             {sortedAnnouncements.map(
-              (a: { _id: string; title: string; body: string; priority: string; publishedAt: string }) => {
+              (a: { _id: string; title: string; body: string; priority: string; publishedAt: string; expiresAt?: string }) => {
                 const urgent = a.priority === "urgent";
                 const important = a.priority === "important";
                 return (
                   <div
                     key={a._id}
-                    className={`p-4 rounded-[var(--r-md)] border ${
+                    className={`p-5 rounded-[var(--r-md)] border ${
                       urgent
                         ? "bg-[var(--warning-soft)] border-[var(--warning)]"
                         : important
@@ -180,22 +213,57 @@ export default function MemberDashboardPage() {
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <strong className="font-semibold text-[var(--ink)] text-[15px]">{a.title}</strong>
+                      <strong className="font-semibold text-[var(--ink)] text-[19px] leading-snug">{a.title}</strong>
                       {(urgent || important) && (
-                        <span className="eyebrow text-[var(--brass)] font-semibold shrink-0">
+                        <span className="eyebrow text-[var(--brass)] text-[13px] font-semibold shrink-0">
                           {urgent ? "URGENT" : "IMPORTANT"}
                         </span>
                       )}
                     </div>
-                    <p className="text-[14px] leading-relaxed text-[var(--ink-body)] mt-1 whitespace-pre-line">
+                    <p className="text-[17px] leading-relaxed text-[var(--ink-body)] mt-2 whitespace-pre-line">
                       {a.body}
                     </p>
-                    <span className="text-[12px] text-[var(--ink-muted)] block mt-2">
+                    <span className="text-[14px] text-[var(--ink-muted)] block mt-3">
                       {formatRelativeTime(new Date(a.publishedAt).getTime())}
+                      {a.expiresAt && a.expiresAt.length > 10 && (
+                        <> · {formatTimeLeft(new Date(a.expiresAt).getTime() - nowMs)}</>
+                      )}
                     </span>
                   </div>
                 );
               }
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* 2b. A colleague is bereaved: how to contribute, shown right on the home screen */}
+      {contributionCalls.length > 0 && (
+        <section aria-label="Colleague bereavement">
+          <h2 className="font-serif text-[24px] font-semibold text-[var(--ink)] mb-4 flex items-center gap-2">
+            <HeartHandshake className="h-6 w-6 text-[var(--union)]" /> Standing with a colleague
+          </h2>
+          <div className="space-y-3">
+            {contributionCalls.map(
+              (n: { _id: Id<"notifications">; title: string; body: string; createdAt: number }) => (
+                <div
+                  key={n._id}
+                  className="p-5 rounded-[var(--r-md)] border border-[var(--union)]/30 bg-[var(--union-soft)]/40 border-l-4 border-l-[var(--union)]"
+                >
+                  <strong className="block font-semibold text-[19px] leading-snug text-[var(--ink)]">
+                    {n.title.replace(/^Bereavement:\s*/, "")}
+                  </strong>
+                  <p className="mt-2 text-[17px] leading-relaxed text-[var(--ink-body)]">{n.body}</p>
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                    <span className="text-[14px] text-[var(--ink-muted)]">
+                      {formatRelativeTime(n.createdAt)} · disappears after 24 hours
+                    </span>
+                    <Button variant="secondary" size="sm" onClick={() => markRead({ id: n._id })}>
+                      <CheckCircle2 className="mr-1.5 h-4 w-4" /> Got it, dismiss
+                    </Button>
+                  </div>
+                </div>
+              )
             )}
           </div>
         </section>

@@ -55,7 +55,11 @@ export default function AdminSchoolsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Roster View Modal
-  const [selectedSchoolRoster, setSelectedSchoolRoster] = useState<any>(null);
+  const [selectedSchool, setSelectedSchool] = useState<any>(null);
+  // Staff list is fetched only for the school being viewed.
+  const rosterTeachers = useQuery(api.schools.roster, selectedSchool ? { schoolName: selectedSchool.name } : "skip");
+  const selectedSchoolRoster = selectedSchool ? { ...selectedSchool, teachers: rosterTeachers ?? [] } : null;
+  const setSelectedSchoolRoster = setSelectedSchool;
 
   const schools = useQuery(api.schools.listWithRosters);
   const addSchool = useMutation(api.schools.create);
@@ -381,7 +385,9 @@ export default function AdminSchoolsPage() {
             </DialogHeader>
 
             <div className="space-y-4 pt-4">
-              {selectedSchoolRoster.teachers.length > 0 ? (
+              {rosterTeachers === undefined ? (
+                <div className="p-6 text-center text-[14px] text-slate-500">Loading staff…</div>
+              ) : selectedSchoolRoster.teachers.length > 0 ? (
                 <div className="divide-y divide-[var(--line)] border border-[var(--line)] rounded-lg">
                   {selectedSchoolRoster.teachers.map((teacher: any) => (
                     <div key={teacher._id} className="p-4 hover:bg-slate-50/70 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3">

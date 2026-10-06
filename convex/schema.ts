@@ -54,6 +54,9 @@ export default defineSchema({
     // login (enforced server-side in requireUser). Expires so an unused
     // temporary password can't be picked up later by someone else.
     mustChangePassword: v.optional(v.boolean()),
+    // Staff account created without a usable password: the first sign-in
+    // attempt prompts the person to create one (passwordSetup.completeFirstSetup).
+    passwordSetupPending: v.optional(v.boolean()),
     tempPasswordExpiresAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -66,7 +69,22 @@ export default defineSchema({
     .index("by_role_status", ["role", "status"])
     .index("by_status", ["status"])
     .index("by_subCounty", ["subCounty"])
-    .index("by_authId", ["authId"]),
+    .index("by_authId", ["authId"])
+    // Alphabetical, paginated member lists without loading the whole table.
+    .index("by_role_fullName", ["role", "fullName"])
+    .index("by_role_status_fullName", ["role", "status", "fullName"])
+    // A school's staff roster, fetched one school at a time.
+    .index("by_school", ["school"])
+    // Name search for the admin Members page and global search.
+    .searchIndex("search_name", { searchField: "fullName", filterFields: ["role", "status"] }),
+
+  // Small pre-computed figures (member totals etc.) refreshed by a cron, so
+  // dashboards read one row instead of counting thousands.
+  stats: defineTable({
+    key: v.string(),
+    data: v.any(),
+    updatedAt: v.number(),
+  }).index("by_key", ["key"]),
 
   // Fixed-window counters used to throttle anonymous / high-abuse endpoints.
   rateLimits: defineTable({
@@ -332,7 +350,8 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_user", ["userId"])
-    .index("by_user_unread", ["userId", "isRead"]),
+    .index("by_user_unread", ["userId", "isRead"])
+    .index("by_createdAt", ["createdAt"]),
 
   auditLog: defineTable({
     actorId: v.optional(v.id("users")),

@@ -20,7 +20,7 @@ import { JOB_GROUPS } from "@/lib/constants";
 import { downloadExcel } from "@/lib/exportExcel";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowRightLeft, Download, Search, X, CheckCircle2, Mail, Phone, School, ShieldCheck, UserRound, UserCheck, XCircle } from "lucide-react";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, usePaginatedQuery, useConvex } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { Doc, Id } from "../../../../../convex/_generated/dataModel";
 import { toast } from "sonner";
@@ -43,7 +43,11 @@ export default function AdminMembersPage() {
 }
 
 function AdminMembersPageInner() {
-  const members = useQuery(api.users.listMembers, {});
+  const convex = useConvex();
+  // Live, bounded "awaiting approval" queue + pre-computed totals. The member
+  // list itself is loaded one page at a time (see usePaginatedQuery below).
+  const pending = useQuery(api.adminInbox.pending, {});
+  const stats = useQuery(api.stats.members, {});
   const approveMemberMutation = useMutation(api.users.approveMember);
   const setMemberStatusMutation = useMutation(api.users.setMemberStatus);
   const searchParams = useSearchParams();
@@ -63,18 +67,23 @@ function AdminMembersPageInner() {
 
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [selectedMember, setSelectedMember] = useState<(Doc<"users"> & { photoUrl: string | null }) | null>(null);
-  const pendingApprovalCount = members?.filter((member) => member.status === "pending_approval").length ?? 0;
+  const pendingApprovalCount = pending?.members.length ?? 0;
 
-  // Opened via the top-bar search ("?highlight=<id>") — jump straight to that
-  // member's record once the list has loaded.
+  const openMemberById = async (id: Id<"users">) => {
+    try {
+      const m = await convex.query(api.memberDirectory.byId, { id });
+      if (m) setSelectedMember(m);
+    } catch {
+      toast.error("Couldn't open that member.");
+    }
+  };
+
+  // Opened via the top-bar search ("?highlight=<id>") — fetch that one member.
   useEffect(() => {
     const highlightId = searchParams.get("highlight");
-    if (highlightId && members && !selectedMember) {
-      const match = members.find((m) => m._id === highlightId);
-      if (match) setSelectedMember(match);
-    }
+    if (highlightId && !selectedMember) void openMemberById(highlightId as Id<"users">);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, members]);
+  }, [searchParams]);
 
   const handleApprove = async (userId: Id<"users">) => {
     const ok = await confirm({
@@ -152,42 +161,59 @@ function AdminMembersPageInner() {
   const [statusTab, setStatusTab] = useState<StatusTab>("all");
   const [jobGroupFilter, setJobGroupFilter] = useState<string>("all");
 
-  const q = query.trim().toLowerCase();
+  // Wait for a pause in typing before asking the server.
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(query.trim()), 300);
+    return () => clearTimeout(t);
+  }, [query]);
+  const q = debouncedQuery;
 
-  const tabCounts = useMemo(() => {
-    const list = members ?? [];
-    return {
-      all: list.length,
-      pending_approval: list.filter((m) => m.status === "pending_approval").length,
-      active: list.filter((m) => m.status === "active").length,
-      inactive: list.filter((m) => m.status === "suspended" || m.status === "rejected").length,
-    } as Record<StatusTab, number>;
-  }, [members]);
+  const filterArgs = {
+    tab: statusTab,
+    jobGroup: jobGroupFilter === "all" ? undefined : jobGroupFilter,
+    search: q || undefined,
+  };
 
-  // Filtered by status tab + search (name, school, TSC, ID, phone), sorted A-Z by name.
-  const visibleMembers = useMemo(() => {
-    return (members ?? [])
-      .filter((m) => {
-        if (statusTab === "pending_approval" && m.status !== "pending_approval") return false;
-        if (statusTab === "active" && m.status !== "active") return false;
-        if (statusTab === "inactive" && m.status !== "suspended" && m.status !== "rejected") return false;
-        if (jobGroupFilter === "none" && m.jobGroup) return false;
-        if (jobGroupFilter !== "all" && jobGroupFilter !== "none" && m.jobGroup !== jobGroupFilter) return false;
-        if (!q) return true;
-        return [m.fullName, m.school, m.tscNumber, m.idNumber, m.phone].some((v) => v?.toLowerCase().includes(q));
-      })
-      .sort((a, b) => a.fullName.localeCompare(b.fullName, undefined, { sensitivity: "base" }));
-  }, [members, statusTab, jobGroupFilter, q]);
+  const {
+    results: visibleMembers,
+    status: listStatus,
+    loadMore,
+  } = usePaginatedQuery(api.memberDirectory.page, filterArgs, { initialNumItems: 50 });
+
+  // Totals come from a pre-computed document (refreshed every 15 minutes); the
+  // pending count is live.
+  const tabCounts = {
+    all: stats?.total,
+    pending_approval: pendingApprovalCount,
+    active: stats?.byStatus?.active,
+    inactive: stats ? (stats.byStatus?.suspended ?? 0) + (stats.byStatus?.rejected ?? 0) : undefined,
+  } as Record<StatusTab, number | undefined>;
 
   const [exporting, setExporting] = useState(false);
 
   const handleExportExcel = async () => {
-    if (visibleMembers.length === 0) {
-      toast.error("No members in this view to export.");
-      return;
-    }
     setExporting(true);
     try {
+      // Stream the full result set in pages of 500 so the export is never
+      // limited by what's currently on screen (or by memory in one query).
+      const rows: Array<(string | number)[]> = [];
+      let cursor: string | null = null;
+      for (let guard = 0; guard < 400; guard++) {
+        const res: { page: Doc<"users">[]; isDone: boolean; continueCursor: string } = await convex.query(
+          api.memberDirectory.exportPage,
+          { paginationOpts: { numItems: 500, cursor }, ...filterArgs }
+        );
+        for (const m of res.page) {
+          rows.push([m.fullName, m.tscNumber, m.jobGroup ?? "", m.school, m.subCounty, m.phone, m.email, m.status]);
+        }
+        if (res.isDone) break;
+        cursor = res.continueCursor;
+      }
+      if (rows.length === 0) {
+        toast.error("No members in this view to export.");
+        return;
+      }
       const groupPart = jobGroupFilter === "all" ? "" : `_JobGroup-${jobGroupFilter === "none" ? "Unset" : jobGroupFilter}`;
       await downloadExcel({
         fileName: `KUPPET_Busia_Members${groupPart}_${statusTab}_${new Date().toISOString().split("T")[0]}.xlsx`,
@@ -202,9 +228,9 @@ function AdminMembersPageInner() {
           { header: "Email" },
           { header: "Status" },
         ],
-        rows: visibleMembers.map((m) => [m.fullName, m.tscNumber, m.jobGroup ?? "", m.school, m.subCounty, m.phone, m.email, m.status]),
+        rows,
       });
-      toast.success(`Exported ${visibleMembers.length} member${visibleMembers.length === 1 ? "" : "s"}.`);
+      toast.success(`Exported ${rows.length} member${rows.length === 1 ? "" : "s"}.`);
     } catch {
       toast.error("Export failed. Please try again.");
     } finally {
@@ -291,8 +317,8 @@ function AdminMembersPageInner() {
         <button
           type="button"
           onClick={() => {
-            const firstPending = members?.find((member) => member.status === "pending_approval");
-            if (firstPending) setSelectedMember(firstPending);
+            const firstPending = pending?.members[0];
+            if (firstPending) void openMemberById(firstPending._id);
           }}
           className="mb-6 flex w-full items-center gap-3 rounded-[var(--r-md)] border border-[var(--warning)]/30 bg-[var(--warning-soft)] p-4 text-left text-[13.5px] text-[var(--ink-body)] transition-colors hover:bg-[var(--brass-soft)]"
         >
@@ -335,7 +361,7 @@ function AdminMembersPageInner() {
         </div>
       )}
 
-      {members === undefined ? (
+      {listStatus === "LoadingFirstPage" ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
             <Skeleton key={i} className="h-16 w-full" />
@@ -399,7 +425,7 @@ function AdminMembersPageInner() {
                 >
                   {t.label}
                   <span className={`text-[11px] ${statusTab === t.value ? "text-white/80" : "text-[var(--ink-muted)]"}`}>
-                    {tabCounts[t.value]}
+                    {tabCounts[t.value] ?? "…"}
                   </span>
                 </button>
               ))}
@@ -407,7 +433,8 @@ function AdminMembersPageInner() {
           </div>
 
           <p className="mb-3 text-[12.5px] text-[var(--ink-muted)]">
-            {visibleMembers.length} teacher{visibleMembers.length === 1 ? "" : "s"}
+            Showing {visibleMembers.length} teacher{visibleMembers.length === 1 ? "" : "s"}
+            {listStatus === "CanLoadMore" && "+"}
             {jobGroupFilter !== "all" && ` · ${jobGroupFilter === "none" ? "no job group set" : `Job Group ${jobGroupFilter}`}`} · sorted A–Z by name
           </p>
 
@@ -423,6 +450,18 @@ function AdminMembersPageInner() {
               onRowClick={setSelectedMember}
             />
           )}
+
+          {listStatus === "CanLoadMore" && (
+            <div className="mt-4 flex justify-center">
+              <Button variant="secondary" onClick={() => loadMore(50)}>
+                Load more members
+              </Button>
+            </div>
+          )}
+          {listStatus === "LoadingMore" && (
+            <p className="mt-4 text-center text-[14px] text-[var(--ink-muted)]">Loading…</p>
+          )}
+
         </>
       )}
 

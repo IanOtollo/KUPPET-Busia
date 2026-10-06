@@ -1,6 +1,10 @@
-import { query, mutation, QueryCtx, MutationCtx } from "./_generated/server";
+import { query, mutation, internalMutation, QueryCtx, MutationCtx } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { getCurrentUser } from "./lib/auth";
+
+/** Notifications disappear 24 hours after they are created. */
+const NOTIFICATION_TTL_MS = 24 * 3600_000;
 
 export const listMine = query({
   args: {},
@@ -13,7 +17,8 @@ export const listMine = query({
         .order("desc")
         .take(100);
 
-      return list.sort((a, b) => b.createdAt - a.createdAt);
+      const cutoff = Date.now() - NOTIFICATION_TTL_MS;
+      return list.filter((n) => n.createdAt > cutoff).sort((a, b) => b.createdAt - a.createdAt);
     } catch {
       return [];
     }
@@ -30,6 +35,22 @@ export const markAsRead = mutation({
       await ctx.db.patch(notif._id, { isRead: true });
     }
     return { success: true };
+  },
+});
+
+/** Hourly cleanup: permanently delete notifications older than 24 hours. */
+export const purgeExpired = internalMutation({
+  args: {},
+  handler: async (ctx: MutationCtx) => {
+    const cutoff = Date.now() - NOTIFICATION_TTL_MS;
+    const stale = await ctx.db
+      .query("notifications")
+      .withIndex("by_createdAt", (q) => q.lt("createdAt", cutoff))
+      .take(500);
+    for (const n of stale) await ctx.db.delete(n._id);
+    if (stale.length === 500) {
+      await ctx.scheduler.runAfter(0, internal.notifications.purgeExpired, {});
+    }
   },
 });
 

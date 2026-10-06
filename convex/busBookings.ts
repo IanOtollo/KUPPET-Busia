@@ -203,7 +203,7 @@ export const listMine = query({
       const bookings = await ctx.db
         .query("busBookings")
         .withIndex("by_member", (q) => q.eq("memberId", user._id))
-        .collect();
+        .take(200);
 
       return bookings.sort((a, b) => b.createdAt - a.createdAt);
     } catch {

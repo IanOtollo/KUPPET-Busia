@@ -4,6 +4,15 @@ import { requireRole, requireUser } from "./lib/auth";
 import { writeAudit } from "./lib/audit";
 import { announcementPriorityValidator, audienceTypeValidator } from "./lib/validators";
 
+/** Durations an admin may choose before sending a notice. */
+const ANNOUNCEMENT_DURATION_HOURS = [24, 48, 72, 96];
+
+/** Legacy notices stored a date-only expiry (YYYY-MM-DD); new ones store a full ISO timestamp. */
+function isExpired(expiresAt: string | undefined, nowIso: string): boolean {
+  if (!expiresAt) return false;
+  return expiresAt.length <= 10 ? expiresAt < nowIso.slice(0, 10) : expiresAt <= nowIso;
+}
+
 export const listActive = query({
   args: {},
   handler: async (ctx: QueryCtx) => {
@@ -16,11 +25,11 @@ export const listActive = query({
     // Staff manage announcements, so they see everything. Members only get
     // announcements that are still current and addressed to them.
     const isStaff = ["official", "admin", "superadmin"].includes(user.role);
-    const today = new Date().toISOString().slice(0, 10);
+    const nowIso = new Date().toISOString();
     const visible = isStaff
       ? list
       : list.filter((a) => {
-          if (a.expiresAt && a.expiresAt.slice(0, 10) < today) return false;
+          if (isExpired(a.expiresAt, nowIso)) return false;
           if (a.audienceType === "sub_county") return a.audienceValue === user.subCounty;
           if (a.audienceType === "designation") return a.audienceValue === user.designation;
           return true;
@@ -38,15 +47,20 @@ export const create = mutation({
     priority: announcementPriorityValidator,
     audienceType: audienceTypeValidator,
     audienceValue: v.optional(v.string()),
-    expiresAt: v.optional(v.string()),
+    durationHours: v.number(),
   },
-  handler: async (ctx: MutationCtx, args) => {
+  handler: async (ctx: MutationCtx, { durationHours, ...args }) => {
     const admin = await requireRole(ctx, ["admin", "superadmin"]);
-    const now = new Date().toISOString();
+    if (!ANNOUNCEMENT_DURATION_HOURS.includes(durationHours)) {
+      throw new Error("Choose how long this notice stays visible: 24, 48, 72 or 96 hours.");
+    }
+    const nowMs = Date.now();
+    const now = new Date(nowMs).toISOString();
 
     const id = await ctx.db.insert("announcements", {
       ...args,
       publishedAt: now,
+      expiresAt: new Date(nowMs + durationHours * 3600_000).toISOString(),
       createdBy: admin._id,
       isActive: true,
     });
@@ -57,7 +71,7 @@ export const create = mutation({
       entityId: id,
       actorId: admin._id,
       actorRole: admin.role,
-      metadata: { title: args.title, priority: args.priority },
+      metadata: { title: args.title, priority: args.priority, durationHours },
     });
 
     return id;

@@ -103,13 +103,23 @@ export default function AdminLayout({
   // so large tables aren't streamed to every open admin tab.
   const pending = useQuery(api.adminInbox.pending, isQueueHandler ? {} : "skip");
   const searching = searchQuery.trim().length > 0;
-  const members = useQuery(api.users.listMembers, isFullAdmin && searching ? {} : "skip");
-  const bereavementCases = useQuery(api.bereavement.listAllAdmin, isQueueHandler && searching ? {} : "skip");
+  // Server-side, indexed and capped: the header search never streams whole tables.
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 250);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+  const searchHits = useQuery(
+    api.adminSearch.search,
+    isQueueHandler && debouncedSearch.length >= 2 ? { term: debouncedSearch } : "skip"
+  );
+  const members = searchHits?.members;
+  const bereavementCases = searchHits?.bereavement;
   // Harassment access depends on a per-official flag the client can't cheaply
   // pre-check, and an unauthorized call throws — only admins/superadmins are
   // guaranteed access, so restrict the live count to them.
-  const harassmentReports = useQuery(api.harassment.listAllAdmin, isFullAdmin && searching ? {} : "skip");
-  const busBookings = useQuery(api.busBookings.listAllAdmin, isQueueHandler && searching ? {} : "skip");
+  const harassmentReports = searchHits?.harassment;
+  const busBookings = searchHits?.bus;
   const transfers = useQuery(api.transfers.listAll, isFullAdmin ? {} : "skip");
   const resetRequests = useQuery(api.passwordResets.listOpen, isFullAdmin ? {} : "skip");
 
@@ -275,15 +285,13 @@ export default function AdminLayout({
     }
 
     for (const m of members ?? []) {
-      if ([m.fullName, m.tscNumber, m.idNumber, m.phone].some((v) => v?.toLowerCase().includes(q))) {
-        results.push({
-          id: `member-${m._id}`,
-          group: "Member",
-          title: m.fullName,
-          subtitle: `TSC ${m.tscNumber} • ID ${m.idNumber}`,
-          href: `/admin/members?highlight=${m._id}`,
-        });
-      }
+      results.push({
+        id: `member-${m._id}`,
+        group: "Member",
+        title: m.fullName,
+        subtitle: `TSC ${m.tscNumber} • ID ${m.idNumber}`,
+        href: `/admin/members?highlight=${m._id}`,
+      });
     }
 
     for (const c of bereavementCases ?? []) {

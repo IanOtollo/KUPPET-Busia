@@ -271,49 +271,6 @@ export const getEmailByTsc = query({
 });
 
 /**
- * Admin query to list all members with filtering by status or subCounty.
- */
-export const listMembers = query({
-  args: {
-    status: v.optional(userStatusValidator),
-    subCounty: v.optional(subCountyValidator),
-  },
-  handler: async (ctx: QueryCtx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return null;
-
-    await requireRole(ctx, ["admin", "superadmin"]);
-
-    // This is the teacher-membership workspace. Administrative and official
-    // accounts are managed through their respective role workflows and must
-    // not be mixed into TSC verification records.
-    // Read through indexes and cap the result — never the whole table.
-    const status = args.status;
-    let members = status
-      ? await ctx.db
-          .query("users")
-          .withIndex("by_role_status", (q) => q.eq("role", "member").eq("status", status))
-          .take(3000)
-      : await ctx.db
-          .query("users")
-          .withIndex("by_role", (q) => q.eq("role", "member"))
-          .take(3000);
-
-    if (args.subCounty) {
-      members = members.filter((m) => m.subCounty === args.subCounty);
-    }
-
-    const sorted = members.sort((a, b) => b.createdAt - a.createdAt);
-    return await Promise.all(
-      sorted.map(async (member) => ({
-        ...member,
-        photoUrl: member.photoStorageId ? await ctx.storage.getUrl(member.photoStorageId) : null,
-      }))
-    );
-  },
-});
-
-/**
  * Admin action to approve a registered member after verifying TSC records.
  */
 export const approveMember = mutation({
@@ -437,6 +394,14 @@ export const assignRole = mutation({
       throw new ConvexError({
         code: "USER_NOT_FOUND",
         message: "User not found.",
+      });
+    }
+    // The branch has exactly one administrator (the Executive Chairman, set up
+    // by adminSetup.setupChairman). Nobody else can be made admin or superadmin.
+    if (args.role === "admin" || args.role === "superadmin") {
+      throw new ConvexError({
+        code: "ADMIN_LOCKED",
+        message: "The branch has a single administrator. Admin roles can't be assigned to other accounts.",
       });
     }
     // Prevents a superadmin demoting themselves and locking everyone out.

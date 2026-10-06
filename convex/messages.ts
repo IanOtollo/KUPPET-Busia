@@ -195,7 +195,7 @@ export const unreadCount = query({
       .withIndex("by_recipient_unread", (q) =>
         q.eq("recipientId", me._id).eq("isRead", false)
       )
-      .collect();
+      .take(1000);
     return unread.length;
   },
 });
