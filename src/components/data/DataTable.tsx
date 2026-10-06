@@ -45,7 +45,7 @@ export function DataTable<T extends Record<string, any>>({
                 <th
                   key={col.key}
                   className={cn(
-                    "px-4 text-[13.5px] font-semibold uppercase tracking-[0.06em] text-[var(--ink-muted)]",
+                    "px-4 text-[14px] font-bold uppercase tracking-[0.06em] text-[var(--ink)]",
                     col.className
                   )}
                 >

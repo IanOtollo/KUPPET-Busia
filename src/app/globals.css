@@ -66,6 +66,17 @@
   --danger:        #8C2F2F;  --danger-soft:  #F6E8E8;
   --info:          #29506F;  --info-soft:    #E8EEF4;
 
+  /* Type hierarchy colours: each level reads as a different colour, not just a different size.
+     page title = near-black ink, section heading = bright brand blue,
+     item title = ink, body = slate, meta = grey, eyebrow = deep brass. */
+  --heading-accent: #2A5F94;
+  --brass-text:     #86622A;
+
+  /* Dark sidebar */
+  --sidebar-label: #E3BF73;  /* group labels: warm gold, clearly different from the links */
+  --sidebar-text:  #E8EDF2;  /* links */
+  --sidebar-icon:  #A9B8C6;  /* inactive icons, secondary text */
+
   /* Elevation */
   --shadow-hair:  0 1px 2px rgba(16, 26, 36, 0.06);
   --shadow-panel: 0 4px 16px rgba(16, 26, 36, 0.08);
@@ -107,7 +118,12 @@ body {
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--brass);
+  color: var(--brass-text);
+}
+
+/* Section headings inside pages: bright blue so they stand apart from the near-black page title */
+main h2 {
+  color: var(--heading-accent);
 }
 
 /* Monospace reference token */

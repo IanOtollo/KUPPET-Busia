@@ -44,14 +44,14 @@ const ADMIN_NAV_ITEMS: {
   exact?: boolean;
   countKey?: CountKey;
 }[] = [
-  { href: "/admin", label: "Operations Overview", icon: LayoutDashboard, exact: true },
-  { href: "/admin/members", label: "Members Management", icon: UserCheck, countKey: "members" },
-  { href: "/admin/schools", label: "Schools & Staff Roster", icon: School },
-  { href: "/admin/bereavement", label: "Bereavement Queue", icon: HeartHandshake, countKey: "bereavement" },
+  { href: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
+  { href: "/admin/members", label: "Members", icon: UserCheck, countKey: "members" },
+  { href: "/admin/schools", label: "Schools & Staff", icon: School },
+  { href: "/admin/bereavement", label: "Bereavement Claims", icon: HeartHandshake, countKey: "bereavement" },
   { href: "/admin/harassment", label: "Harassment Reports", icon: ShieldAlert, countKey: "harassment" },
-  { href: "/admin/bus", label: "Bus Booking & Fleet", icon: Bus, countKey: "bus" },
+  { href: "/admin/bus", label: "Union Bus", icon: Bus, countKey: "bus" },
   { href: "/admin/password-resets", label: "Password Resets", icon: KeyRound, countKey: "resets" },
-  { href: "/admin/officials", label: "Officials Directory", icon: Users },
+  { href: "/admin/officials", label: "Branch Officials", icon: Users },
   { href: "/admin/reports", label: "Financial Reports", icon: FileSpreadsheet },
   { href: "/admin/announcements", label: "Announcements", icon: Megaphone },
   { href: "/admin/transfers", label: "Transfers & Swaps", icon: ArrowRightLeft },
@@ -414,7 +414,7 @@ export default function AdminLayout({
       {/* 1. ADMIN DARK SIDEBAR (Desktop 272px / 76px collapsed, Mobile Drawer) */}
       <aside
         className={cn(
-          "fixed top-0 left-0 h-screen bg-[var(--ink)] text-[#C8CFD6] z-50 flex flex-col justify-between transition-[width,transform] duration-200 lg:translate-x-0 select-none",
+          "fixed top-0 left-0 h-screen bg-[var(--ink)] text-[var(--sidebar-text)] z-50 flex flex-col justify-between transition-[width,transform] duration-200 lg:translate-x-0 select-none",
           sidebarCollapsed ? "lg:w-[76px]" : "lg:w-[272px]",
           "w-[272px]",
           mobileDrawerOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
@@ -423,7 +423,7 @@ export default function AdminLayout({
         {/* Desktop collapse toggle — a standalone icon straddling the sidebar edge, out of the header's flow entirely */}
         <button
           onClick={toggleSidebarCollapsed}
-          className="hidden lg:flex absolute -right-3 top-6 h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-[var(--ink)] text-[#8E9CA8] hover:text-white hover:border-white/20 transition-colors cursor-pointer z-10"
+          className="hidden lg:flex absolute -right-3 top-6 h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-[var(--ink)] text-[var(--sidebar-icon)] hover:text-white hover:border-white/20 transition-colors cursor-pointer z-10"
           aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
@@ -447,7 +447,7 @@ export default function AdminLayout({
             {/* Mobile close button */}
             <button
               onClick={() => setMobileDrawerOpen(false)}
-              className="lg:hidden text-[#C8CFD6] hover:text-white p-1 cursor-pointer"
+              className="lg:hidden text-[var(--sidebar-text)] hover:text-white p-1 cursor-pointer"
               aria-label="Close sidebar"
             >
               <X className="h-5 w-5" />
@@ -459,7 +459,7 @@ export default function AdminLayout({
             {ADMIN_NAV_GROUPS.map((group) => (
               <div key={group.title}>
                 {group.hrefs.length > 0 && group.title !== "Overview" && (
-                  <span className={cn("mb-1.5 block px-3.5 text-[13.5px] font-semibold uppercase tracking-[0.1em] text-[#8E9CA8]", sidebarCollapsed && "lg:hidden")}>
+                  <span className={cn("mb-1.5 block px-3.5 text-[13.5px] font-semibold uppercase tracking-[0.12em] text-[var(--sidebar-label)]", sidebarCollapsed && "lg:hidden")}>
                     {group.title}
                   </span>
                 )}
@@ -485,8 +485,8 @@ export default function AdminLayout({
                     "relative flex items-center gap-3 h-[44px] px-3.5 rounded-[var(--r-md)] text-[16px] font-medium transition-colors",
                     sidebarCollapsed && "lg:justify-center lg:px-0",
                     isActive
-                      ? "bg-white/10 text-white font-semibold"
-                      : "text-[#C8CFD6] hover:bg-white/5 hover:text-white"
+                      ? "bg-white/15 text-white font-bold"
+                      : "text-[var(--sidebar-text)] hover:bg-white/5 hover:text-white"
                   )}
                 >
                   {isActive && (
@@ -496,7 +496,7 @@ export default function AdminLayout({
                     <Icon
                       className={cn(
                         "h-4 w-4 stroke-[1.5]",
-                        isActive ? "text-[var(--brass)]" : "text-[#8E9CA8]"
+                        isActive ? "text-[var(--brass)]" : "text-[var(--sidebar-icon)]"
                       )}
                     />
                     {sidebarCollapsed && count > 0 && (
@@ -536,14 +536,14 @@ export default function AdminLayout({
                   <span className="block text-[14.5px] font-medium text-white truncate">
                     {adminName}
                   </span>
-                  <span className="block text-[12.5px] text-[#8E9CA8] truncate capitalize">
+                  <span className="block text-[12.5px] text-[var(--sidebar-icon)] truncate capitalize">
                     {adminRoleLabel}
                   </span>
                 </div>
               </div>
               <button
                 onClick={handleSignOut}
-                className={cn("text-[#8E9CA8] hover:text-[var(--danger)] p-1.5 rounded-[var(--r-sm)] transition-colors cursor-pointer", sidebarCollapsed && "lg:hidden")}
+                className={cn("text-[var(--sidebar-icon)] hover:text-[var(--danger)] p-1.5 rounded-[var(--r-sm)] transition-colors cursor-pointer", sidebarCollapsed && "lg:hidden")}
                 title="Sign out of Admin"
                 aria-label="Sign out"
               >

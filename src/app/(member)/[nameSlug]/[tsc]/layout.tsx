@@ -51,7 +51,7 @@ const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
     title: "Welfare & Support",
     items: [
       { href: "/bereavement", label: "Bereavement", icon: HeartHandshake },
-      { href: "/harassment", label: "Harassment Safe Report", icon: Shield },
+      { href: "/harassment", label: "Report Harassment", icon: Shield },
     ],
   },
   {
@@ -210,14 +210,14 @@ export default function MemberLayout({
       {/* 1. DESKTOP FIXED SIDEBAR (>=1024px) */}
       <aside
         className={cn(
-          "hidden lg:flex h-screen fixed top-0 left-0 flex-col justify-between bg-[var(--ink)] text-[#C8CFD6] z-30 select-none transition-[width] duration-200",
+          "hidden lg:flex h-screen fixed top-0 left-0 flex-col justify-between bg-[var(--ink)] text-[var(--sidebar-text)] z-30 select-none transition-[width] duration-200",
           sidebarCollapsed ? "w-[76px]" : "w-[264px]"
         )}
       >
         {/* Collapse toggle — standalone icon straddling the sidebar edge */}
         <button
           onClick={toggleSidebarCollapsed}
-          className="absolute -right-3 top-6 h-6 w-6 flex items-center justify-center rounded-full border border-white/10 bg-[var(--ink)] text-[#8E9CA8] hover:text-white hover:border-white/20 transition-colors cursor-pointer z-10"
+          className="absolute -right-3 top-6 h-6 w-6 flex items-center justify-center rounded-full border border-white/10 bg-[var(--ink)] text-[var(--sidebar-icon)] hover:text-white hover:border-white/20 transition-colors cursor-pointer z-10"
           aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
@@ -236,7 +236,7 @@ export default function MemberLayout({
               <span className="block text-[14.5px] font-semibold tracking-[0.08em] text-white uppercase">
                 KUPPET BUSIA
               </span>
-              <span className="block text-[13px] text-[#8E9CA8]">
+              <span className="block text-[13px] text-[var(--sidebar-icon)]">
                 Members Portal
               </span>
             </div>
@@ -246,7 +246,7 @@ export default function MemberLayout({
           <nav className="p-3 space-y-6 overflow-y-auto max-h-[calc(100vh-160px)]">
             {NAV_GROUPS.map((group) => (
               <div key={group.title}>
-                <span className={cn("px-3 text-[13.5px] font-semibold uppercase tracking-[0.1em] text-[#8E9CA8] block mb-1.5", sidebarCollapsed && "hidden")}>
+                <span className={cn("px-3 text-[13.5px] font-semibold uppercase tracking-[0.12em] text-[var(--sidebar-label)] block mb-1.5", sidebarCollapsed && "hidden")}>
                   {group.title}
                 </span>
                 <ul className="space-y-1">
@@ -266,8 +266,8 @@ export default function MemberLayout({
                             "relative flex items-center gap-3 h-[44px] px-3 rounded-[var(--r-md)] text-[15.5px] font-medium transition-colors",
                             sidebarCollapsed && "justify-center px-0",
                             isActive
-                              ? "bg-white/10 text-white font-semibold"
-                              : "text-[#C8CFD6] hover:bg-white/5 hover:text-white"
+                              ? "bg-white/15 text-white font-bold"
+                              : "text-[var(--sidebar-text)] hover:bg-white/5 hover:text-white"
                           )}
                         >
                           {isActive && (
@@ -276,7 +276,7 @@ export default function MemberLayout({
                           <Icon
                             className={cn(
                               "h-4 w-4 shrink-0 stroke-[1.5]",
-                              isActive ? "text-[var(--brass)]" : "text-[#8E9CA8]"
+                              isActive ? "text-[var(--brass)]" : "text-[var(--sidebar-icon)]"
                             )}
                           />
                           <span className={cn(sidebarCollapsed && "hidden")}>{item.label}</span>
@@ -321,12 +321,12 @@ export default function MemberLayout({
                 <span className="block text-[15px] font-medium text-white truncate max-w-[130px]">
                   {memberName}
                 </span>
-                <span className="block text-[13px] text-[#8E9CA8]">
+                <span className="block text-[13px] text-[var(--sidebar-icon)]">
                   {memberRole}
                 </span>
               </div>
             </div>
-            <ChevronDown className={cn("h-4 w-4 text-[#8E9CA8]", sidebarCollapsed && "hidden")} />
+            <ChevronDown className={cn("h-4 w-4 text-[var(--sidebar-icon)]", sidebarCollapsed && "hidden")} />
           </button>
 
           {userMenuOpen && (

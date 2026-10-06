@@ -23,7 +23,7 @@ export function PageHeader({
   action,
 }: PageHeaderProps) {
   return (
-    <div className="mb-8">
+    <div className="mb-10">
       {/* Breadcrumbs if provided */}
       {breadcrumbs && breadcrumbs.length > 0 && (
         <nav
@@ -58,7 +58,7 @@ export function PageHeader({
 
       {/* Title & Action Row */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <h1 className="font-serif text-[28px] sm:text-[34px] font-bold leading-[1.15] text-[var(--ink)] tracking-[-0.015em]">
+        <h1 className="font-serif text-[30px] sm:text-[38px] font-bold leading-[1.15] text-[var(--ink)] tracking-[-0.02em]">
           {title}
         </h1>
         {action && <div className="shrink-0">{action}</div>}
@@ -66,7 +66,7 @@ export function PageHeader({
 
       {/* Lead description */}
       {lead && (
-        <p className="text-[16px] sm:text-[17px] leading-[1.6] text-[var(--ink-muted)] max-w-[68ch] mt-2">
+        <p className="text-[17px] sm:text-[18px] leading-[1.6] text-[var(--ink-body)] max-w-[68ch] mt-3">
           {lead}
         </p>
       )}

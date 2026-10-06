@@ -89,7 +89,7 @@ function SectionHeader({
         <Icon className="h-5 w-5" />
       </span>
       <div className="min-w-0">
-        <h2 className="flex items-center gap-2 font-serif text-[22px] font-semibold leading-tight text-[var(--ink)]">
+        <h2 className="flex items-center gap-2 font-serif text-[24px] font-semibold leading-tight text-[var(--heading-accent)]">
           {title}
           {count !== undefined && count > 0 && (
             <span className="rounded-full bg-[var(--surface-sunk)] px-2.5 py-0.5 font-sans text-[15.5px] font-semibold text-[var(--ink-body)]">
