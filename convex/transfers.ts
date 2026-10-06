@@ -2,6 +2,8 @@ import { query, mutation, QueryCtx, MutationCtx } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { requireRole, requireUser } from "./lib/auth";
 import { writeAudit } from "./lib/audit";
+import { ensureSchool } from "./schools";
+import { requestMembersRefresh } from "./stats";
 import { subCountyValidator, designationValidator, jobGroupValidator } from "./lib/validators";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -33,13 +35,9 @@ export const report = mutation({
   handler: async (ctx: MutationCtx, args) => {
     const user = await requireUser(ctx);
 
-    const school = args.school.trim();
-    if (school.length < 3 || school.length > 120) {
-      throw new ConvexError({
-        code: "INVALID_SCHOOL",
-        message: "Enter the school name (3-120 characters).",
-      });
-    }
+    // Match the directory's spelling, or add the school if it's new.
+    const school = (await ensureSchool(ctx, args.school, args.subCounty)).name;
+    await requestMembersRefresh(ctx);
 
     const unchanged =
       school.toLowerCase() === user.school.trim().toLowerCase() &&

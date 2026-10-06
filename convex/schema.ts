@@ -84,6 +84,8 @@ export default defineSchema({
     key: v.string(),
     data: v.any(),
     updatedAt: v.number(),
+    // When a refresh is already scheduled (so bursts of changes share one).
+    queuedAt: v.optional(v.number()),
   }).index("by_key", ["key"]),
 
   // Fixed-window counters used to throttle anonymous / high-abuse endpoints.

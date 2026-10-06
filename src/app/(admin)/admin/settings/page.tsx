@@ -18,7 +18,8 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/ui/confirm-dialog";
-import { Save, Plus, School, CheckCircle2, XCircle, UserCircle, KeyRound } from "lucide-react";
+import { Save, Plus, School, CheckCircle2, XCircle, UserCircle, KeyRound, Pencil } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import Link from "next/link";
 import { ProfilePhotoUpload } from "@/components/modules/ProfilePhotoUpload";
 
@@ -60,6 +61,25 @@ export default function AdminSettingsPage() {
   const schools = useQuery(api.schools.list);
   const addSchool = useMutation(api.schools.create);
   const toggleSchoolActive = useMutation(api.schools.toggleActive);
+  const updateSchool = useMutation(api.schools.update);
+
+  // Fix a school's spelling or sub-county; its teachers move with it.
+  const [editing, setEditing] = useState<{ id: any; name: string; subCounty: string; original: string } | null>(null);
+  const [isSavingSchool, setIsSavingSchool] = useState(false);
+  const handleSaveSchool = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editing) return;
+    setIsSavingSchool(true);
+    try {
+      const res = await updateSchool({ id: editing.id, name: editing.name, subCounty: editing.subCounty as any });
+      toast.success(res.changed ? "School updated. Its teachers were moved to the corrected name." : "No changes to save.");
+      setEditing(null);
+    } catch (err: any) {
+      toast.error(err.data?.message || err.message || "Couldn't update the school.");
+    } finally {
+      setIsSavingSchool(false);
+    }
+  };
 
   const branchConfig = useQuery(api.settings.getBranchConfig);
   const saveBranchConfig = useMutation(api.settings.setBranchConfig);
@@ -321,12 +341,16 @@ export default function AdminSettingsPage() {
                       <span className="ml-2.5 text-xs text-[var(--ink-muted)] px-2 py-0.5 bg-[var(--surface-sunk)] rounded-full">
                         {sch.subCounty}
                       </span>
-                      {sch.addedBy === "teacher" && (
-                        <span className="ml-2 text-xs font-semibold text-[var(--brass)] px-2 py-0.5 bg-[var(--brass-soft)] rounded-full">
-                          New · added by a teacher
-                        </span>
-                      )}
                     </div>
+                    <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      aria-label={`Edit ${sch.name}`}
+                      onClick={() => setEditing({ id: sch._id, name: sch.name, subCounty: sch.subCounty, original: sch.name })}
+                    >
+                      <Pencil className="h-4 w-4" /> Edit
+                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -339,6 +363,7 @@ export default function AdminSettingsPage() {
                         <span className="flex items-center gap-1"><XCircle className="h-4 w-4" /> Inactive</span>
                       )}
                     </Button>
+                    </div>
                   </div>
                 ))
               ) : (
@@ -416,6 +441,53 @@ export default function AdminSettingsPage() {
       </Card>
       </div>
       </div>
+
+      <Dialog open={!!editing} onOpenChange={(open) => !open && setEditing(null)}>
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle>Edit school</DialogTitle>
+            <DialogDescription>
+              Correct the spelling or sub-county. Every teacher registered at this school is moved to the new name automatically.
+            </DialogDescription>
+          </DialogHeader>
+          {editing && (
+            <form onSubmit={handleSaveSchool} className="space-y-4">
+              <div>
+                <Label htmlFor="editSchoolName">School name</Label>
+                <Input
+                  id="editSchoolName"
+                  value={editing.name}
+                  onChange={(e) => setEditing({ ...editing, name: e.target.value })}
+                  autoFocus
+                />
+              </div>
+              <div>
+                <Label htmlFor="editSchoolSub">Sub-County</Label>
+                <Select value={editing.subCounty} onValueChange={(v) => setEditing({ ...editing, subCounty: v })}>
+                  <SelectTrigger id="editSchoolSub">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SUB_COUNTIES.map((sc) => (
+                      <SelectItem key={sc} value={sc}>
+                        {sc}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="secondary" onClick={() => setEditing(null)}>
+                  Cancel
+                </Button>
+                <Button type="submit" loading={isSavingSchool} loadingText="Saving…">
+                  Save changes
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

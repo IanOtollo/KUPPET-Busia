@@ -15,6 +15,7 @@ import { getCurrentUser, requireRole, requireUser } from "./lib/auth";
 import { writeAudit } from "./lib/audit";
 import { loginAliasForTsc } from "./lib/loginAlias";
 import { consumeRateLimit } from "./lib/rateLimit";
+import { requestMembersRefresh } from "./stats";
 import {
   userRoleValidator,
   userStatusValidator,
@@ -217,6 +218,8 @@ export const registerMember = action({
       shouldLinkViaPhone: false,
     });
 
+    await ctx.runMutation(internal.stats.requestRefresh, {});
+
     return { success: true };
   },
 });
@@ -285,6 +288,7 @@ export const approveMember = mutation({
   },
   handler: async (ctx: MutationCtx, args) => {
     const admin = await requireRole(ctx, ["admin", "superadmin"]);
+    await requestMembersRefresh(ctx);
 
     const targetUser = await ctx.db.get(args.userId);
     if (!targetUser) {
@@ -349,6 +353,7 @@ export const setMemberStatus = mutation({
   },
   handler: async (ctx: MutationCtx, args) => {
     const admin = await requireRole(ctx, ["admin", "superadmin"]);
+    await requestMembersRefresh(ctx);
 
     const targetUser = await ctx.db.get(args.userId);
     if (!targetUser) {

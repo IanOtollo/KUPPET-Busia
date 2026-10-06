@@ -79,6 +79,37 @@ export const refreshMembers = internalMutation({
   },
 });
 
+const REFRESH_GAP_MS = 20_000;
+
+/**
+ * Call from any mutation that changes who is a member, their status or their
+ * school. Schedules a tally right after the change commits (at most one per
+ * 20 seconds, so a burst of sign-ups shares a single recount). The 15-minute
+ * cron stays as a safety net.
+ */
+export async function requestMembersRefresh(ctx: MutationCtx) {
+  const now = Date.now();
+  const row = await ctx.db
+    .query("stats")
+    .withIndex("by_key", (q) => q.eq("key", "members"))
+    .first();
+  // A refresh is already waiting to run later: it will see this change too.
+  if (row?.queuedAt && row.queuedAt > now) return;
+
+  const runAt = Math.max(now, (row?.updatedAt ?? 0) + REFRESH_GAP_MS);
+  if (row) await ctx.db.patch(row._id, { queuedAt: runAt });
+  else await ctx.db.insert("stats", { key: "members", data: emptyStats(), updatedAt: 0, queuedAt: runAt });
+  await ctx.scheduler.runAfter(runAt - now, internal.stats.startMembersRefresh, {});
+}
+
+/** For actions (which can't touch the database directly). */
+export const requestRefresh = internalMutation({
+  args: {},
+  handler: async (ctx: MutationCtx) => {
+    await requestMembersRefresh(ctx);
+  },
+});
+
 /** Kicks off a fresh tally (called by the cron). */
 export const startMembersRefresh = internalMutation({
   args: {},

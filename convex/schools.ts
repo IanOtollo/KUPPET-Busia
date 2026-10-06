@@ -3,7 +3,8 @@ import { v } from "convex/values";
 import { requireRole } from "./lib/auth";
 import { writeAudit } from "./lib/audit";
 import { subCountyValidator } from "./lib/validators";
-import { readMemberStats, schoolKey } from "./stats";
+import { readMemberStats, schoolKey, requestMembersRefresh } from "./stats";
+import { internal } from "./_generated/api";
 import { ConvexError } from "convex/values";
 
 /**
@@ -69,36 +70,94 @@ export const roster = query({
   },
 });
 
+const SCHOOL_NAME_RE = /^[\p{L}\p{N} .,'&()\/-]+$/u;
+
+function cleanSchoolName(raw: string): string {
+  const name = raw.replace(/\s+/g, " ").trim();
+  if (name.length < 3 || name.length > 120 || !SCHOOL_NAME_RE.test(name)) {
+    throw new ConvexError({
+      code: "INVALID_SCHOOL",
+      message: "Enter the school's name using letters and numbers only (3–120 characters).",
+    });
+  }
+  return name;
+}
+
 /**
- * Called when a teacher registers. Returns the directory's spelling of their
- * school, and adds the school to the directory (flagged as teacher-added) when
- * it isn't there yet, so the admin's School Directory grows as teachers join.
+ * Returns the directory's spelling of a school, adding it (flagged as
+ * teacher-added) when it isn't there yet. Used wherever a teacher types a school.
  */
+export async function ensureSchool(ctx: MutationCtx, rawName: string, subCounty: string) {
+  const name = cleanSchoolName(rawName);
+  const key = name.toLowerCase();
+  const existing = await ctx.db.query("schools").take(3000);
+  const match = existing.find((s) => s.name.toLowerCase().replace(/\s+/g, " ").trim() === key);
+  if (match) return { name: match.name, created: false };
+
+  await ctx.db.insert("schools", {
+    name,
+    subCounty: subCounty as any,
+    isActive: true,
+    addedBy: "teacher",
+    addedAt: Date.now(),
+  });
+  return { name, created: true };
+}
+
 export const ensureFromRegistration = internalMutation({
   args: { name: v.string(), subCounty: subCountyValidator },
+  handler: async (ctx: MutationCtx, args) => ensureSchool(ctx, args.name, args.subCounty),
+});
+
+/** Moves a school's members to its corrected name, a batch at a time. */
+export const renameMembers = internalMutation({
+  args: { oldName: v.string(), newName: v.string(), subCounty: subCountyValidator },
   handler: async (ctx: MutationCtx, args) => {
-    // Tidy spacing only; keep the teacher's capitalisation.
-    const name = args.name.replace(/\s+/g, " ").trim();
-    if (name.length < 3 || name.length > 120 || !/^[\p{L}\p{N} .,'&()\/-]+$/u.test(name)) {
-      throw new ConvexError({
-        code: "INVALID_SCHOOL",
-        message: "Enter your school's name using letters and numbers only (3–120 characters).",
-      });
+    const batch = await ctx.db
+      .query("users")
+      .withIndex("by_school", (q) => q.eq("school", args.oldName))
+      .take(200);
+    for (const u of batch) {
+      await ctx.db.patch(u._id, { school: args.newName, subCounty: args.subCounty, updatedAt: Date.now() });
     }
+    if (batch.length === 200) {
+      await ctx.scheduler.runAfter(0, internal.schools.renameMembers, args);
+    }
+  },
+});
 
-    const key = name.toLowerCase();
-    const existing = await ctx.db.query("schools").take(3000);
-    const match = existing.find((s) => s.name.toLowerCase().replace(/\s+/g, " ").trim() === key);
-    if (match) return { name: match.name, created: false };
+/** Admin: correct a school's spelling and/or sub-county. Its teachers follow automatically. */
+export const update = mutation({
+  args: { id: v.id("schools"), name: v.string(), subCounty: subCountyValidator },
+  handler: async (ctx: MutationCtx, args) => {
+    const admin = await requireRole(ctx, ["admin", "superadmin"]);
+    const school = await ctx.db.get(args.id);
+    if (!school) throw new ConvexError({ code: "NOT_FOUND", message: "School record not found." });
 
-    await ctx.db.insert("schools", {
-      name,
+    const name = cleanSchoolName(args.name);
+    const all = await ctx.db.query("schools").take(3000);
+    if (all.some((s) => s._id !== args.id && s.name.toLowerCase() === name.toLowerCase())) {
+      throw new ConvexError({ code: "DUPLICATE_SCHOOL", message: `"${name}" already exists in the directory.` });
+    }
+    if (name === school.name && args.subCounty === school.subCounty) return { changed: false };
+
+    await ctx.db.patch(args.id, { name, subCounty: args.subCounty });
+    await ctx.scheduler.runAfter(0, internal.schools.renameMembers, {
+      oldName: school.name,
+      newName: name,
       subCounty: args.subCounty,
-      isActive: true,
-      addedBy: "teacher",
-      addedAt: Date.now(),
     });
-    return { name, created: true };
+    await requestMembersRefresh(ctx);
+
+    await writeAudit(ctx, {
+      actorId: admin._id,
+      actorRole: admin.role,
+      action: "UPDATE_SCHOOL",
+      entityType: "schools",
+      entityId: args.id,
+      metadata: { from: { name: school.name, subCounty: school.subCounty }, to: { name, subCounty: args.subCounty } },
+    });
+    return { changed: true };
   },
 });
 
