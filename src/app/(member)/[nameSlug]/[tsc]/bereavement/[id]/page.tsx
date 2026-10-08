@@ -112,7 +112,7 @@ export default function BereavementDetailPage({
                 Deceased Record
               </h3>
 
-              <div className="grid grid-cols-2 gap-4 text-[16px]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-[16px] [&>div]:min-w-0 [&_span]:break-words [&_p]:break-words">
                 <div>
                   <span className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)] block">
                     Deceased Full Name
@@ -146,7 +146,7 @@ export default function BereavementDetailPage({
                 )}
 
                 {caseDoc.burialPlace && (
-                  <div className="col-span-2">
+                  <div className="sm:col-span-2">
                     <span className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)] block">
                       Funeral Location / Place of Burial
                     </span>
@@ -155,11 +155,11 @@ export default function BereavementDetailPage({
                 )}
 
                 {caseDoc.details && (
-                  <div className="col-span-2 pt-2 border-t border-[var(--line)]">
+                  <div className="sm:col-span-2 pt-2 border-t border-[var(--line)]">
                     <span className="text-[13.5px] uppercase font-semibold text-[var(--ink-muted)] block mb-1">
                       Additional Details
                     </span>
-                    <p className="text-[15.5px] leading-relaxed text-[var(--ink-body)]">
+                    <p className="text-[15.5px] leading-relaxed text-[var(--ink-body)] whitespace-pre-line">
                       {caseDoc.details}
                     </p>
                   </div>
@@ -196,7 +196,7 @@ export default function BereavementDetailPage({
               )}
 
               {caseDoc.statusReason && (
-                <div className="p-3 rounded-[var(--r-md)] bg-[var(--surface-sunk)] border border-[var(--line)] text-[14.5px] text-[var(--ink-body)]">
+                <div className="p-3 rounded-[var(--r-md)] bg-[var(--surface-sunk)] border border-[var(--line)] text-[14.5px] text-[var(--ink-body)] break-words">
                   <strong>Branch Note:</strong> {caseDoc.statusReason}
                 </div>
               )}

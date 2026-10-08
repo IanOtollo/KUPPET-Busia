@@ -269,7 +269,7 @@ function CaseReview({ id }: { id: string }) {
               <CardTitle>Claim Details</CardTitle>
             </CardHeader>
             <CardContent>
-              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-[16px]">
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-[16px] [&>div]:min-w-0 [&_dd]:break-words">
                 <div>
                   <dt className={dt}>Deceased</dt>
                   <dd className="font-semibold text-[var(--ink)] mt-0.5">{caseDoc.deceasedName}</dd>
@@ -307,7 +307,7 @@ function CaseReview({ id }: { id: string }) {
               <CardTitle>Member</CardTitle>
             </CardHeader>
             <CardContent>
-              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-[15.5px]">
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-[15.5px] [&>div]:min-w-0 [&_dd]:break-words">
                 <div>
                   <dt className={dt}>Full name</dt>
                   <dd className="font-medium text-[var(--ink)] mt-0.5">{caseDoc.memberNameSnapshot}</dd>
