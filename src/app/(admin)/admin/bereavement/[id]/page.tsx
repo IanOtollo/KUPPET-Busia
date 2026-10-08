@@ -12,10 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { formatDate, formatDateTime } from "@/lib/format";
 import {
-  Send,
   CheckCircle,
   Users,
-  MessageSquare,
   Paperclip,
   ExternalLink,
   ArrowRight,
@@ -34,6 +32,25 @@ const DONE_MESSAGE: Record<string, string> = {
   declined: "Declined. The member has been told why.",
 };
 
+const DECLINE_REASONS = [
+  {
+    label: "Documents missing",
+    text: "Your supporting documents are missing. Please submit a new claim with the burial permit and your payslip attached.",
+  },
+  {
+    label: "Documents unclear",
+    text: "One or more of your documents is unclear or unreadable. Please submit a new claim with clear copies.",
+  },
+  {
+    label: "Details don't match",
+    text: "The details in your claim do not match the documents provided. Please check them and submit a new claim.",
+  },
+  {
+    label: "Not eligible",
+    text: "This claim is not eligible under the union's welfare rules. Please contact the branch office for guidance.",
+  },
+];
+
 export default function AdminBereavementDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   // Keyed so moving to the next case starts with a clean form.
@@ -46,7 +63,6 @@ function CaseReview({ id }: { id: string }) {
   const caseDoc = useQuery(api.bereavement.getById, { id: caseId });
   const allCases = useQuery(api.bereavement.listAllAdmin, {});
   const updateStatusMutation = useMutation(api.bereavement.updateStatus);
-  const addNoteMutation = useMutation(api.bereavement.addInternalNote);
 
   const [declining, setDeclining] = useState(false);
   const [declineReason, setDeclineReason] = useState("");
@@ -54,8 +70,6 @@ function CaseReview({ id }: { id: string }) {
   const [justDone, setJustDone] = useState<string | null>(null);
 
   const [previewIdx, setPreviewIdx] = useState<number | null>(null);
-  const [internalNoteText, setInternalNoteText] = useState("");
-  const [isAddingNote, setIsAddingNote] = useState(false);
 
   // The longest-waiting claim still pending, other than this one.
   const waiting = useMemo(
@@ -117,22 +131,6 @@ function CaseReview({ id }: { id: string }) {
     }
   };
 
-  const handleAddNote = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!internalNoteText.trim()) return;
-
-    setIsAddingNote(true);
-    try {
-      await addNoteMutation({ id: caseId, note: internalNoteText.trim() });
-      toast.success("Internal note added to case file.");
-      setInternalNoteText("");
-    } catch {
-      toast.error("Failed to add note.");
-    } finally {
-      setIsAddingNote(false);
-    }
-  };
-
   const dt = "text-[13.5px] uppercase font-semibold text-[var(--ink-muted)]";
   const preview = previewIdx !== null ? documents[previewIdx] : null;
 
@@ -188,14 +186,26 @@ function CaseReview({ id }: { id: string }) {
                   </Button>
 
                   {declining ? (
-                    <div className="space-y-2 rounded-[var(--r-md)] border border-[var(--danger)] p-3">
-                      <Label htmlFor="declineReason">Why is it declined? (sent to the member)</Label>
+                    <div className="space-y-3 rounded-[var(--r-md)] border border-[var(--danger)] p-3">
+                      <Label htmlFor="declineReason">Reason for declining (the member will read this)</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {DECLINE_REASONS.map((r) => (
+                          <button
+                            key={r.label}
+                            type="button"
+                            onClick={() => setDeclineReason(r.text)}
+                            className="rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 min-h-[40px] text-[14px] font-medium text-[var(--ink)] hover:bg-[var(--canvas)]"
+                          >
+                            {r.label}
+                          </button>
+                        ))}
+                      </div>
                       <Textarea
                         id="declineReason"
-                        rows={3}
+                        rows={4}
                         value={declineReason}
                         onChange={(e) => setDeclineReason(e.target.value)}
-                        placeholder="e.g. The burial permit is unreadable. Please submit a new claim with a clear copy."
+                        placeholder="Say what is missing or wrong so the member can fix it and submit again."
                         autoFocus
                       />
                       <div className="flex gap-2">
@@ -252,60 +262,8 @@ function CaseReview({ id }: { id: string }) {
           </Card>
         </div>
 
-        {/* Facts, documents first because verifying depends on them */}
+        {/* Claim facts */}
         <div className="lg:order-1 lg:col-span-2 space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Paperclip className="h-4 w-4 text-[var(--union)]" />
-                <CardTitle>Supporting Documents</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {documents.length === 0 ? (
-                <p className="text-[14.5px] text-[var(--ink-muted)] italic">
-                  No supporting documents were attached to this claim.
-                </p>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {documents.map((d, i) =>
-                    d.url ? (
-                      <Button
-                        key={d.label}
-                        variant={previewIdx === i ? "primary" : "secondary"}
-                        size="sm"
-                        onClick={() => setPreviewIdx(previewIdx === i ? null : i)}
-                      >
-                        <Paperclip className="h-3.5 w-3.5 mr-1.5" /> {d.label}
-                      </Button>
-                    ) : (
-                      <span key={d.label} className="text-[15px] text-[var(--ink-muted)] self-center">
-                        {d.label} (unavailable)
-                      </span>
-                    )
-                  )}
-                </div>
-              )}
-              {preview?.url && (
-                <div className="space-y-2">
-                  <iframe
-                    src={preview.url}
-                    title={preview.label}
-                    className="w-full h-[480px] rounded-[var(--r-md)] border border-[var(--line)] bg-[var(--surface-sunk)]"
-                  />
-                  <a
-                    href={preview.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-[14.5px] font-medium text-[var(--union)] hover:underline"
-                  >
-                    Open in a new tab <ExternalLink className="h-3.5 w-3.5" />
-                  </a>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
           <Card>
             <CardHeader>
               <CardTitle>Claim Details</CardTitle>
@@ -382,6 +340,58 @@ function CaseReview({ id }: { id: string }) {
             </CardContent>
           </Card>
 
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Paperclip className="h-4 w-4 text-[var(--union)]" />
+                <CardTitle>Supporting Documents</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {documents.length === 0 ? (
+                <p className="text-[14.5px] text-[var(--ink-muted)] italic">
+                  No supporting documents were attached to this claim.
+                </p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {documents.map((d, i) =>
+                    d.url ? (
+                      <Button
+                        key={d.label}
+                        variant={previewIdx === i ? "primary" : "secondary"}
+                        size="sm"
+                        onClick={() => setPreviewIdx(previewIdx === i ? null : i)}
+                      >
+                        <Paperclip className="h-3.5 w-3.5 mr-1.5" /> {d.label}
+                      </Button>
+                    ) : (
+                      <span key={d.label} className="text-[15px] text-[var(--ink-muted)] self-center">
+                        {d.label} (unavailable)
+                      </span>
+                    )
+                  )}
+                </div>
+              )}
+              {preview?.url && (
+                <div className="space-y-2">
+                  <iframe
+                    src={preview.url}
+                    title={preview.label}
+                    className="w-full h-[480px] rounded-[var(--r-md)] border border-[var(--line)] bg-[var(--surface-sunk)]"
+                  />
+                  <a
+                    href={preview.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-[14.5px] font-medium text-[var(--union)] hover:underline"
+                  >
+                    Open in a new tab <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {caseDoc.contributionMethod && (
             <Card>
               <CardContent className="pt-6 space-y-2">
@@ -405,57 +415,6 @@ function CaseReview({ id }: { id: string }) {
             </Card>
           )}
 
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-[var(--union)]" />
-                <CardTitle>Internal Notes (confidential)</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-[14px] text-[var(--ink-muted)]">Only branch officials see these. The teacher never does.</p>
-
-              {caseDoc.internalNotes && caseDoc.internalNotes.length > 0 ? (
-                <div className="space-y-3">
-                  {caseDoc.internalNotes.map(
-                    (note: { authorId: string; authorName: string; note: string; createdAt: number }, idx: number) => (
-                      <div
-                        key={idx}
-                        className="p-3 rounded-[var(--r-md)] bg-[var(--surface-sunk)] border border-[var(--line)] text-[15px]"
-                      >
-                        <div className="flex items-center justify-between text-[13px] text-[var(--ink-muted)] mb-1">
-                          <span className="font-semibold text-[var(--ink)]">{note.authorName}</span>
-                          <span>{formatDateTime(note.createdAt)}</span>
-                        </div>
-                        <p className="text-[var(--ink-body)]">{note.note}</p>
-                      </div>
-                    )
-                  )}
-                </div>
-              ) : (
-                <p className="text-[14.5px] text-[var(--ink-muted)] italic">No internal notes yet.</p>
-              )}
-
-              <form onSubmit={handleAddNote} className="space-y-2 pt-2 border-t border-[var(--line)]">
-                <Textarea
-                  value={internalNoteText}
-                  onChange={(e) => setInternalNoteText(e.target.value)}
-                  placeholder="Record an observation or committee recommendation…"
-                  rows={2}
-                />
-                <Button
-                  type="submit"
-                  size="sm"
-                  variant="secondary"
-                  loading={isAddingNote}
-                  loadingText="Adding…"
-                  disabled={!internalNoteText.trim()}
-                >
-                  <Send className="h-3.5 w-3.5 mr-1" /> Add note
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>
