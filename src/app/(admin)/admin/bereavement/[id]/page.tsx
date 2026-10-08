@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, use } from "react";
+import { useState, use } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { BackLink } from "@/components/layout/BackLink";
@@ -61,7 +61,7 @@ function CaseReview({ id }: { id: string }) {
   const caseId = id as Id<"bereavementCases">;
 
   const caseDoc = useQuery(api.bereavement.getById, { id: caseId });
-  const allCases = useQuery(api.bereavement.listAllAdmin, {});
+  const next = useQuery(api.bereavement.nextPending, { excludeId: caseId });
   const updateStatusMutation = useMutation(api.bereavement.updateStatus);
 
   const [declining, setDeclining] = useState(false);
@@ -71,15 +71,8 @@ function CaseReview({ id }: { id: string }) {
 
   const [previewIdx, setPreviewIdx] = useState<number | null>(null);
 
-  // The longest-waiting claim still pending, other than this one.
-  const waiting = useMemo(
-    () =>
-      (allCases ?? [])
-        .filter((c) => c._id !== caseId && isOpen(c.status))
-        .sort((a, b) => a.createdAt - b.createdAt),
-    [allCases, caseId]
-  );
-  const nextCase = waiting[0];
+  const nextCase = next ? { _id: next.id } : null;
+  const waiting = { length: next?.remaining ?? 0 };
 
   if (caseDoc === undefined) {
     return (

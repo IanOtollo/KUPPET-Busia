@@ -164,6 +164,11 @@ export default defineSchema({
     contributionNote: v.optional(v.string()),
     contributionBroadcastAt: v.optional(v.number()),
     status: bereavementStatusValidator,
+    // Coarse queue bucket derived from status, so the admin queue can page through
+    // one bucket at a time without scanning every claim.
+    stage: v.optional(
+      v.union(v.literal("pending"), v.literal("approved"), v.literal("declined"))
+    ),
     statusReason: v.optional(v.string()),
     assignedTo: v.optional(v.id("users")),
     supportAmount: v.optional(v.number()),
@@ -197,6 +202,7 @@ export default defineSchema({
   })
     .index("by_member", ["memberId"])
     .index("by_status", ["status"])
+    .index("by_stage", ["stage", "createdAt"])
     .index("by_subCounty", ["subCounty"])
     .index("by_createdAt", ["createdAt"])
     .index("by_reference", ["reference"]),

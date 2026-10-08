@@ -34,7 +34,7 @@ export default function AdminDashboardPage() {
   const busBookings = inbox?.bus;
 
   const pendingMembers = members ?? [];
-  const pendingBereavement = bereavementCases?.filter((c) => c.status === "submitted" || c.status === "under_review") ?? [];
+  const pendingBereavement = bereavementCases?.filter((c) => c.status === "submitted" || c.status === "under_review" || c.status === "verified") ?? [];
   const pendingHarassment = harassmentReports?.filter((r) => r.status === "submitted" || r.status === "acknowledged") ?? [];
   const pendingBus = busBookings?.filter((b) => b.status === "requested" || b.status === "under_review") ?? [];
 

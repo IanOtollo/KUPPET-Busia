@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { requireUser } from "./lib/auth";
+import { Doc, Id } from "./_generated/dataModel";
 
 // Build a stable thread ID from two user IDs (sorted so A↔B === B↔A)
 function makeThreadId(a: string, b: string): string {
@@ -200,32 +201,76 @@ export const unreadCount = query({
   },
 });
 
-// Admin: list all users for composing a new message
-export const listUsers = query({
-  args: {},
-  handler: async (ctx) => {
+type Recipient = {
+  _id: Id<"users">;
+  fullName: string;
+  school: string;
+  schoolRole?: string;
+  phone: string;
+  role: string;
+};
+
+const STAFF_ROLES = ["official", "admin", "superadmin"] as const;
+const COLLEAGUE_RESULTS = 25;
+
+function toRecipient(u: Doc<"users">, showPhone: boolean): Recipient {
+  return {
+    _id: u._id,
+    fullName: u.fullName,
+    school: u.school,
+    schoolRole: u.schoolRole,
+    // Phone numbers are only shown to staff, so the picker isn't a directory
+    // of teachers' contact details.
+    phone: showPhone ? u.phone : "",
+    role: u.role,
+  };
+}
+
+/**
+ * Recipient picker. Staff are a short list, shown in full. Colleagues are found
+ * by typing a name (search index), so this never loads the whole membership.
+ */
+export const searchRecipients = query({
+  args: { group: v.union(v.literal("staff"), v.literal("colleagues")), term: v.string() },
+  handler: async (ctx, args): Promise<Recipient[]> => {
     const me = await requireUser(ctx);
+    const showPhone = (STAFF_ROLES as readonly string[]).includes(me.role);
 
-    // Everyone can message any active colleague or the branch office. Phone
-    // numbers are only shown to staff, so the picker isn't a directory of
-    // teachers' contact details.
-    const isStaff = ["official", "admin", "superadmin"].includes(me.role);
+    if (args.group === "staff") {
+      const lists = await Promise.all(
+        STAFF_ROLES.map((role) =>
+          ctx.db.query("users").withIndex("by_role", (q) => q.eq("role", role)).take(100)
+        )
+      );
+      const needle = args.term.trim().toLowerCase();
+      return lists
+        .flat()
+        .filter((u) => u.status === "active" && u._id !== me._id)
+        .filter((u) => !needle || u.fullName.toLowerCase().includes(needle))
+        .map((u) => toRecipient(u, showPhone))
+        .sort((a, b) => a.fullName.localeCompare(b.fullName));
+    }
 
-    const users = await ctx.db
+    const term = args.term.trim();
+    if (term.length < 2) return [];
+    const hits = await ctx.db
       .query("users")
-      .withIndex("by_status", (q) => q.eq("status", "active"))
-      .take(3000);
+      .withSearchIndex("search_name", (q) => q.search("fullName", term).eq("status", "active"))
+      .take(COLLEAGUE_RESULTS + 5);
+    return hits
+      .filter((u) => u._id !== me._id && u.role === "member")
+      .slice(0, COLLEAGUE_RESULTS)
+      .map((u) => toRecipient(u, showPhone));
+  },
+});
 
-    return users
-      .filter((u) => u._id !== me._id && u.status === "active")
-      .map((u) => ({
-        _id: u._id,
-        fullName: u.fullName,
-        school: u.school,
-        schoolRole: u.schoolRole,
-        phone: isStaff ? u.phone : "",
-        role: u.role,
-      }))
-      .sort((a, b) => a.fullName.localeCompare(b.fullName));
+/** One person, for an open conversation or a deep link (/messages?to=...). */
+export const recipientById = query({
+  args: { id: v.id("users") },
+  handler: async (ctx, args): Promise<Recipient | null> => {
+    const me = await requireUser(ctx);
+    const u = await ctx.db.get(args.id);
+    if (!u || u.status !== "active" || u._id === me._id) return null;
+    return toRecipient(u, (STAFF_ROLES as readonly string[]).includes(me.role));
   },
 });

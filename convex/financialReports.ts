@@ -19,7 +19,7 @@ export const listActive = query({
     let reports = await ctx.db
       .query("financialReports")
       .withIndex("by_active", (q) => q.eq("isActive", true))
-      .collect();
+      .take(500);
 
     if (args.category) {
       reports = reports.filter((r) => r.category === args.category);

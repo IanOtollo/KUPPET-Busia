@@ -22,7 +22,6 @@ import { useMemberBasePath } from "@/lib/memberPath";
 export default function MessagesPage() {
   const basePath = useMemberBasePath();
   const inbox = useQuery(api.messages.listInbox);
-  const allUsers = useQuery(api.messages.listUsers);
   const sendMessage = useMutation(api.messages.send);
   const markRead = useMutation(api.messages.markThreadRead);
   const profile = useQuery(api.users.getMyProfile);
@@ -41,7 +40,22 @@ export default function MessagesPage() {
     selectedUserId ? { otherUserId: selectedUserId } : "skip"
   );
 
-  const selectedUser = allUsers?.find((u) => u._id === selectedUserId);
+  const selectedUser = useQuery(
+    api.messages.recipientById,
+    selectedUserId ? { id: selectedUserId } : "skip"
+  );
+
+  // Search as the person types, but not on every keystroke.
+  const [debouncedTerm, setDebouncedTerm] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedTerm(userSearchQ), 250);
+    return () => clearTimeout(t);
+  }, [userSearchQ]);
+
+  const filteredUsers = useQuery(api.messages.searchRecipients, {
+    group: pickerGroup,
+    term: debouncedTerm,
+  });
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -60,25 +74,17 @@ export default function MessagesPage() {
 
   const isStaffUser = (role: string) => ["official", "admin", "superadmin"].includes(role);
 
-  const filteredUsers = allUsers?.filter(
-    (u) =>
-      (pickerGroup === "staff") === isStaffUser(u.role) &&
-      (u.fullName.toLowerCase().includes(userSearchQ.toLowerCase()) ||
-        u.school.toLowerCase().includes(userSearchQ.toLowerCase()))
-  );
-
   // The CC applies to members writing to an official (not to admins directly).
   const ccAdmin = profile?.role === "member" && selectedUser?.role === "official";
 
   // Deep link from elsewhere in the portal, e.g. /messages?to=<userId>.
   useEffect(() => {
-    if (!allUsers) return;
     const to = new URLSearchParams(window.location.search).get("to");
-    if (to && allUsers.some((u) => u._id === to)) {
+    if (to) {
       setSelectedUserId(to as Id<"users">);
       setComposing(false);
     }
-  }, [allUsers]);
+  }, []);
 
   async function handleSend() {
     if (!selectedUserId || !draftBody.trim() || sending) return;
@@ -220,7 +226,7 @@ export default function MessagesPage() {
                   <input
                     autoFocus
                     type="text"
-                    placeholder="Search by name or school…"
+                    placeholder={pickerGroup === "staff" ? "Filter officials by name…" : "Type a colleague's name…"}
                     value={userSearchQ}
                     onChange={(e) => setUserSearchQ(e.target.value)}
                     className="w-full pl-9 pr-3 h-[38px] text-[14.5px] rounded-[var(--r-md)] border border-[var(--line-strong)] bg-[var(--surface)] placeholder:text-[var(--ink-muted)] focus:outline-none focus:border-[var(--union)]"
@@ -228,6 +234,12 @@ export default function MessagesPage() {
                 </div>
               </div>
               <div className="flex-1 overflow-y-auto">
+                {pickerGroup === "colleagues" && debouncedTerm.trim().length < 2 && (
+                  <p className="p-4 text-[14.5px] text-[var(--ink-muted)]">Type at least two letters of a colleague&apos;s name.</p>
+                )}
+                {pickerGroup === "colleagues" && debouncedTerm.trim().length >= 2 && filteredUsers?.length === 0 && (
+                  <p className="p-4 text-[14.5px] text-[var(--ink-muted)]">No colleague found with that name.</p>
+                )}
                 {filteredUsers?.map((u) => (
                   <button
                     key={u._id}

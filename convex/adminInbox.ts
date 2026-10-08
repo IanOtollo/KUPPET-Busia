@@ -15,7 +15,7 @@ export const pending = query({
 
     const bereavement = (
       await Promise.all(
-        (["submitted", "under_review"] as const).map((status) =>
+        (["submitted", "under_review", "verified"] as const).map((status) =>
           ctx.db
             .query("bereavementCases")
             .withIndex("by_status", (q) => q.eq("status", status))

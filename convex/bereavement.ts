@@ -1,6 +1,7 @@
 import { query, mutation, internalMutation, QueryCtx, MutationCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
+import { paginationOptsValidator } from "convex/server";
 import { getCurrentUser, requireRole, requireUser } from "./lib/auth";
 import { validateUploads } from "./lib/uploads";
 import { writeAudit } from "./lib/audit";
@@ -55,6 +56,34 @@ function findLock(
     if (relationship === "mother" || relationship === "father") return true;
     return normName(l.deceasedName) === normName(deceasedName);
   });
+}
+
+
+type Stage = "pending" | "approved" | "declined";
+
+/** Which queue bucket a status belongs to. (Older claims may sit in the retired review steps.) */
+function stageOf(status: string): Stage {
+  if (status === "declined") return "declined";
+  if (status === "support_approved" || status === "disbursed" || status === "closed") return "approved";
+  return "pending";
+}
+
+/**
+ * Running totals per bucket, kept in one small row so the queue tabs show exact
+ * counts without scanning claims. Updated in the same transaction as every claim
+ * change; a daily recount (internal.bereavement.recountStages) corrects any drift.
+ */
+async function adjustStageCount(ctx: MutationCtx, from: Stage | null, to: Stage) {
+  if (from === to) return;
+  const row = await ctx.db
+    .query("stats")
+    .withIndex("by_key", (q) => q.eq("key", "bereavement"))
+    .first();
+  const data = { pending: 0, approved: 0, declined: 0, ...((row?.data as Record<string, number>) ?? {}) };
+  if (from) data[from] = Math.max(0, data[from] - 1);
+  data[to] += 1;
+  if (row) await ctx.db.patch(row._id, { data, updatedAt: Date.now() });
+  else await ctx.db.insert("stats", { key: "bereavement", data, updatedAt: Date.now() });
 }
 
 // Legal status transitions
@@ -197,10 +226,13 @@ export const create = mutation({
       contributionAccount: args.contributionAccount?.trim() || undefined,
       contributionNote: args.contributionNote?.trim() || undefined,
       status: "submitted",
+      stage: "pending",
       history: [{ status: "submitted", at: currentTime, actorName: user.fullName }],
       createdAt: currentTime,
       updatedAt: currentTime,
     });
+
+    await adjustStageCount(ctx, null, "pending");
 
     // In-app notification for the member
     await ctx.db.insert("notifications", {
@@ -318,33 +350,97 @@ export const getById = query({
 });
 
 /**
- * Admin list query with optional filtering.
+ * Admin queue: one bucket at a time, a page at a time. Pending is oldest first
+ * (so nobody waits longest); everything else is newest first.
  */
-export const listAllAdmin = query({
+export const listQueue = query({
   args: {
-    status: v.optional(bereavementStatusValidator),
+    tab: v.union(v.literal("pending"), v.literal("approved"), v.literal("declined"), v.literal("all")),
     subCounty: v.optional(subCountyValidator),
+    paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx: QueryCtx, args) => {
     await requireRole(ctx, ["official", "admin", "superadmin"]);
+    const { tab, subCounty } = args;
 
-    const status = args.status;
-    let cases = status
-      ? await ctx.db
-          .query("bereavementCases")
-          .withIndex("by_status", (q) => q.eq("status", status))
-          .take(1000)
-      : await ctx.db
-          .query("bereavementCases")
-          .withIndex("by_createdAt")
-          .order("desc")
-          .take(1000);
-
-    if (args.subCounty) {
-      cases = cases.filter((c) => c.subCounty === args.subCounty);
+    if (tab === "all") {
+      const base = ctx.db.query("bereavementCases").withIndex("by_createdAt").order("desc");
+      return await (subCounty ? base.filter((f) => f.eq(f.field("subCounty"), subCounty)) : base).paginate(
+        args.paginationOpts
+      );
     }
+    const base = ctx.db
+      .query("bereavementCases")
+      .withIndex("by_stage", (q) => q.eq("stage", tab))
+      .order(tab === "pending" ? "asc" : "desc");
+    return await (subCounty ? base.filter((f) => f.eq(f.field("subCounty"), subCounty)) : base).paginate(
+      args.paginationOpts
+    );
+  },
+});
 
-    return cases.sort((a, b) => b.createdAt - a.createdAt);
+/** Exact claim counts per bucket for the queue tabs. */
+export const queueCounts = query({
+  args: {},
+  handler: async (ctx: QueryCtx) => {
+    await requireRole(ctx, ["official", "admin", "superadmin"]);
+    const row = await ctx.db
+      .query("stats")
+      .withIndex("by_key", (q) => q.eq("key", "bereavement"))
+      .first();
+    if (!row) return null;
+    const d = row.data as { pending: number; approved: number; declined: number };
+    return { ...d, all: d.pending + d.approved + d.declined };
+  },
+});
+
+/** The longest-waiting pending claim other than this one, and how many are waiting besides it. */
+export const nextPending = query({
+  args: { excludeId: v.id("bereavementCases") },
+  handler: async (ctx: QueryCtx, args) => {
+    await requireRole(ctx, ["official", "admin", "superadmin"]);
+    const oldest = await ctx.db
+      .query("bereavementCases")
+      .withIndex("by_stage", (q) => q.eq("stage", "pending"))
+      .order("asc")
+      .take(2);
+    const next = oldest.find((c) => c._id !== args.excludeId);
+    if (!next) return null;
+    const row = await ctx.db
+      .query("stats")
+      .withIndex("by_key", (q) => q.eq("key", "bereavement"))
+      .first();
+    const pending = (row?.data as { pending?: number } | undefined)?.pending ?? 1;
+    const self = await ctx.db.get(args.excludeId);
+    const selfPending = self && (self.stage ?? stageOf(self.status)) === "pending" ? 1 : 0;
+    return { id: next._id, remaining: Math.max(1, pending - selfPending) };
+  },
+});
+
+/** One-off and daily: sets every claim's bucket and rebuilds the totals from the claims themselves. */
+export const recountStages = internalMutation({
+  args: {
+    cursor: v.union(v.string(), v.null()),
+    acc: v.optional(v.object({ pending: v.number(), approved: v.number(), declined: v.number() })),
+  },
+  handler: async (ctx: MutationCtx, args) => {
+    const acc = args.acc ?? { pending: 0, approved: 0, declined: 0 };
+    const page = await ctx.db.query("bereavementCases").paginate({ numItems: 500, cursor: args.cursor });
+    for (const c of page.page) {
+      const stage = stageOf(c.status);
+      acc[stage] += 1;
+      if (c.stage !== stage) await ctx.db.patch(c._id, { stage });
+    }
+    if (!page.isDone) {
+      await ctx.scheduler.runAfter(0, internal.bereavement.recountStages, { cursor: page.continueCursor, acc });
+      return;
+    }
+    const row = await ctx.db
+      .query("stats")
+      .withIndex("by_key", (q) => q.eq("key", "bereavement"))
+      .first();
+    if (row) await ctx.db.patch(row._id, { data: acc, updatedAt: Date.now() });
+    else await ctx.db.insert("stats", { key: "bereavement", data: acc, updatedAt: Date.now() });
   },
 });
 
@@ -412,8 +508,10 @@ export const updateStatus = mutation({
       { status: args.newStatus, at: now, actorName: admin.fullName, note },
     ];
 
+    await adjustStageCount(ctx, targetCase.stage ?? stageOf(targetCase.status), stageOf(args.newStatus));
     await ctx.db.patch(targetCase._id, {
       status: args.newStatus,
+      stage: stageOf(args.newStatus),
       statusReason: args.statusReason,
       supportAmount,
       paymentMethod:

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -17,13 +17,14 @@ import {
 } from "@/components/ui/select";
 import { formatShortDate } from "@/lib/format";
 import { Download, ChevronRight, Clock } from "lucide-react";
-import { useQuery } from "convex/react";
+import { useQuery, usePaginatedQuery, useConvex } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { SUB_COUNTIES } from "@/lib/constants";
 import { Doc } from "../../../../../convex/_generated/dataModel";
 import { toast } from "sonner";
 import { downloadExcel } from "@/lib/exportExcel";
 import { QUEUE_TABS, QueueTabKey, daysSince, isOpen } from "@/lib/bereavementFlow";
+import type { SubCounty } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 type Case = Doc<"bereavementCases">;
@@ -35,37 +36,40 @@ export default function AdminBereavementPage() {
   const [selectedSubCounty, setSelectedSubCounty] = useState<string>("all");
   const [exporting, setExporting] = useState(false);
 
-  const allCases = useQuery(api.bereavement.listAllAdmin, {});
-
-  const scoped = useMemo(
-    () => (allCases ?? []).filter((c) => selectedSubCounty === "all" || c.subCounty === selectedSubCounty),
-    [allCases, selectedSubCounty]
-  );
-
-  const counts = useMemo(() => {
-    const out = {} as Record<QueueTabKey, number>;
-    for (const t of QUEUE_TABS) {
-      out[t.key] = scoped.filter((c) => t.match(c.status)).length;
-    }
-    return out;
-  }, [scoped]);
-
+  const convex = useConvex();
   const activeTab: QueueTabKey = chosenTab ?? "pending";
+  const subCounty = selectedSubCounty === "all" ? undefined : (selectedSubCounty as SubCounty);
 
-  const visible = useMemo(() => {
-    const tab = QUEUE_TABS.find((t) => t.key === activeTab)!;
-    const rows = scoped.filter((c) => tab.match(c.status));
-    // Pending: oldest first, so nobody is left waiting. Everything else: newest first.
-    return [...rows].sort((a, b) => (activeTab === "pending" ? a.createdAt - b.createdAt : b.createdAt - a.createdAt));
-  }, [scoped, activeTab]);
+  // Rows load a page at a time, straight from an index, so this stays fast with thousands of claims.
+  const {
+    results: visible,
+    status: pageStatus,
+    loadMore,
+  } = usePaginatedQuery(api.bereavement.listQueue, { tab: activeTab, subCounty }, { initialNumItems: 25 });
+  const loading = pageStatus === "LoadingFirstPage";
+
+  // Exact branch-wide totals. They ignore the sub-county filter, so hide them while it is on.
+  const totals = useQuery(api.bereavement.queueCounts, {});
+  const showCounts = !subCounty;
 
   const handleExportExcel = async () => {
-    if (visible.length === 0) {
-      toast.error("No case records available to export.");
-      return;
-    }
     setExporting(true);
     try {
+      const rows: Case[] = [];
+      let cursor: string | null = null;
+      for (;;) {
+        const res: { page: Case[]; isDone: boolean; continueCursor: string } = await convex.query(
+          api.bereavement.listQueue,
+          { tab: activeTab, subCounty, paginationOpts: { numItems: 500, cursor } }
+        );
+        rows.push(...res.page);
+        if (res.isDone) break;
+        cursor = res.continueCursor;
+      }
+      if (rows.length === 0) {
+        toast.error("No case records available to export.");
+        return;
+      }
       await downloadExcel({
         fileName: `KUPPET_Busia_Bereavement_${new Date().toISOString().split("T")[0]}.xlsx`,
         sheetName: "Bereavement",
@@ -79,10 +83,8 @@ export default function AdminBereavementPage() {
           { header: "Relationship" },
           { header: "Date of Loss" },
           { header: "Status" },
-          { header: "Support Amount (KES)", numFmt: "#,##0" },
-          { header: "Payment Reference" },
         ],
-        rows: visible.map((c: Case) => [
+        rows: rows.map((c) => [
           c.reference,
           c.memberNameSnapshot,
           c.tscSnapshot,
@@ -92,11 +94,9 @@ export default function AdminBereavementPage() {
           c.relationship,
           c.dateOfBereavement,
           c.status,
-          c.supportAmount || 0,
-          c.paymentReference ?? "",
         ]),
       });
-      toast.success("Bereavement Excel file exported successfully.");
+      toast.success(`Exported ${rows.length} claim${rows.length === 1 ? "" : "s"} to Excel.`);
     } catch {
       toast.error("Export failed. Please try again.");
     } finally {
@@ -200,7 +200,7 @@ export default function AdminBereavementPage() {
         <div role="tablist" aria-label="Claim stage" className="flex flex-wrap gap-2">
           {QUEUE_TABS.map((t) => {
             const selected = t.key === activeTab;
-            const urgent = t.key === "pending" && counts[t.key] > 0;
+            const urgent = t.key === "pending" && showCounts && (totals?.pending ?? 0) > 0;
             return (
               <button
                 key={t.key}
@@ -225,7 +225,7 @@ export default function AdminBereavementPage() {
                         : "bg-[var(--surface-sunk)] text-[var(--ink-muted)]"
                   )}
                 >
-                  {allCases === undefined ? "–" : counts[t.key]}
+                  {showCounts && totals ? (t.key === "all" ? totals.all : totals[t.key]) : "·"}
                 </span>
               </button>
             );
@@ -249,7 +249,7 @@ export default function AdminBereavementPage() {
         </div>
       </div>
 
-      {allCases === undefined && (
+      {loading && (
         <div className="space-y-3">
           {[1, 2, 3, 4].map((i) => (
             <Skeleton key={i} className="h-16 w-full" />
@@ -257,16 +257,28 @@ export default function AdminBereavementPage() {
         </div>
       )}
 
-      {allCases !== undefined && (
-        <DataTable
-          columns={columns}
-          data={visible}
-          keyExtractor={(item) => item._id}
-          emptyMessage={
-            activeTab === "pending" ? "No claims waiting. You're all caught up." : "No bereavement cases here."
-          }
-          onRowClick={(item) => router.push(`/admin/bereavement/${item._id}`)}
-        />
+      {!loading && (
+        <>
+          <DataTable
+            columns={columns}
+            data={visible}
+            keyExtractor={(item) => item._id}
+            emptyMessage={
+              activeTab === "pending" ? "No claims waiting. You're all caught up." : "No bereavement cases here."
+            }
+            onRowClick={(item) => router.push(`/admin/bereavement/${item._id}`)}
+          />
+          {pageStatus === "CanLoadMore" && (
+            <div className="mt-4 text-center">
+              <Button variant="secondary" onClick={() => loadMore(25)}>
+                Show more
+              </Button>
+            </div>
+          )}
+          {pageStatus === "LoadingMore" && (
+            <p className="mt-4 text-center text-[14.5px] text-[var(--ink-muted)]">Loading…</p>
+          )}
+        </>
       )}
     </div>
   );

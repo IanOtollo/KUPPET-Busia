@@ -21,7 +21,6 @@ import {
 
 export default function AdminMessagesPage() {
   const inbox = useQuery(api.messages.listInbox);
-  const allUsers = useQuery(api.messages.listUsers);
   const sendMessage = useMutation(api.messages.send);
   const markRead = useMutation(api.messages.markThreadRead);
   const markIssuesRead = useMutation(api.notifications.markTypeRead);
@@ -40,7 +39,24 @@ export default function AdminMessagesPage() {
     selectedUserId ? { otherUserId: selectedUserId } : "skip"
   );
 
-  const selectedUser = allUsers?.find((u) => u._id === selectedUserId);
+  const selectedUser = useQuery(
+    api.messages.recipientById,
+    selectedUserId ? { id: selectedUserId } : "skip"
+  );
+
+  // Search as the person types, but not on every keystroke.
+  const [debouncedTerm, setDebouncedTerm] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedTerm(userSearchQ), 250);
+    return () => clearTimeout(t);
+  }, [userSearchQ]);
+
+  // Branch staff are listed up front; teachers are found by typing a name.
+  const searching = debouncedTerm.trim().length >= 2;
+  const filteredUsers = useQuery(api.messages.searchRecipients, {
+    group: searching ? "colleagues" : "staff",
+    term: debouncedTerm,
+  });
 
   // Opening Messages clears the "member wrote to an official" (CC) alerts.
   useEffect(() => {
@@ -60,11 +76,6 @@ export default function AdminMessagesPage() {
   const filteredInbox = inbox?.filter((t) =>
     t.otherUser.fullName.toLowerCase().includes(searchQ.toLowerCase()) ||
     t.otherUser.school.toLowerCase().includes(searchQ.toLowerCase())
-  );
-
-  const filteredUsers = allUsers?.filter((u) =>
-    u.fullName.toLowerCase().includes(userSearchQ.toLowerCase()) ||
-    u.school.toLowerCase().includes(userSearchQ.toLowerCase())
   );
 
   async function handleSend() {
@@ -185,7 +196,7 @@ export default function AdminMessagesPage() {
                   <input
                     autoFocus
                     type="text"
-                    placeholder="Search by name or school…"
+                    placeholder="Type a teacher's name…"
                     value={userSearchQ}
                     onChange={(e) => setUserSearchQ(e.target.value)}
                     className="w-full pl-9 pr-3 h-[38px] text-[14.5px] rounded-[var(--r-md)] border border-[var(--line-strong)] bg-[var(--surface)] placeholder:text-[var(--ink-muted)] focus:outline-none focus:border-[var(--union)]"
@@ -193,6 +204,14 @@ export default function AdminMessagesPage() {
                 </div>
               </div>
               <div className="flex-1 overflow-y-auto">
+                {!searching && (
+                  <p className="px-4 py-3 text-[14px] text-[var(--ink-muted)] border-b border-[var(--line)]">
+                    Branch officials are listed below. Type at least two letters to find a teacher.
+                  </p>
+                )}
+                {searching && filteredUsers?.length === 0 && (
+                  <p className="p-4 text-[14.5px] text-[var(--ink-muted)]">No teacher found with that name.</p>
+                )}
                 {filteredUsers?.map((u) => (
                   <button
                     key={u._id}

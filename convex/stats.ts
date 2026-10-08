@@ -79,12 +79,15 @@ export const refreshMembers = internalMutation({
   },
 });
 
-const REFRESH_GAP_MS = 20_000;
+const MIN_REFRESH_GAP_MS = 20_000;
+/** A recount reads every member, so the wait between recounts grows with the membership (~10ms per member). */
+const refreshGapMs = (totalMembers: number) => Math.max(MIN_REFRESH_GAP_MS, totalMembers * 10);
 
 /**
  * Call from any mutation that changes who is a member, their status or their
  * school. Schedules a tally right after the change commits (at most one per
- * 20 seconds, so a burst of sign-ups shares a single recount). The 15-minute
+ * gap, so a burst of sign-ups shares a single recount; the gap is 20 seconds for a small
+ * branch and grows to about 8 minutes at 50,000 members). The 15-minute
  * cron stays as a safety net.
  */
 export async function requestMembersRefresh(ctx: MutationCtx) {
@@ -96,7 +99,8 @@ export async function requestMembersRefresh(ctx: MutationCtx) {
   // A refresh is already waiting to run later: it will see this change too.
   if (row?.queuedAt && row.queuedAt > now) return;
 
-  const runAt = Math.max(now, (row?.updatedAt ?? 0) + REFRESH_GAP_MS);
+  const total = (row?.data as MemberStats | undefined)?.total ?? 0;
+  const runAt = Math.max(now, (row?.updatedAt ?? 0) + refreshGapMs(total));
   if (row) await ctx.db.patch(row._id, { queuedAt: runAt });
   else await ctx.db.insert("stats", { key: "members", data: emptyStats(), updatedAt: 0, queuedAt: runAt });
   await ctx.scheduler.runAfter(runAt - now, internal.stats.startMembersRefresh, {});
