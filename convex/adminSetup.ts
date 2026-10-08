@@ -12,7 +12,6 @@ import { Id } from "./_generated/dataModel";
 
 /** The branch's one and only administrator: the Executive Chairman. */
 const CHAIRMAN_TSC = "520283";
-const CHAIRMAN_PHONE = "0728919641";
 const CHAIRMAN_EMAIL = "chairman@kuppetbusia.local";
 
 /** The retired bootstrap account — removed by `setupChairman`. */
@@ -78,8 +77,9 @@ export const deleteLegacyAdmin = internalMutation({
  * Internal action: it cannot be called from the internet.
  */
 export const setupChairman = internalAction({
-  args: {},
-  handler: async (ctx: ActionCtx) => {
+  // The chairman's mobile number is supplied on the command line, never kept in source.
+  args: { phone: v.string() },
+  handler: async (ctx: ActionCtx, args) => {
     const result: {
       chairman: "created" | "already_exists";
       legacyAdmin: "deleted" | "not_found";
@@ -99,7 +99,7 @@ export const setupChairman = internalAction({
           fullName: "Executive Chairman",
           idNumber: `PENDING-${CHAIRMAN_TSC}`,
           tscNumber: CHAIRMAN_TSC,
-          phone: CHAIRMAN_PHONE,
+          phone: args.phone,
           school: "KUPPET Busia Branch Secretariat",
           subCounty: "Matayos",
           designation: "Other",

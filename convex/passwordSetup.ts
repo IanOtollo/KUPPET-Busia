@@ -8,7 +8,7 @@ import { loginAliasForTsc } from "./lib/loginAlias";
 import { assertStrongPassword } from "./users";
 
 const digits = (s: string) => s.replace(/\D/g, "");
-/** 0728919641 / +254728919641 / 254 728 919 641 all compare equal. */
+/** 07xx xxx xxx / +2547xx xxx xxx / 254 7xx xxx xxx all compare equal. */
 const sameKenyanPhone = (a: string, b: string) => {
   const x = digits(a);
   const y = digits(b);

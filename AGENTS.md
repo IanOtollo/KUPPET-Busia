@@ -39,8 +39,7 @@ Placeholders live in `.env.base44-defaults` (listed FIRST in `env_file`); `/run/
 - **Everyone** (teachers, officials, admins, superadmins) signs in at the single
   **`/login`** page with **TSC number + password**. There is no email-based login and no
   separate admin sign-in route — `/admin-login` was retired and now 301-redirects to
-  `/login` (see `next.config.ts`). The client resolves TSC -> internal account email via
-  `users.getEmailByTsc`, then calls `signIn("password", { flow: "signIn" })` — the email
+  `/login` (see `next.config.ts`). The client derives the internal account id from the TSC (no lookup), then calls `signIn("password", { flow: "signIn" })` — the email
   is only an internal Convex Auth account identifier and is never shown to the user.
 - After sign-in, `/login` reads the fresh profile and routes by role: `member` ->
   `/dashboard`, anything else (`official`/`admin`/`superadmin`) -> `/admin`. This is the
@@ -92,7 +91,7 @@ Placeholders live in `.env.base44-defaults` (listed FIRST in `env_file`); `/run/
    (TSC `520283`, no password yet), permanently deletes the old `000000` account, and lists any
    other admin-level account for review:
    ```bash
-   npx convex run adminSetup:setupChairman '{}'
+   npx convex run adminSetup:setupChairman '{"phone":"<chairman mobile>"}'
    ```
    Then have the chairman open `/login` and press Sign In with only his TSC number to create his password.
 

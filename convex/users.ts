@@ -33,8 +33,13 @@ export const getMyProfile = query({
   handler: async (ctx: QueryCtx) => {
     try {
       const user = await getCurrentUser(ctx);
+      // While signed in on a temporary password the session is not yet proven to
+      // be the real teacher, so it must not be handed the details (National ID,
+      // phone, email) that the password-change step relies on as a second factor.
+      const guarded = user.mustChangePassword ? { idNumber: "", phone: "", email: "" } : {};
       return {
         ...user,
+        ...guarded,
         photoUrl: user.photoStorageId
           ? await ctx.storage.getUrl(user.photoStorageId)
           : null,
@@ -256,27 +261,6 @@ export const checkDuplicates = internalQuery({
     email: v.string(),
   },
   handler: async (ctx: QueryCtx, args) => findDuplicate(ctx, args),
-});
-
-/**
- * DEPRECATED — delete right after `migrations:aliasLogins` has been run on the
- * live deployment. Only here so the previously deployed login page keeps working
- * during the rollout; the new login page derives the account id from the TSC and
- * never calls this.
- */
-export const getEmailByTsc = query({
-  args: { tscNumber: v.string() },
-  handler: async (ctx: QueryCtx, args) => {
-    const tscNumber = args.tscNumber.toUpperCase().trim();
-    if (!tscNumber) return null;
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_tsc", (q) => q.eq("tscNumber", tscNumber))
-      .first();
-
-    return user ? { email: user.email } : null;
-  },
 });
 
 /**
