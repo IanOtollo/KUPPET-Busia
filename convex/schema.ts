@@ -168,6 +168,20 @@ export default defineSchema({
     assignedTo: v.optional(v.id("users")),
     supportAmount: v.optional(v.number()),
     disbursedAt: v.optional(v.number()),
+    // How and under what reference the relief was paid out (set at disbursement).
+    paymentMethod: v.optional(v.string()),
+    paymentReference: v.optional(v.string()),
+    // One entry per step taken, so the admin timeline can show who and when.
+    history: v.optional(
+      v.array(
+        v.object({
+          status: bereavementStatusValidator,
+          at: v.number(),
+          actorName: v.string(),
+          note: v.optional(v.string()),
+        })
+      )
+    ),
     internalNotes: v.optional(
       v.array(
         v.object({

@@ -196,6 +196,7 @@ export const create = mutation({
       contributionAccount: args.contributionAccount?.trim() || undefined,
       contributionNote: args.contributionNote?.trim() || undefined,
       status: "submitted",
+      history: [{ status: "submitted", at: currentTime, actorName: user.fullName }],
       createdAt: currentTime,
       updatedAt: currentTime,
     });
@@ -255,7 +256,7 @@ export const listMine = query({
 
       return cases
         .sort((a, b) => b.createdAt - a.createdAt)
-        .map(({ internalNotes: _internalNotes, ...c }) => c);
+        .map(({ internalNotes: _internalNotes, history: _history, ...c }) => c);
     } catch {
       return [];
     }
@@ -302,10 +303,12 @@ export const getById = query({
 
     // Internal notes are admin-only working notes — never shown to the member.
     const canSeeNotes = ["admin", "superadmin"].includes(user.role);
-    const { internalNotes, ...safeCase } = caseDoc;
+    const { internalNotes, history, ...safeCase } = caseDoc;
     return {
       ...safeCase,
       internalNotes: canSeeNotes ? internalNotes : undefined,
+      // Who handled each step is an admin detail.
+      history: canSeeNotes ? history : undefined,
       documentUrls,
       burialPermitUrl,
       payslipUrl,
@@ -354,6 +357,8 @@ export const updateStatus = mutation({
     newStatus: bereavementStatusValidator,
     statusReason: v.optional(v.string()),
     supportAmount: v.optional(v.number()),
+    paymentMethod: v.optional(v.string()),
+    paymentReference: v.optional(v.string()),
   },
   handler: async (ctx: MutationCtx, args) => {
     const admin = await requireRole(ctx, ["admin", "superadmin"]);
@@ -366,8 +371,12 @@ export const updateStatus = mutation({
       });
     }
 
+    // Fast track: a fresh claim can be verified in one click. The skipped
+    // "under review" step is still recorded so the timeline stays complete.
+    const fastTrack = targetCase.status === "submitted" && args.newStatus === "verified";
+
     const allowed = LEGAL_TRANSITIONS[targetCase.status] || [];
-    if (!allowed.includes(args.newStatus)) {
+    if (!fastTrack && !allowed.includes(args.newStatus)) {
       throw new ConvexError({
         code: "INVALID_TRANSITION",
         message: `Cannot transition from ${targetCase.status} to ${args.newStatus}.`,
@@ -383,22 +392,61 @@ export const updateStatus = mutation({
       }
     }
 
+    const supportAmount = args.supportAmount ?? targetCase.supportAmount;
+    if (args.newStatus === "support_approved" && !(supportAmount && supportAmount > 0)) {
+      throw new ConvexError({
+        code: "AMOUNT_REQUIRED",
+        message: "Enter the approved relief amount before approving.",
+      });
+    }
+
+    const paymentReference = args.paymentReference?.trim() || undefined;
+    if (args.newStatus === "disbursed" && !paymentReference) {
+      throw new ConvexError({
+        code: "PAYMENT_REFERENCE_REQUIRED",
+        message: "Enter the payment reference (e.g. the M-Pesa code) to record the payment.",
+      });
+    }
+
     const now = Date.now();
+    const note = args.statusReason?.trim() || undefined;
+    const trail: Doc<"bereavementCases">["history"] = [
+      ...(targetCase.history ?? []),
+      ...(fastTrack
+        ? [{ status: "under_review" as const, at: now, actorName: admin.fullName }]
+        : []),
+      { status: args.newStatus, at: now, actorName: admin.fullName, note },
+    ];
+
     await ctx.db.patch(targetCase._id, {
       status: args.newStatus,
       statusReason: args.statusReason,
-      supportAmount: args.supportAmount ?? targetCase.supportAmount,
+      supportAmount,
+      paymentMethod:
+        args.newStatus === "disbursed" ? args.paymentMethod?.trim() || undefined : targetCase.paymentMethod,
+      paymentReference: args.newStatus === "disbursed" ? paymentReference : targetCase.paymentReference,
       disbursedAt: args.newStatus === "disbursed" ? now : targetCase.disbursedAt,
+      history: trail,
       updatedAt: now,
     });
 
     // Notify the member
+    const memberMessage: Record<string, string> = {
+      under_review: "The welfare committee has started reviewing your claim.",
+      verified: "Your claim has been verified and approved by the branch.",
+      support_approved: `Your welfare relief of KES ${(supportAmount ?? 0).toLocaleString("en-KE")} has been approved.`,
+      disbursed: `Your welfare relief has been paid${
+        paymentReference ? ` (ref ${paymentReference})` : ""
+      }.`,
+      closed: "Your welfare case has been closed.",
+      declined: "Your claim was declined.",
+    };
     await ctx.db.insert("notifications", {
       userId: targetCase.memberId,
       type: `bereavement_status_${args.newStatus}`,
       title: `Bereavement Case Updated (${targetCase.reference})`,
-      body: `Status updated to ${args.newStatus.replace(/_/g, " ")}. ${
-        args.statusReason ? `Note: ${args.statusReason}` : ""
+      body: `${memberMessage[args.newStatus] ?? `Status updated to ${args.newStatus.replace(/_/g, " ")}.`}${
+        args.statusReason ? ` Note: ${args.statusReason}` : ""
       }`,
       link: `/bereavement/${targetCase._id}`,
       entityType: "bereavement",
