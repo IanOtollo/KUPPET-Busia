@@ -107,6 +107,16 @@ export default function AdminSettingsPage() {
 
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
+    const days = Number(configForm.busNoticeDays);
+    const seats = Number(configForm.busCapacitySeats);
+    if (!Number.isInteger(days) || days < 0 || days > 60) {
+      toast.error("Bus notice period must be a whole number of days from 0 to 60.");
+      return;
+    }
+    if (!Number.isInteger(seats) || seats < 1 || seats > 200) {
+      toast.error("Bus capacity must be a whole number of seats from 1 to 200.");
+      return;
+    }
     const ok = await confirm({
       title: "Save branch settings?",
       description: (
@@ -122,8 +132,8 @@ export default function AdminSettingsPage() {
     try {
       await saveBranchConfig({
         branchName: configForm.branchName.trim(),
-        busNoticeDays: parseInt(configForm.busNoticeDays, 10) || 3,
-        busCapacitySeats: parseInt(configForm.busCapacitySeats, 10) || 62,
+        busNoticeDays: days,
+        busCapacitySeats: seats,
         contactPhone: configForm.contactPhone.trim(),
         contactEmail: configForm.contactEmail.trim(),
       });
