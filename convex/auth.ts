@@ -2,6 +2,10 @@ import { convexAuth } from "@convex-dev/auth/server";
 import { Password } from "@convex-dev/auth/providers/Password";
 
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
+  // Brute-force protection on the password sign-in, enforced server-side per
+  // account: 5 failed attempts, then one more attempt is allowed every 12
+  // minutes (the library's token bucket). Library default is 10/hour.
+  signIn: { maxFailedAttempsPerHour: 5 },
   providers: [
     Password({
       /**

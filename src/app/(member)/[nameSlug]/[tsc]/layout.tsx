@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { useQuery, useConvexAuth } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
+import { useIdleLogout } from "@/hooks/useIdleLogout";
 import { api } from "../../../../../convex/_generated/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -106,6 +107,7 @@ export default function MemberLayout({
   };
 
   const { isLoading: authLoading, isAuthenticated } = useConvexAuth();
+  useIdleLogout(isAuthenticated);
   const profile = useQuery(api.users.getMyProfile);
   // Skipped while the profile is loading or locked to a forced password change —
   // every other query would be refused server-side until the password is set.

@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { useQuery, useConvexAuth } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
+import { useIdleLogout } from "@/hooks/useIdleLogout";
 import { api } from "../../../../convex/_generated/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatRelativeTime } from "@/lib/format";
@@ -105,6 +106,7 @@ export default function AdminLayout({
 
   const { signOut } = useAuthActions();
   const { isLoading: authLoading, isAuthenticated } = useConvexAuth();
+  useIdleLogout(isAuthenticated);
   const profile = useQuery(api.users.getMyProfile);
   const isFullAdmin = !!profile && ["admin", "superadmin"].includes(profile.role);
   const isQueueHandler = !!profile && ["official", "admin", "superadmin"].includes(profile.role);

@@ -25,7 +25,8 @@ const BLOCKED_MESSAGES: Record<string, string> = {
     "Your membership registration is awaiting branch office approval. You'll be able to sign in once a branch administrator verifies your details.",
   suspended: "Your account has been suspended. Please contact the branch office.",
   rejected: "Your membership registration was not approved. Please contact the branch office.",
-  wrong_role: "That account isn't a teacher-member account. Use the admin sign-in link below.",
+  idle: "You were signed out after 10 minutes of inactivity. Please sign in again.",
+  wrong_role:"That account isn't a teacher-member account. Use the admin sign-in link below.",
 };
 
 const loginSchema = z.object({
@@ -139,10 +140,15 @@ function LoginForm() {
           password: data.password,
           flow: "signIn",
         });
-      } catch {
+      } catch (err: any) {
         // The TSC number itself is valid (we just resolved it above) — any
         // failure from the sign-in call itself against a known account can
-        // only be an incorrect password.
+        // only be an incorrect password, unless the server has locked the
+        // account out after too many failed attempts.
+        if (String(err?.message ?? "").includes("TooManyFailedAttempts")) {
+          toast.error("Too many failed attempts. Please wait about 15 minutes before trying again.");
+          return;
+        }
         toast.error(INVALID_CREDENTIALS);
         return;
       }
