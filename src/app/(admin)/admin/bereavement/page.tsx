@@ -23,12 +23,11 @@ import { SUB_COUNTIES } from "@/lib/constants";
 import { Doc } from "../../../../../convex/_generated/dataModel";
 import { toast } from "sonner";
 import { downloadExcel } from "@/lib/exportExcel";
-import { QUEUE_TABS, QueueTabKey, daysSince, enteredStatusAt, planFor } from "@/lib/bereavementFlow";
+import { QUEUE_TABS, QueueTabKey, daysSince, isOpen } from "@/lib/bereavementFlow";
 import { cn } from "@/lib/utils";
 
 type Case = Doc<"bereavementCases">;
 
-const ACTION_TABS: QueueTabKey[] = ["needs_review", "awaiting_approval", "ready_to_pay"];
 
 export default function AdminBereavementPage() {
   const router = useRouter();
@@ -46,22 +45,18 @@ export default function AdminBereavementPage() {
   const counts = useMemo(() => {
     const out = {} as Record<QueueTabKey, number>;
     for (const t of QUEUE_TABS) {
-      out[t.key] = t.key === "all" ? scoped.length : scoped.filter((c) => (t.statuses as readonly string[]).includes(c.status)).length;
+      out[t.key] = scoped.filter((c) => t.match(c.status)).length;
     }
     return out;
   }, [scoped]);
 
-  // Open on the first stage that has work waiting; fall back to everything.
-  const activeTab: QueueTabKey =
-    chosenTab ?? (ACTION_TABS.find((k) => counts[k] > 0) ?? "all");
+  const activeTab: QueueTabKey = chosenTab ?? "pending";
 
   const visible = useMemo(() => {
     const tab = QUEUE_TABS.find((t) => t.key === activeTab)!;
-    const rows = scoped.filter((c) => activeTab === "all" || (tab.statuses as readonly string[]).includes(c.status));
-    const waitingFirst = ACTION_TABS.includes(activeTab);
-    return [...rows].sort((a, b) =>
-      waitingFirst ? enteredStatusAt(a) - enteredStatusAt(b) : b.createdAt - a.createdAt
-    );
+    const rows = scoped.filter((c) => tab.match(c.status));
+    // Pending: oldest first, so nobody is left waiting. Everything else: newest first.
+    return [...rows].sort((a, b) => (activeTab === "pending" ? a.createdAt - b.createdAt : b.createdAt - a.createdAt));
   }, [scoped, activeTab]);
 
   const handleExportExcel = async () => {
@@ -143,7 +138,7 @@ export default function AdminBereavementPage() {
       key: "status",
       header: "Status",
       render: (item) => {
-        const waiting = planFor(item.status).primary ? daysSince(enteredStatusAt(item)) : null;
+        const waiting = isOpen(item.status) ? daysSince(item.createdAt) : null;
         return (
           <div className="space-y-1">
             <StatusBadge status={item.status} />
@@ -159,7 +154,7 @@ export default function AdminBereavementPage() {
                 )}
               >
                 <Clock className="h-3 w-3" />
-                {waiting === 0 ? "Today" : `Waiting ${waiting} day${waiting === 1 ? "" : "s"}`}
+                {waiting === 0 ? "Submitted today" : `Submitted ${waiting} day${waiting === 1 ? "" : "s"} ago`}
               </span>
             )}
           </div>
@@ -169,13 +164,13 @@ export default function AdminBereavementPage() {
     {
       key: "actions",
       header: "",
-      className: "text-right w-44",
+      className: "text-right w-32",
       render: (item) => {
-        const primary = planFor(item.status).primary;
+        const open = isOpen(item.status);
         return (
-          <Button variant={primary ? "primary" : "ghost"} size="sm" asChild>
+          <Button variant={open ? "primary" : "ghost"} size="sm" asChild>
             <Link href={`/admin/bereavement/${item._id}`} onClick={(e) => e.stopPropagation()}>
-              {primary ? primary.label : "View"} <ChevronRight className="h-3.5 w-3.5 ml-1" />
+              {open ? "Review" : "View"} <ChevronRight className="h-3.5 w-3.5 ml-1" />
             </Link>
           </Button>
         );
@@ -188,7 +183,7 @@ export default function AdminBereavementPage() {
       <PageHeader
         eyebrow="WELFARE ADMINISTRATION"
         title="Bereavement Claims"
-        lead="Work through claims stage by stage. The oldest claim in each stage is listed first."
+        lead="Review each claim and approve or decline it. The longest-waiting claim is listed first."
         breadcrumbs={[
           { label: "Admin Operations", href: "/admin" },
           { label: "Bereavement Queue" },
@@ -205,7 +200,7 @@ export default function AdminBereavementPage() {
         <div role="tablist" aria-label="Claim stage" className="flex flex-wrap gap-2">
           {QUEUE_TABS.map((t) => {
             const selected = t.key === activeTab;
-            const urgent = ACTION_TABS.includes(t.key) && counts[t.key] > 0;
+            const urgent = t.key === "pending" && counts[t.key] > 0;
             return (
               <button
                 key={t.key}
@@ -268,9 +263,7 @@ export default function AdminBereavementPage() {
           data={visible}
           keyExtractor={(item) => item._id}
           emptyMessage={
-            ACTION_TABS.includes(activeTab)
-              ? "Nothing waiting at this stage. You're all caught up."
-              : "No bereavement cases here."
+            activeTab === "pending" ? "No claims waiting. You're all caught up." : "No bereavement cases here."
           }
           onRowClick={(item) => router.push(`/admin/bereavement/${item._id}`)}
         />

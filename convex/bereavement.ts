@@ -15,6 +15,7 @@ import { ConvexError } from "convex/values";
 import { Doc, Id } from "./_generated/dataModel";
 import { notifyAdmins } from "./lib/notify";
 
+type BereavementStatusT = Doc<"bereavementCases">["status"];
 type Relationship = "mother" | "father" | "spouse" | "child";
 
 /** A member can claim for at most this many children. */
@@ -373,7 +374,15 @@ export const updateStatus = mutation({
 
     // Fast track: a fresh claim can be verified in one click. The skipped
     // "under review" step is still recorded so the timeline stays complete.
-    const fastTrack = targetCase.status === "submitted" && args.newStatus === "verified";
+    const CHAIN = ["submitted", "under_review", "verified", "support_approved"];
+    const fromIdx = CHAIN.indexOf(targetCase.status);
+    const toIdx = CHAIN.indexOf(args.newStatus);
+    // Skipped steps in between are still recorded so the timeline stays complete.
+    const skipped: BereavementStatusT[] =
+      fromIdx >= 0 && toIdx > fromIdx + 1
+        ? (CHAIN.slice(fromIdx + 1, toIdx) as BereavementStatusT[])
+        : [];
+    const fastTrack = skipped.length > 0;
 
     const allowed = LEGAL_TRANSITIONS[targetCase.status] || [];
     if (!fastTrack && !allowed.includes(args.newStatus)) {
@@ -393,28 +402,13 @@ export const updateStatus = mutation({
     }
 
     const supportAmount = args.supportAmount ?? targetCase.supportAmount;
-    if (args.newStatus === "support_approved" && !(supportAmount && supportAmount > 0)) {
-      throw new ConvexError({
-        code: "AMOUNT_REQUIRED",
-        message: "Enter the approved relief amount before approving.",
-      });
-    }
-
     const paymentReference = args.paymentReference?.trim() || undefined;
-    if (args.newStatus === "disbursed" && !paymentReference) {
-      throw new ConvexError({
-        code: "PAYMENT_REFERENCE_REQUIRED",
-        message: "Enter the payment reference (e.g. the M-Pesa code) to record the payment.",
-      });
-    }
 
     const now = Date.now();
     const note = args.statusReason?.trim() || undefined;
     const trail: Doc<"bereavementCases">["history"] = [
       ...(targetCase.history ?? []),
-      ...(fastTrack
-        ? [{ status: "under_review" as const, at: now, actorName: admin.fullName }]
-        : []),
+      ...skipped.map((status) => ({ status, at: now, actorName: admin.fullName })),
       { status: args.newStatus, at: now, actorName: admin.fullName, note },
     ];
 
@@ -434,7 +428,7 @@ export const updateStatus = mutation({
     const memberMessage: Record<string, string> = {
       under_review: "The welfare committee has started reviewing your claim.",
       verified: "Your claim has been verified and approved by the branch.",
-      support_approved: `Your welfare relief of KES ${(supportAmount ?? 0).toLocaleString("en-KE")} has been approved.`,
+      support_approved: "Your bereavement claim has been approved by the branch. Members have been told how to support you.",
       disbursed: `Your welfare relief has been paid${
         paymentReference ? ` (ref ${paymentReference})` : ""
       }.`,
@@ -457,7 +451,7 @@ export const updateStatus = mutation({
 
     // Approval opens the contribution drive: tell every member (once).
     if (
-      args.newStatus === "verified" &&
+      (args.newStatus === "verified" || args.newStatus === "support_approved" || skipped.includes("verified")) &&
       targetCase.contributionMethod &&
       !targetCase.contributionBroadcastAt
     ) {

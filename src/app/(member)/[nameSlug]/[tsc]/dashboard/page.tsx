@@ -39,11 +39,11 @@ type AttentionItem = {
 
 // What the teacher is waiting for, in plain words, per stage.
 const BEREAVEMENT_NEXT: Record<string, string> = {
-  submitted: "Received — waiting for the branch office to start review.",
-  under_review: "The branch office is reviewing your claim.",
-  verified: "Your claim is verified — support approval is next.",
-  support_approved: "Support approved — payment is being arranged.",
-  disbursed: "Support has been paid out.",
+  submitted: "Received. The branch office is reviewing your claim.",
+  under_review: "Received. The branch office is reviewing your claim.",
+  verified: "Received. The branch office is reviewing your claim.",
+  support_approved: "Approved. Members have been told how to support you.",
+  disbursed: "Approved. Members have been told how to support you.",
 };
 
 const BUS_NEXT: Record<string, string> = {

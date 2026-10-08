@@ -15,14 +15,6 @@ import { api } from "../../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../../convex/_generated/dataModel";
 import { useMemberBasePath } from "@/lib/memberPath";
 
-const STATUS_STEPS = [
-  { key: "submitted", label: "Submitted" },
-  { key: "under_review", label: "Under Review" },
-  { key: "verified", label: "Verified" },
-  { key: "support_approved", label: "Approved" },
-  { key: "disbursed", label: "Disbursed" },
-];
-
 export default function BereavementDetailPage({
   params,
 }: {
@@ -54,8 +46,8 @@ export default function BereavementDetailPage({
     );
   }
 
-  // Determine current step index
-  const currentStepIdx = STATUS_STEPS.findIndex((s) => s.key === caseDoc.status);
+  const approved = ["support_approved", "disbursed", "closed"].includes(caseDoc.status);
+  const declined = caseDoc.status === "declined";
 
   return (
     <div className="max-w-[860px] mx-auto">
@@ -71,42 +63,22 @@ export default function BereavementDetailPage({
         ]}
       />
 
-      {/* Progress Timeline */}
-      {caseDoc.status !== "declined" && (
-        <Card className="mb-6">
-          <CardContent className="pt-6">
-            <h4 className="text-[14.5px] font-semibold uppercase tracking-wider text-[var(--ink-muted)] mb-4">
-              Welfare Processing Timeline
-            </h4>
-            <div className="grid grid-cols-5 gap-2 text-center">
-              {STATUS_STEPS.map((step, idx) => {
-                const isPassed = currentStepIdx >= idx;
-                const isCurrent = currentStepIdx === idx;
-                return (
-                  <div key={step.key} className="flex flex-col items-center">
-                    <div
-                      className={`w-7 h-7 rounded-full flex items-center justify-center text-[13.5px] font-semibold mb-1.5 transition-colors ${
-                        isPassed
-                          ? "bg-[var(--union)] text-white"
-                          : "bg-[var(--surface-sunk)] text-[var(--ink-muted)] border border-[var(--line)]"
-                      } ${isCurrent ? "ring-2 ring-[var(--brass)]" : ""}`}
-                    >
-                      {idx + 1}
-                    </div>
-                    <span
-                      className={`text-[13px] ${
-                        isPassed ? "font-semibold text-[var(--ink)]" : "text-[var(--ink-muted)]"
-                      }`}
-                    >
-                      {step.label}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Where the claim stands */}
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <p
+            className={`text-[17px] font-semibold ${
+              approved ? "text-[var(--success)]" : declined ? "text-[var(--danger)]" : "text-[var(--ink)]"
+            }`}
+          >
+            {approved
+              ? "Approved by the branch. Members have been told how to support you."
+              : declined
+                ? "This claim was declined."
+                : "Received. The branch office is reviewing your claim and will approve it shortly."}
+          </p>
+        </CardContent>
+      </Card>
 
       {/* Case Details Card */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

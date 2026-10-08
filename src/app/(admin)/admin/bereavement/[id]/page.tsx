@@ -6,17 +6,15 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { BackLink } from "@/components/layout/BackLink";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/data/StatusBadge";
-import { CaseTimeline } from "@/components/data/CaseTimeline";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { formatDate, formatDateTime, formatKES } from "@/lib/format";
+import { formatDate, formatDateTime } from "@/lib/format";
 import {
   Send,
   CheckCircle,
+  Users,
   MessageSquare,
   Paperclip,
   ExternalLink,
@@ -27,19 +25,13 @@ import {
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
-import { BereavementStatus } from "@/lib/constants";
-import { ACTIONABLE, PAYMENT_METHODS, enteredStatusAt, planFor } from "@/lib/bereavementFlow";
+import { isApproved, isOpen } from "@/lib/bereavementFlow";
 import { toast } from "sonner";
-import { useConfirm } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
 
 const DONE_MESSAGE: Record<string, string> = {
-  under_review: "Marked as under review. The member has been told.",
-  verified: "Claim verified. The member has been told.",
-  support_approved: "Relief approved. The member has been told the amount.",
-  disbursed: "Payment recorded. The member has been told.",
-  closed: "Case closed.",
-  declined: "Claim declined. The member has been told why.",
+  support_approved: "Approved. Teachers and the member have been notified.",
+  declined: "Declined. The member has been told why.",
 };
 
 export default function AdminBereavementDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -55,13 +47,7 @@ function CaseReview({ id }: { id: string }) {
   const allCases = useQuery(api.bereavement.listAllAdmin, {});
   const updateStatusMutation = useMutation(api.bereavement.updateStatus);
   const addNoteMutation = useMutation(api.bereavement.addInternalNote);
-  const confirm = useConfirm();
 
-  const [docsChecked, setDocsChecked] = useState(false);
-  const [amount, setAmount] = useState<string | null>(null);
-  const [payMethod, setPayMethod] = useState<string>(PAYMENT_METHODS[0]);
-  const [payRef, setPayRef] = useState("");
-  const [memberNote, setMemberNote] = useState("");
   const [declining, setDeclining] = useState(false);
   const [declineReason, setDeclineReason] = useState("");
   const [busy, setBusy] = useState(false);
@@ -71,12 +57,12 @@ function CaseReview({ id }: { id: string }) {
   const [internalNoteText, setInternalNoteText] = useState("");
   const [isAddingNote, setIsAddingNote] = useState(false);
 
-  // Oldest claim still waiting on an admin, other than this one.
+  // The longest-waiting claim still pending, other than this one.
   const waiting = useMemo(
     () =>
       (allCases ?? [])
-        .filter((c) => c._id !== caseId && ACTIONABLE.has(c.status))
-        .sort((a, b) => enteredStatusAt(a) - enteredStatusAt(b)),
+        .filter((c) => c._id !== caseId && isOpen(c.status))
+        .sort((a, b) => a.createdAt - b.createdAt),
     [allCases, caseId]
   );
   const nextCase = waiting[0];
@@ -104,7 +90,6 @@ function CaseReview({ id }: { id: string }) {
     );
   }
 
-  const plan = planFor(caseDoc.status);
   const documents: { label: string; url: string | null }[] = [
     ...(caseDoc.burialPermitId ? [{ label: "Burial permit", url: caseDoc.burialPermitUrl }] : []),
     ...(caseDoc.payslipId ? [{ label: "Payslip", url: caseDoc.payslipUrl }] : []),
@@ -113,109 +98,23 @@ function CaseReview({ id }: { id: string }) {
       url: d.url,
     })),
   ];
+  const pending = isOpen(caseDoc.status);
 
-  const amountNumber = parseFloat(amount ?? String(caseDoc.supportAmount ?? ""));
-  const hasAmount = Number.isFinite(amountNumber) && amountNumber > 0;
-
-  /** What is still missing before the main button works, in plain words. */
-  const missing: string | null = (() => {
-    if (plan.needs.documentsChecked && !docsChecked) return "Tick the box above once you have checked the documents.";
-    if (plan.needs.amount && !hasAmount) return "Enter the relief amount to continue.";
-    if (plan.needs.payment && !payRef.trim()) return "Enter the payment reference to continue.";
-    return null;
-  })();
-
-  const apply = async (to: BereavementStatus, reason?: string) => {
+  const decide = async (to: "support_approved" | "declined", reason?: string) => {
     setBusy(true);
     setJustDone(null);
     try {
-      await updateStatusMutation({
-        id: caseId,
-        newStatus: to,
-        statusReason: (reason ?? memberNote).trim() || undefined,
-        supportAmount: to === "support_approved" && hasAmount ? amountNumber : undefined,
-        paymentMethod: to === "disbursed" ? payMethod : undefined,
-        paymentReference: to === "disbursed" ? payRef.trim() : undefined,
-      });
+      await updateStatusMutation({ id: caseId, newStatus: to, statusReason: reason?.trim() || undefined });
       setJustDone(to);
-      setMemberNote("");
       setDeclineReason("");
       setDeclining(false);
-      setDocsChecked(false);
-      setPayRef("");
-      toast.success(DONE_MESSAGE[to] ?? "Case updated.");
+      toast.success(DONE_MESSAGE[to]);
     } catch (err: unknown) {
       const error = err as { message?: string; data?: { message?: string } };
-      toast.error(error.data?.message || error.message || "Failed to update case status.");
+      toast.error(error.data?.message || error.message || "Could not save your decision.");
     } finally {
       setBusy(false);
     }
-  };
-
-  const handlePrimary = async () => {
-    const primary = plan.primary;
-    if (!primary || missing) return;
-
-    if (primary.to === "verified" && caseDoc.contributionMethod && !caseDoc.contributionBroadcastAt) {
-      const ok = await confirm({
-        title: "Verify this claim and notify all members?",
-        description: (
-          <p>
-            This sends <strong>every member and official</strong> a notification about {caseDoc.deceasedName}
-            &apos;s passing and how to contribute ({caseDoc.contributionMethod}: {caseDoc.contributionNumber}). It goes
-            out once and cannot be recalled, so check the contribution details first.
-          </p>
-        ),
-        confirmLabel: "Yes, verify and notify",
-      });
-      if (!ok) return;
-    } else if (primary.to === "disbursed") {
-      const ok = await confirm({
-        title: "Record this payment?",
-        description: (
-          <p>
-            You are recording that {formatKES(caseDoc.supportAmount)} was paid to {caseDoc.memberNameSnapshot} via{" "}
-            {payMethod} (ref {payRef.trim()}). {caseDoc.memberNameSnapshot} will be notified.
-          </p>
-        ),
-        confirmLabel: "Yes, record payment",
-      });
-      if (!ok) return;
-    }
-    await apply(primary.to);
-  };
-
-  const handleSecondary = async (to: BereavementStatus) => {
-    if (to === "closed") {
-      const ok = await confirm({
-        title: "Close this case without payment?",
-        description: <p>The case will be closed with no relief paid. This cannot be reopened.</p>,
-        confirmLabel: "Yes, close case",
-        tone: "danger",
-      });
-      if (!ok) return;
-    }
-    await apply(to);
-  };
-
-  const handleDecline = async () => {
-    if (!declineReason.trim()) {
-      toast.error("Please give a reason for declining this case.");
-      return;
-    }
-    const ok = await confirm({
-      title: "Decline this bereavement claim?",
-      description: (
-        <p>
-          {caseDoc.memberNameSnapshot} will be told their claim is declined, with your reason. This is final: the case
-          cannot be reopened (they would have to file a new claim).
-        </p>
-      ),
-      confirmLabel: "Yes, decline claim",
-      tone: "danger",
-    });
-    if (!ok) return;
-    await apply("declined", declineReason);
   };
 
   const handleAddNote = async (e: React.FormEvent) => {
@@ -251,223 +150,103 @@ function CaseReview({ id }: { id: string }) {
         ]}
       />
 
-      <Card className="mb-6">
-        <CardContent className="pt-6">
-          <CaseTimeline
-            status={caseDoc.status}
-            createdAt={caseDoc.createdAt}
-            disbursedAt={caseDoc.disbursedAt}
-            history={caseDoc.history}
-          />
-        </CardContent>
-      </Card>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Action panel: first on mobile so the next step is never buried */}
+        {/* Decision panel: first on mobile so it is never buried */}
         <div className="lg:order-2 space-y-6">
           <Card className="lg:sticky lg:top-20">
             <CardHeader>
               <div className="flex items-center justify-between gap-3">
-                <CardTitle>{plan.primary ? "Next step" : "Case status"}</CardTitle>
-                <StatusBadge status={caseDoc.status} />
+                <CardTitle>{pending ? "Your decision" : "Outcome"}</CardTitle>
+                <StatusBadge status={isApproved(caseDoc.status) ? "support_approved" : caseDoc.status} />
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
               {justDone && (
-                <div className="rounded-[var(--r-md)] border border-[var(--success)] bg-[var(--success-soft)] p-3 text-[15px] text-[var(--success)]">
-                  <p className="flex items-center gap-2 font-semibold">
-                    <PartyPopper className="h-4 w-4" /> {DONE_MESSAGE[justDone] ?? "Done."}
+                <div className="rounded-[var(--r-md)] border border-[var(--success)] bg-[var(--success-soft)] p-3 text-[15px] text-[var(--success)] font-semibold flex items-center gap-2">
+                  <PartyPopper className="h-4 w-4 shrink-0" /> {DONE_MESSAGE[justDone]}
+                </div>
+              )}
+
+              {pending ? (
+                <>
+                  <p className="flex items-start gap-2 text-[15px] text-[var(--ink-body)]">
+                    <Users className="h-4 w-4 mt-1 shrink-0 text-[var(--union)]" />
+                    <span>
+                      <strong>Approving</strong> tells every teacher about {caseDoc.deceasedName}&apos;s passing
+                      {caseDoc.contributionMethod ? (
+                        <>
+                          {" "}and how to contribute ({caseDoc.contributionMethod}:{" "}
+                          <span className="mono-ref">{caseDoc.contributionNumber}</span>)
+                        </>
+                      ) : null}
+                      , and tells {caseDoc.memberNameSnapshot} it is approved.
+                    </span>
                   </p>
-                  {nextCase ? (
-                    <Button asChild size="sm" className="mt-3 w-full">
-                      <Link href={`/admin/bereavement/${nextCase._id}`}>
-                        Next waiting claim ({waiting.length}) <ArrowRight className="h-4 w-4 ml-1" />
-                      </Link>
-                    </Button>
+
+                  <Button className="w-full" size="lg" onClick={() => decide("support_approved")} loading={busy} loadingText="Approving…">
+                    <CheckCircle className="h-4 w-4 mr-1.5" /> Approve
+                  </Button>
+
+                  {declining ? (
+                    <div className="space-y-2 rounded-[var(--r-md)] border border-[var(--danger)] p-3">
+                      <Label htmlFor="declineReason">Why is it declined? (sent to the member)</Label>
+                      <Textarea
+                        id="declineReason"
+                        rows={3}
+                        value={declineReason}
+                        onChange={(e) => setDeclineReason(e.target.value)}
+                        placeholder="e.g. The burial permit is unreadable. Please submit a new claim with a clear copy."
+                        autoFocus
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => decide("declined", declineReason)}
+                          disabled={busy || !declineReason.trim()}
+                        >
+                          Decline claim
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => setDeclining(false)}>
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
                   ) : (
-                    <p className="mt-1 text-[14px]">No other claims are waiting. You&apos;re all caught up.</p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full text-[var(--danger)]"
+                      onClick={() => setDeclining(true)}
+                    >
+                      <XCircle className="h-4 w-4 mr-1.5" /> Decline
+                    </Button>
+                  )}
+                </>
+              ) : (
+                <div className="text-[15px] text-[var(--ink-muted)] space-y-2">
+                  <p>
+                    {caseDoc.status === "declined" ? "Declined" : "Approved"} on{" "}
+                    <strong className="text-[var(--ink)]">
+                      {formatDateTime(caseDoc.history?.[caseDoc.history.length - 1]?.at ?? caseDoc.updatedAt)}
+                    </strong>
+                    .
+                  </p>
+                  {caseDoc.statusReason && (
+                    <p className="p-3 rounded-[var(--r-md)] bg-[var(--surface-sunk)] border border-[var(--line)] text-[var(--ink-body)]">
+                      <strong>Reason:</strong> {caseDoc.statusReason}
+                    </p>
                   )}
                 </div>
               )}
 
-              {caseDoc.supportAmount ? (
-                <div className="p-3 bg-[var(--surface-sunk)] border border-[var(--line)] rounded-[var(--r-md)]">
-                  <span className={dt}>Approved relief</span>
-                  <span className="mono-ref block text-[20px] font-bold text-[var(--ink)]">
-                    {formatKES(caseDoc.supportAmount)}
-                  </span>
-                  {caseDoc.paymentReference && (
-                    <span className="text-[14px] text-[var(--ink-muted)]">
-                      Paid via {caseDoc.paymentMethod ?? "—"} · ref{" "}
-                      <span className="mono-ref">{caseDoc.paymentReference}</span>
-                    </span>
-                  )}
-                </div>
-              ) : null}
-
-              {!plan.primary ? (
-                <div className="text-[15px] text-[var(--ink-muted)] space-y-2">
-                  <p>
-                    This case is <strong className="text-[var(--ink)]">{caseDoc.status.replace(/_/g, " ")}</strong>. Nothing
-                    more to do.
-                  </p>
-                  {caseDoc.statusReason && (
-                    <p className="p-3 rounded-[var(--r-md)] bg-[var(--surface-sunk)] border border-[var(--line)] text-[var(--ink-body)]">
-                      <strong>Note to member:</strong> {caseDoc.statusReason}
-                    </p>
-                  )}
-                  {!justDone && nextCase && (
-                    <Button asChild variant="secondary" size="sm" className="w-full">
-                      <Link href={`/admin/bereavement/${nextCase._id}`}>
-                        Next waiting claim ({waiting.length}) <ArrowRight className="h-4 w-4 ml-1" />
-                      </Link>
-                    </Button>
-                  )}
-                </div>
-              ) : (
-                <>
-                  {plan.needs.documentsChecked && (
-                    <label className="flex items-start gap-3 rounded-[var(--r-md)] border border-[var(--line)] p-3 cursor-pointer">
-                      <Checkbox
-                        checked={docsChecked}
-                        onCheckedChange={(v) => setDocsChecked(v === true)}
-                        className="mt-0.5"
-                        aria-label="I have checked the documents"
-                      />
-                      <span className="text-[15px] text-[var(--ink)]">
-                        I have checked the burial permit, payslip and claim details.
-                      </span>
-                    </label>
-                  )}
-
-                  {plan.needs.amount && (
-                    <div>
-                      <Label htmlFor="amount">Relief amount (KES)</Label>
-                      <Input
-                        id="amount"
-                        type="number"
-                        inputMode="numeric"
-                        min={1}
-                        placeholder="e.g. 20000"
-                        value={amount ?? (caseDoc.supportAmount ? String(caseDoc.supportAmount) : "")}
-                        onChange={(e) => setAmount(e.target.value)}
-                      />
-                    </div>
-                  )}
-
-                  {plan.needs.payment && (
-                    <div className="space-y-3">
-                      <div>
-                        <span className="block text-[15px] font-medium text-[var(--ink)] mb-1.5">Paid by</span>
-                        <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Payment method">
-                          {PAYMENT_METHODS.map((m) => (
-                            <button
-                              key={m}
-                              type="button"
-                              role="radio"
-                              aria-checked={payMethod === m}
-                              onClick={() => setPayMethod(m)}
-                              className={cn(
-                                "rounded-full border px-4 min-h-[44px] text-[15px] font-medium transition-colors",
-                                payMethod === m
-                                  ? "bg-[var(--union)] text-white border-[var(--union)]"
-                                  : "bg-[var(--surface)] text-[var(--ink)] border-[var(--line)] hover:bg-[var(--canvas)]"
-                              )}
-                            >
-                              {m}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                      <div>
-                        <Label htmlFor="payRef">Payment reference</Label>
-                        <Input
-                          id="payRef"
-                          placeholder={payMethod === "M-Pesa" ? "e.g. SGH4K2LMNP" : "Transaction or cheque number"}
-                          value={payRef}
-                          onChange={(e) => setPayRef(e.target.value)}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  <div>
-                    <Button className="w-full" size="lg" onClick={handlePrimary} loading={busy} loadingText="Saving…" disabled={!!missing}>
-                      <CheckCircle className="h-4 w-4 mr-1.5" />
-                      {plan.primary.to === "support_approved" && hasAmount
-                        ? `Approve ${formatKES(amountNumber)}`
-                        : plan.primary.label}
-                    </Button>
-                    <p className="mt-2 text-[14px] text-[var(--ink-muted)]">{missing ?? plan.primary.hint}</p>
-                  </div>
-
-                  <details className="group">
-                    <summary className="cursor-pointer text-[14.5px] font-medium text-[var(--union)] min-h-[44px] flex items-center">
-                      Add a note for the member (optional)
-                    </summary>
-                    <Textarea
-                      rows={2}
-                      value={memberNote}
-                      onChange={(e) => setMemberNote(e.target.value)}
-                      placeholder="Sent with the notification, e.g. “Please collect your cheque from the branch office.”"
-                    />
-                  </details>
-
-                  {(plan.secondary.length > 0 || plan.canDecline) && (
-                    <div className="pt-3 border-t border-[var(--line)] space-y-2">
-                      {plan.secondary.map((s) => (
-                        <Button
-                          key={s.to}
-                          variant="secondary"
-                          size="sm"
-                          className="w-full"
-                          disabled={busy}
-                          onClick={() => handleSecondary(s.to)}
-                        >
-                          {s.label}
-                        </Button>
-                      ))}
-
-                      {plan.canDecline &&
-                        (declining ? (
-                          <div className="space-y-2 rounded-[var(--r-md)] border border-[var(--danger)] p-3">
-                            <Label htmlFor="declineReason">Reason for declining (sent to the member)</Label>
-                            <Textarea
-                              id="declineReason"
-                              rows={3}
-                              value={declineReason}
-                              onChange={(e) => setDeclineReason(e.target.value)}
-                              placeholder="e.g. The burial permit is unreadable. Please file a new claim with a clear copy."
-                              autoFocus
-                            />
-                            <div className="flex gap-2">
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                className="flex-1"
-                                onClick={handleDecline}
-                                disabled={busy || !declineReason.trim()}
-                              >
-                                Decline claim
-                              </Button>
-                              <Button variant="ghost" size="sm" onClick={() => setDeclining(false)}>
-                                Cancel
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="w-full text-[var(--danger)]"
-                            onClick={() => setDeclining(true)}
-                          >
-                            <XCircle className="h-4 w-4 mr-1.5" /> Decline this claim
-                          </Button>
-                        ))}
-                    </div>
-                  )}
-                </>
+              {nextCase && (
+                <Button asChild variant={pending ? "ghost" : "secondary"} size="sm" className="w-full">
+                  <Link href={`/admin/bereavement/${nextCase._id}`}>
+                    Next pending claim ({waiting.length}) <ArrowRight className="h-4 w-4 ml-1" />
+                  </Link>
+                </Button>
               )}
             </CardContent>
           </Card>
@@ -619,8 +398,8 @@ function CaseReview({ id }: { id: string }) {
                 )}
                 <p className="text-[14px] text-[var(--ink-muted)]">
                   {caseDoc.contributionBroadcastAt
-                    ? "All members have been notified of this bereavement and how to contribute."
-                    : "Members are notified of these details when you verify the claim."}
+                    ? "All teachers have been told about this bereavement and how to contribute."
+                    : "Teachers are told these details when you approve the claim."}
                 </p>
               </CardContent>
             </Card>
