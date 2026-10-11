@@ -6,31 +6,20 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { SUB_COUNTIES } from "@/lib/constants";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/ui/confirm-dialog";
-import { Save, Plus, School, CheckCircle2, XCircle, UserCircle, KeyRound, Pencil } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Save, UserCircle, KeyRound } from "lucide-react";
 import Link from "next/link";
 import { ProfilePhotoUpload } from "@/components/modules/ProfilePhotoUpload";
+import { SchoolDirectory } from "@/components/modules/SchoolDirectory";
 
 export default function AdminSettingsPage() {
-  const [newSchoolName, setNewSchoolName] = useState("");
-  const [newSubCounty, setNewSubCounty] = useState<string>("");
-  const [isAddingSchool, setIsAddingSchool] = useState(false);
   const [isSavingConfig, setIsSavingConfig] = useState(false);
 
-  // On phones the two sections are tabs; from lg up they sit side by side.
-  const [tab, setTab] = useState<"account" | "branch">("account");
+  // One section at a time, chosen from the tabs.
+  const [tab, setTab] = useState<"account" | "branch" | "schools">("account");
 
   const profile = useQuery(api.users.getMyProfile);
   const updateProfile = useMutation(api.users.updateMyProfile);
@@ -55,29 +44,6 @@ export default function AdminSettingsPage() {
       toast.error(err.data?.message || "Couldn't update your details.");
     } finally {
       setIsSavingAccount(false);
-    }
-  };
-
-  const schools = useQuery(api.schools.list);
-  const addSchool = useMutation(api.schools.create);
-  const toggleSchoolActive = useMutation(api.schools.toggleActive);
-  const updateSchool = useMutation(api.schools.update);
-
-  // Fix a school's spelling or sub-county; its teachers move with it.
-  const [editing, setEditing] = useState<{ id: any; name: string; subCounty: string; original: string } | null>(null);
-  const [isSavingSchool, setIsSavingSchool] = useState(false);
-  const handleSaveSchool = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editing) return;
-    setIsSavingSchool(true);
-    try {
-      const res = await updateSchool({ id: editing.id, name: editing.name, subCounty: editing.subCounty as any });
-      toast.success(res.changed ? "School updated. Its teachers were moved to the corrected name." : "No changes to save.");
-      setEditing(null);
-    } catch (err: any) {
-      toast.error(err.data?.message || err.message || "Couldn't update the school.");
-    } finally {
-      setIsSavingSchool(false);
     }
   };
 
@@ -145,65 +111,25 @@ export default function AdminSettingsPage() {
     }
   };
 
-  const handleAddSchool = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newSchoolName.trim()) {
-      toast.error("Enter a valid school name.");
-      return;
-    }
-    if (!newSubCounty) {
-      toast.error("Select a sub-county.");
-      return;
-    }
-
-    setIsAddingSchool(true);
-    try {
-      await addSchool({
-        name: newSchoolName.trim(),
-        subCounty: newSubCounty as any,
-      });
-      toast.success(`"${newSchoolName.trim()}" added to school directory.`);
-      setNewSchoolName("");
-      setNewSubCounty("");
-    } catch (err: any) {
-      toast.error(err.data?.message || err.message || "Failed to add school.");
-    } finally {
-      setIsAddingSchool(false);
-    }
-  };
-
-  const handleToggle = async (id: any, name: string) => {
-    const ok = await confirm({
-      title: `Change the status of ${name}?`,
-      description: <p>This switches the school between active and inactive in the directory.</p>,
-    });
-    if (!ok) return;
-    try {
-      const active = await toggleSchoolActive({ id });
-      toast.success(`${name} marked as ${active ? "Active" : "Inactive"}.`);
-    } catch (err: any) {
-      toast.error("Failed to update status.");
-    }
-  };
-
   return (
     <div className="max-w-6xl space-y-6">
       <PageHeader
         eyebrow="SYSTEM CONFIGURATION"
         title="Settings"
-        lead="Your own account on the left, and the branch portal's school directory and rules on the right."
+        lead="Your own account, the branch portal's rules and contacts, and the directory of registered schools."
         breadcrumbs={[
           { label: "Admin Operations", href: "/admin" },
           { label: "Settings" },
         ]}
       />
 
-      {/* Phone-width switcher (hidden on desktop where both panels show) */}
-      <div role="tablist" className="grid grid-cols-2 gap-1 rounded-[var(--r-md)] bg-[var(--surface-sunk)] p-1 lg:hidden">
+      {/* Section tabs */}
+      <div role="tablist" className="grid grid-cols-3 gap-1 rounded-[var(--r-md)] bg-[var(--surface-sunk)] p-1">
         {(
           [
             ["account", "My Account"],
             ["branch", "Branch Settings"],
+            ["schools", "Registered Schools"],
           ] as const
         ).map(([value, label]) => (
           <button
@@ -220,9 +146,9 @@ export default function AdminSettingsPage() {
         ))}
       </div>
 
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-      {/* LEFT: My Account */}
-      <div className={`space-y-6 ${tab === "account" ? "block" : "hidden lg:block"}`}>
+      <div>
+      {/* My Account */}
+      <div className={`max-w-2xl space-y-6 ${tab === "account" ? "block" : "hidden"}`}>
       <Card>
         <CardHeader>
           <div className="flex items-center space-x-2">
@@ -283,106 +209,8 @@ export default function AdminSettingsPage() {
       </Card>
       </div>
 
-      {/* RIGHT: Branch Portal Settings */}
-      <div className={`space-y-6 ${tab === "branch" ? "block" : "hidden lg:block"}`}>
-
-      {/* School Roster Management Card */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center space-x-2">
-            <School className="h-5 w-5 text-[var(--union)]" />
-            <div>
-              <CardTitle>School Directory</CardTitle>
-              <CardDescription>Add new secondary schools or toggle existing institutions in Busia County.</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Add School Form */}
-          <form onSubmit={handleAddSchool} className="p-4 bg-[var(--surface-sunk)] border border-[var(--line)] rounded-lg space-y-4">
-            <div className="font-medium text-sm text-[var(--union)] flex items-center gap-1.5">
-              <Plus className="h-4 w-4" /> Add New Secondary School
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="schoolName">School Name</Label>
-                <Input
-                  id="schoolName"
-                  placeholder="e.g. St. Peters Busia High"
-                  value={newSchoolName}
-                  onChange={(e) => setNewSchoolName(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="subCounty">Sub-County</Label>
-                <Select value={newSubCounty} onValueChange={setNewSubCounty}>
-                  <SelectTrigger id="subCounty">
-                    <SelectValue placeholder="Select Sub-County" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SUB_COUNTIES.map((sc) => (
-                      <SelectItem key={sc} value={sc}>
-                        {sc}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="flex justify-end">
-              <Button type="submit" disabled={isAddingSchool}>
-                {isAddingSchool ? "Adding..." : "Add School"}
-              </Button>
-            </div>
-          </form>
-
-          {/* School Directory List */}
-          <div className="space-y-2">
-            <div className="text-xs font-semibold uppercase tracking-wider text-[var(--ink-muted)] flex justify-between">
-              <span>Registered Schools ({schools?.length || 0})</span>
-              <span>Status</span>
-            </div>
-            <div className="max-h-[300px] overflow-y-auto divide-y divide-[var(--line)] border border-[var(--line)] rounded-md">
-              {schools && schools.length > 0 ? (
-                schools.map((sch) => (
-                  <div key={sch._id} className="p-3 flex items-center justify-between hover:bg-[var(--surface-sunk)] text-sm">
-                    <div>
-                      <span className="font-medium text-[var(--union)]">{sch.name}</span>
-                      <span className="ml-2.5 text-xs text-[var(--ink-muted)] px-2 py-0.5 bg-[var(--surface-sunk)] rounded-full">
-                        {sch.subCounty}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      aria-label={`Edit ${sch.name}`}
-                      onClick={() => setEditing({ id: sch._id, name: sch.name, subCounty: sch.subCounty, original: sch.name })}
-                    >
-                      <Pencil className="h-4 w-4" /> Edit
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleToggle(sch._id, sch.name)}
-                      className={sch.isActive ? "text-emerald-700" : "text-amber-700"}
-                    >
-                      {sch.isActive ? (
-                        <span className="flex items-center gap-1"><CheckCircle2 className="h-4 w-4" /> Active</span>
-                      ) : (
-                        <span className="flex items-center gap-1"><XCircle className="h-4 w-4" /> Inactive</span>
-                      )}
-                    </Button>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="p-4 text-center text-sm text-[var(--ink-muted)]">Loading schools directory...</div>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Branch Portal Settings */}
+      <div className={`max-w-2xl space-y-6 ${tab === "branch" ? "block" : "hidden"}`}>
 
       {/* Branch Configuration Card */}
       <Card>
@@ -450,54 +278,12 @@ export default function AdminSettingsPage() {
         </CardContent>
       </Card>
       </div>
-      </div>
 
-      <Dialog open={!!editing} onOpenChange={(open) => !open && setEditing(null)}>
-        <DialogContent className="sm:max-w-[480px]">
-          <DialogHeader>
-            <DialogTitle>Edit school</DialogTitle>
-            <DialogDescription>
-              Correct the spelling or sub-county. Every teacher registered at this school is moved to the new name automatically.
-            </DialogDescription>
-          </DialogHeader>
-          {editing && (
-            <form onSubmit={handleSaveSchool} className="space-y-4">
-              <div>
-                <Label htmlFor="editSchoolName">School name</Label>
-                <Input
-                  id="editSchoolName"
-                  value={editing.name}
-                  onChange={(e) => setEditing({ ...editing, name: e.target.value })}
-                  autoFocus
-                />
-              </div>
-              <div>
-                <Label htmlFor="editSchoolSub">Sub-County</Label>
-                <Select value={editing.subCounty} onValueChange={(v) => setEditing({ ...editing, subCounty: v })}>
-                  <SelectTrigger id="editSchoolSub">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SUB_COUNTIES.map((sc) => (
-                      <SelectItem key={sc} value={sc}>
-                        {sc}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <DialogFooter>
-                <Button type="button" variant="secondary" onClick={() => setEditing(null)}>
-                  Cancel
-                </Button>
-                <Button type="submit" loading={isSavingSchool} loadingText="Saving…">
-                  Save changes
-                </Button>
-              </DialogFooter>
-            </form>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Registered Schools */}
+      <div className={tab === "schools" ? "block" : "hidden"}>
+        <SchoolDirectory />
+      </div>
+      </div>
     </div>
   );
 }

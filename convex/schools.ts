@@ -6,6 +6,7 @@ import { subCountyValidator } from "./lib/validators";
 import { readMemberStats, schoolKey, requestMembersRefresh } from "./stats";
 import { internal } from "./_generated/api";
 import { ConvexError } from "convex/values";
+import { BUSIA_SCHOOLS } from "./lib/busiaSchools";
 
 /**
  * List all secondary schools in Busia County.
@@ -179,20 +180,11 @@ export const create = mutation({
   },
   handler: async (ctx: MutationCtx, args) => {
     const adminUser = await requireRole(ctx, ["admin", "superadmin"]);
-    const cleanName = args.name.trim();
+    const cleanName = cleanSchoolName(args.name);
 
-    if (!cleanName || cleanName.length < 3) {
-      throw new ConvexError({
-        code: "INVALID_NAME",
-        message: "School name must be at least 3 characters.",
-      });
-    }
-
-    // Check duplicate
-    const existing = await ctx.db.query("schools").collect();
-    const isDuplicate = existing.some(
-      (s) => s.name.toLowerCase() === cleanName.toLowerCase()
-    );
+    // Check duplicate (spelling-insensitive, same rule as registration)
+    const existing = await ctx.db.query("schools").take(3000);
+    const isDuplicate = existing.some((s) => schoolMatchKey(s.name) === schoolMatchKey(cleanName));
 
     if (isDuplicate) {
       throw new ConvexError({
@@ -251,5 +243,62 @@ export const toggleActive = mutation({
     });
 
     return nextState;
+  },
+});
+
+/**
+ * Admin: remove a school from the directory. Refused while any teacher is still
+ * registered at it (deactivate it instead, which hides it from new sign-ups).
+ */
+export const remove = mutation({
+  args: { id: v.id("schools") },
+  handler: async (ctx: MutationCtx, args) => {
+    const admin = await requireRole(ctx, ["admin", "superadmin"]);
+    const school = await ctx.db.get(args.id);
+    if (!school) throw new ConvexError({ code: "NOT_FOUND", message: "School record not found." });
+
+    const teacher = await ctx.db
+      .query("users")
+      .withIndex("by_school", (q) => q.eq("school", school.name))
+      .first();
+    if (teacher) {
+      throw new ConvexError({
+        code: "SCHOOL_IN_USE",
+        message: `${school.name} still has teachers registered. Edit the school or deactivate it instead of removing it.`,
+      });
+    }
+
+    await ctx.db.delete(args.id);
+    await writeAudit(ctx, {
+      actorId: admin._id,
+      actorRole: admin.role,
+      action: "DELETE_SCHOOL",
+      entityType: "schools",
+      entityId: args.id,
+      metadata: { schoolName: school.name, subCounty: school.subCounty },
+    });
+    return { removed: true };
+  },
+});
+
+/**
+ * One-off, CLI only: loads the Busia secondary schools list. Skips any school
+ * already in the directory (same spelling-insensitive match as registration), so
+ * it is safe to re-run.
+ */
+export const importDirectory = internalMutation({
+  args: {},
+  handler: async (ctx: MutationCtx) => {
+    const existing = await ctx.db.query("schools").take(3000);
+    const known = new Set(existing.map((s) => schoolMatchKey(s.name)));
+    let added = 0;
+    for (const [name, subCounty] of BUSIA_SCHOOLS) {
+      const key = schoolMatchKey(name);
+      if (known.has(key)) continue;
+      known.add(key);
+      await ctx.db.insert("schools", { name, subCounty, isActive: true });
+      added++;
+    }
+    return { added, skipped: BUSIA_SCHOOLS.length - added, total: existing.length + added };
   },
 });
