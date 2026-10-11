@@ -402,6 +402,9 @@ export default defineSchema({
     // under a name that wasn't in the directory yet; absent for admin-added schools.
     addedBy: v.optional(v.literal("teacher")),
     addedAt: v.optional(v.number()),
+    // Review of teacher-added schools. Absent on a teacher-added school means still pending;
+    // schools loaded or added by an admin never need review.
+    reviewStatus: v.optional(v.union(v.literal("pending"), v.literal("approved"), v.literal("rejected"))),
   })
     .index("by_subCounty", ["subCounty"])
     .index("by_name", ["name"]),

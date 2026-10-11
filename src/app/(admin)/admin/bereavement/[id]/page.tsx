@@ -115,7 +115,6 @@ function CaseReview({ id }: { id: string }) {
   const pending = isOpen(caseDoc.status);
 
   const amount = WELFARE_AMOUNT[caseDoc.relationship] ?? 0;
-  const canPay = caseDoc.status !== "disbursed" && caseDoc.status !== "closed";
 
   const decide = async (to: "support_approved" | "declined" | "disbursed", reason?: string) => {
     setBusy(true);

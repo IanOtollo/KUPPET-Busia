@@ -31,6 +31,7 @@ import { useAuthActions } from "@convex-dev/auth/react";
 import { useIdleLogout } from "@/hooks/useIdleLogout";
 import { api } from "../../../../../convex/_generated/api";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SchoolRejectedPrompt } from "@/components/modules/SchoolRejectedPrompt";
 import {
   Dialog,
   DialogContent,
@@ -577,6 +578,8 @@ export default function MemberLayout({
           </span>
         </button>
       </nav>
+
+      <SchoolRejectedPrompt />
 
       {/* Welfare Mobile Bottom Sheet */}
       <Dialog open={welfareSheetOpen} onOpenChange={setWelfareSheetOpen}>
