@@ -3,6 +3,16 @@ export const OPEN_STATUSES = ["submitted", "under_review", "verified"] as const;
 /** Statuses that count as approved. */
 export const APPROVED_STATUSES = ["support_approved", "disbursed", "closed"] as const;
 
+/** What the union pays the bereaved member (KES), by relationship. Mirrors convex/bereavement.ts. */
+export const WELFARE_AMOUNT: Record<string, number> = {
+  child: 20_000,
+  mother: 30_000,
+  father: 30_000,
+  spouse: 40_000,
+};
+
+export const PAYMENT_METHODS = ["M-Pesa", "Bank transfer", "Cheque", "Cash"] as const;
+
 export const isOpen = (status: string) => (OPEN_STATUSES as readonly string[]).includes(status);
 export const isApproved = (status: string) => (APPROVED_STATUSES as readonly string[]).includes(status);
 

@@ -10,7 +10,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { formatDate, formatDateTime } from "@/lib/format";
+import { Input } from "@/components/ui/input";
+import { NativeSelect } from "@/components/ui/native-select";
+import { formatDate, formatDateTime, formatKES } from "@/lib/format";
 import {
   CheckCircle,
   Users,
@@ -19,16 +21,18 @@ import {
   ArrowRight,
   XCircle,
   PartyPopper,
+  Banknote,
 } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
-import { isApproved, isOpen } from "@/lib/bereavementFlow";
+import { isApproved, isOpen, WELFARE_AMOUNT, PAYMENT_METHODS } from "@/lib/bereavementFlow";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 const DONE_MESSAGE: Record<string, string> = {
   support_approved: "Approved. Teachers and the member have been notified.",
+  disbursed: "Payment recorded. The member has been told the money was sent.",
   declined: "Declined. The member has been told why.",
 };
 
@@ -67,6 +71,9 @@ function CaseReview({ id }: { id: string }) {
   const [declining, setDeclining] = useState(false);
   const [declineReason, setDeclineReason] = useState("");
   const [busy, setBusy] = useState(false);
+  const [paying, setPaying] = useState(false);
+  const [payMethod, setPayMethod] = useState<string>(PAYMENT_METHODS[0]);
+  const [payRef, setPayRef] = useState("");
   const [justDone, setJustDone] = useState<string | null>(null);
 
   const [previewIdx, setPreviewIdx] = useState<number | null>(null);
@@ -107,11 +114,21 @@ function CaseReview({ id }: { id: string }) {
   ];
   const pending = isOpen(caseDoc.status);
 
-  const decide = async (to: "support_approved" | "declined", reason?: string) => {
+  const amount = WELFARE_AMOUNT[caseDoc.relationship] ?? 0;
+  const canPay = caseDoc.status !== "disbursed" && caseDoc.status !== "closed";
+
+  const decide = async (to: "support_approved" | "declined" | "disbursed", reason?: string) => {
     setBusy(true);
     setJustDone(null);
     try {
-      await updateStatusMutation({ id: caseId, newStatus: to, statusReason: reason?.trim() || undefined });
+      await updateStatusMutation({
+        id: caseId,
+        newStatus: to,
+        statusReason: reason?.trim() || undefined,
+        ...(to === "disbursed" ? { paymentMethod: payMethod, paymentReference: payRef } : {}),
+      });
+      setPaying(false);
+      setPayRef("");
       setJustDone(to);
       setDeclineReason("");
       setDeclining(false);
@@ -241,6 +258,63 @@ function CaseReview({ id }: { id: string }) {
                       <strong>Reason:</strong> {caseDoc.statusReason}
                     </p>
                   )}
+                </div>
+              )}
+
+
+              {(pending || caseDoc.status === "support_approved") && (
+                <div className="space-y-3 rounded-[var(--r-md)] border border-[var(--line)] bg-[var(--canvas)] p-3">
+                  <p className="flex items-center gap-2 text-[15px] text-[var(--ink)]">
+                    <Banknote className="h-4 w-4 shrink-0 text-[var(--union)]" />
+                    <span>
+                      Union support for a <strong>{caseDoc.relationship}</strong>:{" "}
+                      <strong className="mono-ref">{formatKES(amount)}</strong>
+                    </span>
+                  </p>
+                  {paying ? (
+                    <>
+                      <div>
+                        <Label htmlFor="payMethod">Sent via</Label>
+                        <NativeSelect id="payMethod" value={payMethod} onChange={(e) => setPayMethod(e.target.value)}>
+                          {PAYMENT_METHODS.map((m) => (
+                            <option key={m} value={m}>
+                              {m}
+                            </option>
+                          ))}
+                        </NativeSelect>
+                      </div>
+                      <div>
+                        <Label htmlFor="payRef">Reference (e.g. M-Pesa code)</Label>
+                        <Input id="payRef" value={payRef} onChange={(e) => setPayRef(e.target.value)} />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          className="flex-1"
+                          onClick={() => decide("disbursed")}
+                          loading={busy}
+                          loadingText="Saving…"
+                          disabled={!payRef.trim()}
+                        >
+                          {pending ? "Approve & record payment" : "Confirm money sent"}
+                        </Button>
+                        <Button variant="ghost" onClick={() => setPaying(false)} disabled={busy}>
+                          Cancel
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <Button variant="secondary" size="sm" className="w-full" onClick={() => setPaying(true)}>
+                      {pending ? "Approve and mark money as sent" : "Mark money as sent"}
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              {caseDoc.status === "disbursed" && (
+                <div className="rounded-[var(--r-md)] border border-[var(--success)] bg-[var(--success-soft)] p-3 text-[15px] text-[var(--success)]">
+                  <strong>{formatKES(caseDoc.supportAmount ?? amount)} sent</strong>
+                  {caseDoc.disbursedAt ? ` on ${formatDateTime(caseDoc.disbursedAt)}` : ""} via {caseDoc.paymentMethod}{" "}
+                  (ref <span className="mono-ref">{caseDoc.paymentReference}</span>).
                 </div>
               )}
 

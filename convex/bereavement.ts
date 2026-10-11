@@ -22,6 +22,14 @@ type Relationship = "mother" | "father" | "spouse" | "child";
 /** A member can claim for at most this many children. */
 const MAX_CHILD_CLAIMS = 4;
 
+/** What the union pays the bereaved member, by relationship (KES). Mirrored in src/lib/bereavementFlow.ts. */
+const WELFARE_AMOUNT: Record<Relationship, number> = {
+  child: 20_000,
+  mother: 30_000,
+  father: 30_000,
+  spouse: 40_000,
+};
+
 const normName =(n: string) => n.trim().toLowerCase().replace(/\s+/g, " ");
 
 /**
@@ -453,7 +461,6 @@ export const updateStatus = mutation({
     id: v.id("bereavementCases"),
     newStatus: bereavementStatusValidator,
     statusReason: v.optional(v.string()),
-    supportAmount: v.optional(v.number()),
     paymentMethod: v.optional(v.string()),
     paymentReference: v.optional(v.string()),
   },
@@ -470,7 +477,7 @@ export const updateStatus = mutation({
 
     // Fast track: a fresh claim can be verified in one click. The skipped
     // "under review" step is still recorded so the timeline stays complete.
-    const CHAIN = ["submitted", "under_review", "verified", "support_approved"];
+    const CHAIN = ["submitted", "under_review", "verified", "support_approved", "disbursed"];
     const fromIdx = CHAIN.indexOf(targetCase.status);
     const toIdx = CHAIN.indexOf(args.newStatus);
     // Skipped steps in between are still recorded so the timeline stays complete.
@@ -497,8 +504,20 @@ export const updateStatus = mutation({
       }
     }
 
-    const supportAmount = args.supportAmount ?? targetCase.supportAmount;
+    const paymentMethod = args.paymentMethod?.trim() || undefined;
     const paymentReference = args.paymentReference?.trim() || undefined;
+    if (args.newStatus === "disbursed" && (!paymentMethod || !paymentReference)) {
+      throw new ConvexError({
+        code: "PAYMENT_DETAILS_REQUIRED",
+        message: "Enter how the money was sent and its reference (e.g. the M-Pesa code) to record the payment.",
+      });
+    }
+
+    // The amount is fixed by the relationship and set on approval; it is never taken from the client.
+    const supportAmount =
+      args.newStatus === "support_approved" || args.newStatus === "disbursed"
+        ? WELFARE_AMOUNT[targetCase.relationship as Relationship]
+        : targetCase.supportAmount;
 
     const now = Date.now();
     const note = args.statusReason?.trim() || undefined;
@@ -514,8 +533,7 @@ export const updateStatus = mutation({
       stage: stageOf(args.newStatus),
       statusReason: args.statusReason,
       supportAmount,
-      paymentMethod:
-        args.newStatus === "disbursed" ? args.paymentMethod?.trim() || undefined : targetCase.paymentMethod,
+      paymentMethod: args.newStatus === "disbursed" ? paymentMethod : targetCase.paymentMethod,
       paymentReference: args.newStatus === "disbursed" ? paymentReference : targetCase.paymentReference,
       disbursedAt: args.newStatus === "disbursed" ? now : targetCase.disbursedAt,
       history: trail,
@@ -527,9 +545,7 @@ export const updateStatus = mutation({
       under_review: "The welfare committee has started reviewing your claim.",
       verified: "Your claim has been verified and approved by the branch.",
       support_approved: "Your bereavement claim has been approved by the branch. Members have been told how to support you.",
-      disbursed: `Your welfare relief has been paid${
-        paymentReference ? ` (ref ${paymentReference})` : ""
-      }.`,
+      disbursed: `Your bereavement claim is approved and the union has sent you KES ${supportAmount?.toLocaleString("en-KE")} via ${paymentMethod} (ref ${paymentReference}).`,
       closed: "Your welfare case has been closed.",
       declined: "Your claim was declined.",
     };
@@ -570,6 +586,7 @@ export const updateStatus = mutation({
         fromStatus: targetCase.status,
         toStatus: args.newStatus,
         reason: args.statusReason,
+        ...(args.newStatus === "disbursed" ? { amount: supportAmount, paymentMethod, paymentReference } : {}),
       },
     });
 

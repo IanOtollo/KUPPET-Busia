@@ -187,12 +187,19 @@ export default function BereavementDetailPage({
               {caseDoc.supportAmount && (
                 <div className="p-3 rounded-[var(--r-md)] bg-[var(--success-soft)] border border-[var(--success)] text-center">
                   <span className="text-[13px] uppercase font-semibold text-[var(--success)] block">
-                    Approved Welfare Support
+                    {caseDoc.status === "disbursed" ? "Welfare Support Sent" : "Approved Welfare Support"}
                   </span>
                   <span className="mono-ref text-[20px] font-bold text-[var(--success)]">
                     {formatKES(caseDoc.supportAmount)}
                   </span>
                 </div>
+              )}
+
+              {caseDoc.status === "disbursed" && caseDoc.paymentReference && (
+                <p className="text-[14.5px] text-[var(--ink-body)] break-words">
+                  Sent via {caseDoc.paymentMethod}, ref{" "}
+                  <span className="mono-ref font-semibold">{caseDoc.paymentReference}</span>.
+                </p>
               )}
 
               {caseDoc.statusReason && (
