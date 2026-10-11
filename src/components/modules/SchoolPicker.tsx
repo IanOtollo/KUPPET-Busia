@@ -13,7 +13,7 @@ type School = { _id: string; name: string; subCounty: string; isActive: boolean 
 const normalise = (s: string) =>
   s
     .toLowerCase()
-    .replace(/\b(secondary|school|sec|sch)\b/g, " ")
+    .replace(/\b(secondary|school|sec|sch|high)\b/g, " ")
     .replace(/[^a-z0-9]+/g, "");
 
 function distance(a: string, b: string): number {

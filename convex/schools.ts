@@ -77,7 +77,7 @@ const SCHOOL_NAME_RE = /^[\p{L}\p{N} .,'&()\/-]+$/u;
 function schoolMatchKey(name: string): string {
   return name
     .toLowerCase()
-    .replace(/\b(secondary|school|sec|sch)\b/g, " ")
+    .replace(/\b(secondary|school|sec|sch|high)\b/g, " ")
     .replace(/[^a-z0-9]+/g, "");
 }
 
@@ -429,5 +429,31 @@ export const correctMySchool = mutation({
       metadata: { from: current.name, to: next.name },
     });
     return { name: next.name };
+  },
+});
+
+/**
+ * One-off, CLI only: folds duplicate school records into the one to keep. Teachers
+ * registered at a duplicate are moved to the kept school, then the duplicate is deleted.
+ * Pass `{ pairs: [{ keep: "<name>", drop: "<name>" }] }`.
+ */
+export const mergeDuplicates = internalMutation({
+  args: { pairs: v.array(v.object({ keep: v.string(), drop: v.string() })) },
+  handler: async (ctx: MutationCtx, args) => {
+    const done: string[] = [];
+    for (const { keep, drop } of args.pairs) {
+      const kept = await ctx.db.query("schools").withIndex("by_name", (q) => q.eq("name", keep)).first();
+      const dupe = await ctx.db.query("schools").withIndex("by_name", (q) => q.eq("name", drop)).first();
+      if (!kept || !dupe || kept._id === dupe._id) continue;
+      await ctx.scheduler.runAfter(0, internal.schools.renameMembers, {
+        oldName: dupe.name,
+        newName: kept.name,
+        subCounty: kept.subCounty,
+      });
+      await ctx.db.delete(dupe._id);
+      done.push(`${drop} -> ${keep}`);
+    }
+    if (done.length) await requestMembersRefresh(ctx);
+    return done;
   },
 });
