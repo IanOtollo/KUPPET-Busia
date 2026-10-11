@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { formatShortDate } from "@/lib/format";
+import { formatShortDate, formatKES } from "@/lib/format";
 import { Download, ChevronRight, Clock } from "lucide-react";
 import { useQuery, usePaginatedQuery, useConvex } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
@@ -23,7 +23,7 @@ import { SUB_COUNTIES } from "@/lib/constants";
 import { Doc } from "../../../../../convex/_generated/dataModel";
 import { toast } from "sonner";
 import { downloadExcel } from "@/lib/exportExcel";
-import { QUEUE_TABS, QueueTabKey, daysSince, isOpen } from "@/lib/bereavementFlow";
+import { QUEUE_TABS, QueueTabKey, daysSince, isOpen, WELFARE_AMOUNT } from "@/lib/bereavementFlow";
 import type { SubCounty } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
@@ -83,6 +83,8 @@ export default function AdminBereavementPage() {
           { header: "Relationship" },
           { header: "Date of Loss" },
           { header: "Status" },
+          { header: "Amount (KES)" },
+          { header: "Payment" },
         ],
         rows: rows.map((c) => [
           c.reference,
@@ -94,6 +96,8 @@ export default function AdminBereavementPage() {
           c.relationship,
           c.dateOfBereavement,
           c.status,
+          c.supportAmount ?? WELFARE_AMOUNT[c.relationship] ?? 0,
+          c.status === "disbursed" ? "Paid" : c.status === "support_approved" ? "Awaiting payment" : "",
         ]),
       });
       toast.success(`Exported ${rows.length} claim${rows.length === 1 ? "" : "s"} to Excel.`);
@@ -157,6 +161,28 @@ export default function AdminBereavementPage() {
                 {waiting === 0 ? "Submitted today" : `Submitted ${waiting} day${waiting === 1 ? "" : "s"} ago`}
               </span>
             )}
+          </div>
+        );
+      },
+    },
+    {
+      key: "supportAmount",
+      header: "Support",
+      render: (item) => {
+        if (item.status === "declined") return <span className="text-[var(--ink-muted)]">—</span>;
+        const amount = item.supportAmount ?? WELFARE_AMOUNT[item.relationship];
+        const paid = item.status === "disbursed" || item.status === "closed";
+        return (
+          <div>
+            <span className="mono-ref font-semibold text-[var(--ink)] block">{formatKES(amount)}</span>
+            <span
+              className={cn(
+                "text-[13px] font-semibold",
+                paid ? "text-[var(--success)]" : "text-[var(--ink-muted)]"
+              )}
+            >
+              {paid ? "Paid" : item.status === "support_approved" ? "Awaiting payment" : "To pay on approval"}
+            </span>
           </div>
         );
       },
