@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { useQuery } from "convex/react";
-import { Check, Plus, Search } from "lucide-react";
+import { Check, Search } from "lucide-react";
 import { api } from "../../../convex/_generated/api";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -32,9 +32,9 @@ function distance(a: string, b: string): number {
 }
 
 /**
- * A search box over the branch's school directory. Teachers pick their school
- * from the list, which keeps one spelling per school. If the school really isn't
- * there, one clear option adds it.
+ * A plain text box for the teacher's school. Nothing is suggested until they start
+ * typing; if what they type closely matches a school already registered, it is offered
+ * so the same school isn't saved under two spellings.
  */
 export function SchoolPicker({
   id = "school",
@@ -42,7 +42,7 @@ export function SchoolPicker({
   onChange,
   onPick,
   error,
-  placeholder = "Search for your school…",
+  placeholder = "Enter your school",
 }: {
   id?: string;
   value: string;
@@ -62,7 +62,7 @@ export function SchoolPicker({
 
   const { matches, exact } = useMemo(() => {
     const live = schools.filter((s) => s.isActive);
-    if (!key) return { matches: live.slice(0, 6), exact: null as School | null };
+    if (!key) return { matches: [] as School[], exact: null as School | null };
     const scored = live
       .map((s) => {
         const n = normalise(s.name);
@@ -78,14 +78,11 @@ export function SchoolPicker({
     return { matches: scored.slice(0, 6).map((x) => x.s), exact: scored.find((x) => x.score === 0)?.s ?? null };
   }, [schools, key]);
 
-  const showAdd = query.length >= 3 && !exact;
-  const rows = [...matches.map((s) => ({ type: "school" as const, s })), ...(showAdd ? [{ type: "add" as const }] : [])];
+  const rows = matches.map((s) => ({ type: "school" as const, s }));
 
   const choose = (row: (typeof rows)[number]) => {
-    if (row.type === "school") {
-      onChange(row.s.name);
-      onPick?.({ name: row.s.name, subCounty: row.s.subCounty });
-    }
+    onChange(row.s.name);
+    onPick?.({ name: row.s.name, subCounty: row.s.subCounty });
     setOpen(false);
   };
 
@@ -147,7 +144,7 @@ export function SchoolPicker({
         >
           {rows.map((row, i) => (
             <li
-              key={row.type === "school" ? row.s._id : "add"}
+              key={row.s._id}
               role="option"
               aria-selected={i === active}
               tabIndex={-1}
@@ -156,38 +153,19 @@ export function SchoolPicker({
               onMouseEnter={() => setActive(i)}
               className={cn(
                 "flex cursor-pointer items-center gap-3 rounded-[var(--r-sm)] px-3 py-3 text-[16px]",
-                i === active ? "bg-[var(--union-soft)]" : "",
-                row.type === "add" && "border-t border-[var(--line)] text-[var(--union)]"
+                i === active ? "bg-[var(--union-soft)]" : ""
               )}
             >
-              {row.type === "school" ? (
-                <>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate font-medium text-[var(--ink)]">{row.s.name}</span>
-                    <span className="block text-[14px] text-[var(--ink-muted)]">{row.s.subCounty}</span>
-                  </span>
-                  {exact?._id === row.s._id && <Check className="h-5 w-5 shrink-0 text-[var(--success)]" />}
-                </>
-              ) : (
-                <>
-                  <Plus className="h-5 w-5 shrink-0" />
-                  <span className="min-w-0">
-                    My school isn&apos;t listed: add <strong className="break-words">&ldquo;{query}&rdquo;</strong>
-                  </span>
-                </>
-              )}
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-medium text-[var(--ink)]">{row.s.name}</span>
+                <span className="block text-[14px] text-[var(--ink-muted)]">{row.s.subCounty}</span>
+              </span>
+              {exact?._id === row.s._id && <Check className="h-5 w-5 shrink-0 text-[var(--success)]" />}
             </li>
           ))}
         </ul>
       )}
 
-      {query.length >= 3 && !open && (
-        <p className={cn("mt-2 text-[15px]", exact ? "text-[var(--success)]" : "text-[var(--ink-muted)]")}>
-          {exact
-            ? "Found in the branch directory."
-            : "Not in the directory yet. It will be added when you finish signing up."}
-        </p>
-      )}
     </div>
   );
 }
