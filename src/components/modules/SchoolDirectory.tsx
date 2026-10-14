@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { toast } from "sonner";
-import { Check, CheckCircle2, Pencil, Plus, School, Search, Trash2, X, XCircle } from "lucide-react";
+import { CheckCircle2, Pencil, Plus, School, Search, Trash2, XCircle } from "lucide-react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,8 +27,8 @@ const EMPTY: Form = { id: null, name: "", subCounty: "" };
 
 /**
  * The branch's school directory: search, add, edit, deactivate and remove.
- * Teachers pick from this list when they register; schools they type that are
- * missing get added here automatically and are flagged for review.
+ * Teachers pick from this list when they register; a school they type that is
+ * missing is added here automatically.
  */
 export function SchoolDirectory() {
   const schools = useQuery(api.schools.listWithRosters);
@@ -36,30 +36,19 @@ export function SchoolDirectory() {
   const updateSchool = useMutation(api.schools.update);
   const toggleActive = useMutation(api.schools.toggleActive);
   const removeSchool = useMutation(api.schools.remove);
-  const approveSchool = useMutation(api.schools.approve);
-  const rejectSchool = useMutation(api.schools.reject);
   const confirm = useConfirm();
 
   const [search, setSearch] = useState("");
   const [subFilter, setSubFilter] = useState("all");
   const [form, setForm] = useState<Form | null>(null);
   const [saving, setSaving] = useState(false);
-  const [reviewing, setReviewing] = useState(false);
-
-  // Rejected schools are waiting on their teachers to correct them; they are not part of the directory.
-  const directory = useMemo(() => (schools ?? []).filter((s) => s.reviewStatus !== "rejected"), [schools]);
-  const pending = useMemo(
-    () => directory.filter((s) => s.addedBy === "teacher" && (s.reviewStatus ?? "pending") === "pending"),
-    [directory]
-  );
-  const inReview = reviewing && pending.length > 0;
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return (inReview ? pending : directory)
+    return (schools ?? [])
       .filter((s) => (subFilter === "all" || s.subCounty === subFilter) && (!q || s.name.toLowerCase().includes(q)))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [directory, pending, inReview, search, subFilter]);
+  }, [schools, search, subFilter]);
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,37 +95,6 @@ export function SchoolDirectory() {
     }
   };
 
-  const approve = async (id: Id<"schools">, name: string) => {
-    try {
-      await approveSchool({ id });
-      toast.success(`${name} approved. It stays in the directory.`);
-    } catch {
-      toast.error("Couldn't approve the school.");
-    }
-  };
-
-  const reject = async (id: Id<"schools">, name: string, teachers: number) => {
-    const ok = await confirm({
-      title: `Reject ${name}?`,
-      description: (
-        <p>
-          It is taken out of the suggestions.{" "}
-          {teachers > 0
-            ? `The ${teachers} teacher${teachers === 1 ? "" : "s"} registered at it will be asked to submit the correct, official school when they next sign in.`
-            : "No teacher is registered at it, so the record is simply deleted."}
-        </p>
-      ),
-      confirmLabel: "Yes, reject it",
-    });
-    if (!ok) return;
-    try {
-      await rejectSchool({ id });
-      toast.success(`${name} rejected.`);
-    } catch {
-      toast.error("Couldn't reject the school.");
-    }
-  };
-
   const remove = async (id: Id<"schools">, name: string) => {
     const ok = await confirm({
       title: `Remove ${name}?`,
@@ -160,7 +118,7 @@ export function SchoolDirectory() {
           <div className="flex items-center gap-2">
             <School className="h-5 w-5 text-[var(--union)]" />
             <div>
-              <CardTitle>Registered Schools ({directory.length})</CardTitle>
+              <CardTitle>Registered Schools ({schools?.length ?? 0})</CardTitle>
               <CardDescription>
                 Teachers pick their school from this list when they register. A school they type that isn&apos;t here
                 is added automatically.
@@ -196,24 +154,6 @@ export function SchoolDirectory() {
           </div>
         </div>
 
-        {pending.length > 0 &&
-          (inReview ? (
-            <p className="text-[14.5px] text-[var(--ink-muted)]">
-              Showing the {pending.length} school{pending.length === 1 ? "" : "s"} added by teachers. Fix the spelling
-              if needed, then approve to keep it or reject it.{" "}
-              <button type="button" className="underline text-[var(--union)] cursor-pointer" onClick={() => setReviewing(false)}>
-                Back to all schools
-              </button>
-            </p>
-          ) : (
-            <p className="text-[14.5px] text-[var(--ink-muted)]">
-              {pending.length} school{pending.length === 1 ? " was" : "s were"} added by teachers while registering.{" "}
-              <button type="button" className="underline text-[var(--union)] cursor-pointer" onClick={() => setReviewing(true)}>
-                Review them
-              </button>
-            </p>
-          ))}
-
         <div className="max-h-[60vh] overflow-y-auto divide-y divide-[var(--line)] rounded-md border border-[var(--line)]">
           {schools === undefined ? (
             <div className="p-4 text-center text-[15px] text-[var(--ink-muted)]">Loading schools…</div>
@@ -242,27 +182,6 @@ export function SchoolDirectory() {
                   >
                     <Pencil className="h-4 w-4 mr-1" /> Edit
                   </Button>
-                  {inReview ? (
-                    <>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-emerald-700"
-                        onClick={() => approve(s._id, s.name)}
-                      >
-                        <Check className="h-4 w-4 mr-1" /> Approve
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-[var(--danger)]"
-                        onClick={() => reject(s._id, s.name, s.totalTeachers)}
-                      >
-                        <X className="h-4 w-4 mr-1" /> Reject
-                      </Button>
-                    </>
-                  ) : (
-                  <>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -288,8 +207,6 @@ export function SchoolDirectory() {
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
-                  </>
-                  )}
                 </div>
               </div>
             ))

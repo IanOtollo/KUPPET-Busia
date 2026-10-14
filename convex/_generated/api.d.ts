@@ -22,7 +22,6 @@ import type * as harassment from "../harassment.js";
 import type * as http from "../http.js";
 import type * as lib_audit from "../lib/audit.js";
 import type * as lib_auth from "../lib/auth.js";
-import type * as lib_busiaSchools from "../lib/busiaSchools.js";
 import type * as lib_loginAlias from "../lib/loginAlias.js";
 import type * as lib_money from "../lib/money.js";
 import type * as lib_notify from "../lib/notify.js";
@@ -66,7 +65,6 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   "lib/audit": typeof lib_audit;
   "lib/auth": typeof lib_auth;
-  "lib/busiaSchools": typeof lib_busiaSchools;
   "lib/loginAlias": typeof lib_loginAlias;
   "lib/money": typeof lib_money;
   "lib/notify": typeof lib_notify;

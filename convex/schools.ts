@@ -1,12 +1,11 @@
 import { query, mutation, internalMutation, QueryCtx, MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
-import { getCurrentUser, requireRole, requireUser } from "./lib/auth";
+import { requireRole } from "./lib/auth";
 import { writeAudit } from "./lib/audit";
 import { subCountyValidator } from "./lib/validators";
 import { readMemberStats, schoolKey, requestMembersRefresh } from "./stats";
 import { internal } from "./_generated/api";
 import { ConvexError } from "convex/values";
-import { BUSIA_SCHOOLS } from "./lib/busiaSchools";
 
 /**
  * List all secondary schools in Busia County.
@@ -93,32 +92,18 @@ function cleanSchoolName(raw: string): string {
 }
 
 /**
- * Returns the directory's spelling of a school, adding it (flagged as
- * teacher-added) when it isn't there yet. Used wherever a teacher types a school.
+ * Returns the directory's spelling of a school, adding it when it isn't there yet
+ * (spelling-insensitive, so the same school is never listed twice). Used wherever a
+ * teacher types a school.
  */
 export async function ensureSchool(ctx: MutationCtx, rawName: string, subCounty: string) {
   const name = cleanSchoolName(rawName);
   const key = schoolMatchKey(name);
   const existing = await ctx.db.query("schools").take(3000);
   const match = existing.find((s) => schoolMatchKey(s.name) === key);
-  if (match) {
-    if (match.reviewStatus === "rejected") {
-      throw new ConvexError({
-        code: "SCHOOL_REJECTED",
-        message: `"${match.name}" was rejected by the branch. Enter the correct, official name of your school.`,
-      });
-    }
-    return { name: match.name, created: false };
-  }
+  if (match) return { name: match.name, created: false };
 
-  await ctx.db.insert("schools", {
-    name,
-    subCounty: subCounty as any,
-    isActive: true,
-    addedBy: "teacher",
-    addedAt: Date.now(),
-    reviewStatus: "pending",
-  });
+  await ctx.db.insert("schools", { name, subCounty: subCounty as any, isActive: true });
   return { name, created: true };
 }
 
@@ -291,144 +276,32 @@ export const remove = mutation({
 });
 
 /**
- * One-off, CLI only: loads the Busia secondary schools list. Skips any school
- * already in the directory (same spelling-insensitive match as registration), so
- * it is safe to re-run.
+ * One-off, CLI only: empties the directory down to the one school to keep. Schools that
+ * still have teachers registered are never deleted (they are reported instead), and the
+ * kept school is stripped of any teacher-added / review flags.
  */
-export const importDirectory = internalMutation({
-  args: {},
-  handler: async (ctx: MutationCtx) => {
-    const existing = await ctx.db.query("schools").take(3000);
-    const known = new Set(existing.map((s) => schoolMatchKey(s.name)));
-    let added = 0;
-    for (const [name, subCounty] of BUSIA_SCHOOLS) {
-      const key = schoolMatchKey(name);
-      if (known.has(key)) continue;
-      known.add(key);
-      await ctx.db.insert("schools", { name, subCounty, isActive: true });
-      added++;
-    }
-    return { added, skipped: BUSIA_SCHOOLS.length - added, total: existing.length + added };
-  },
-});
-
-/** Admin: confirm a teacher-added school so it stays in the directory. */
-export const approve = mutation({
-  args: { id: v.id("schools") },
+export const resetDirectory = internalMutation({
+  args: { keep: v.string() },
   handler: async (ctx: MutationCtx, args) => {
-    const admin = await requireRole(ctx, ["admin", "superadmin"]);
-    const school = await ctx.db.get(args.id);
-    if (!school) throw new ConvexError({ code: "NOT_FOUND", message: "School record not found." });
-    await ctx.db.patch(args.id, { reviewStatus: "approved" });
-    await writeAudit(ctx, {
-      actorId: admin._id,
-      actorRole: admin.role,
-      action: "APPROVE_SCHOOL",
-      entityType: "schools",
-      entityId: args.id,
-      metadata: { schoolName: school.name },
-    });
-    return { approved: true };
-  },
-});
-
-/**
- * Admin: reject a teacher-added school. It leaves the suggestions, and every teacher
- * registered at it is told to submit the correct, official school the next time they sign in.
- */
-export const reject = mutation({
-  args: { id: v.id("schools") },
-  handler: async (ctx: MutationCtx, args) => {
-    const admin = await requireRole(ctx, ["admin", "superadmin"]);
-    const school = await ctx.db.get(args.id);
-    if (!school) throw new ConvexError({ code: "NOT_FOUND", message: "School record not found." });
-
-    await ctx.db.patch(args.id, { reviewStatus: "rejected", isActive: false });
-
-    const teachers = await ctx.db
-      .query("users")
-      .withIndex("by_school", (q) => q.eq("school", school.name))
-      .take(500);
-    const now = Date.now();
-    for (const t of teachers) {
-      await ctx.db.insert("notifications", {
-        userId: t._id,
-        type: "school_rejected",
-        title: "Your school was not accepted",
-        body: `"${school.name}" could not be confirmed as an official school. Please submit the correct, official name of your school.`,
-        isRead: false,
-        createdAt: now,
-      });
+    const keepKey = schoolMatchKey(args.keep);
+    const all = await ctx.db.query("schools").take(3000);
+    let removed = 0;
+    const inUse: string[] = [];
+    for (const s of all) {
+      if (schoolMatchKey(s.name) === keepKey) {
+        await ctx.db.replace(s._id, { name: s.name, subCounty: s.subCounty, isActive: true });
+        continue;
+      }
+      const teacher = await ctx.db.query("users").withIndex("by_school", (q) => q.eq("school", s.name)).first();
+      if (teacher) {
+        inUse.push(s.name);
+        continue;
+      }
+      await ctx.db.delete(s._id);
+      removed++;
     }
-
-    // Nobody registered at it: nothing to correct, so drop the record.
-    if (teachers.length === 0) await ctx.db.delete(args.id);
-
-    await writeAudit(ctx, {
-      actorId: admin._id,
-      actorRole: admin.role,
-      action: "REJECT_SCHOOL",
-      entityType: "schools",
-      entityId: args.id,
-      metadata: { schoolName: school.name, teachersNotified: teachers.length },
-    });
-    return { rejected: true, teachers: teachers.length };
-  },
-});
-
-/** The signed-in teacher's school, if the branch rejected it. Drives the "submit the correct school" prompt. */
-export const myRejectedSchool = query({
-  args: {},
-  handler: async (ctx: QueryCtx) => {
-    try {
-      const user = await getCurrentUser(ctx);
-      const school = await ctx.db
-        .query("schools")
-        .withIndex("by_name", (q) => q.eq("name", user.school))
-        .first();
-      return school?.reviewStatus === "rejected" ? { name: school.name } : null;
-    } catch {
-      return null;
-    }
-  },
-});
-
-/** A teacher whose school was rejected submits the correct one. */
-export const correctMySchool = mutation({
-  args: { name: v.string(), subCounty: subCountyValidator },
-  handler: async (ctx: MutationCtx, args) => {
-    const user = await requireUser(ctx);
-    const current = await ctx.db
-      .query("schools")
-      .withIndex("by_name", (q) => q.eq("name", user.school))
-      .first();
-    if (current?.reviewStatus !== "rejected") {
-      throw new ConvexError({
-        code: "NOT_REJECTED",
-        message: "Your school is fine. To move schools, use Transfers & Swaps.",
-      });
-    }
-
-    const next = await ensureSchool(ctx, args.name, args.subCounty);
-    await ctx.db.patch(user._id, { school: next.name, subCounty: args.subCounty, updatedAt: Date.now() });
-
-    // The rejected record has served its purpose once its last teacher has moved.
-    const remaining = await ctx.db
-      .query("users")
-      .withIndex("by_school", (q) => q.eq("school", current.name))
-      .first();
-    if (!remaining) await ctx.db.delete(current._id);
-
     await requestMembersRefresh(ctx);
-    await writeAudit(ctx, {
-      actorId: user._id,
-      actorRole: user.role,
-      action: "CORRECT_REJECTED_SCHOOL",
-      entityType: "users",
-      entityId: user._id,
-      metadata: { from: current.name, to: next.name },
-    });
-    return { name: next.name };
+    return { removed, inUse };
   },
 });
 
