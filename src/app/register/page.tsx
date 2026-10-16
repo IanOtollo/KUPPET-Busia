@@ -31,7 +31,7 @@ import { useConvex } from "convex/react";
 import { SchoolPicker } from "@/components/modules/SchoolPicker";
 import { api } from "../../../convex/_generated/api";
 import { toast } from "sonner";
-import { Eye, EyeOff, ArrowLeft, ArrowRight, ShieldCheck, BookOpen, Check } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft, ArrowRight, ShieldCheck, BookOpen, Check, MailCheck } from "lucide-react";
 
 // Step 1 Validation Schema
 const step1Schema = z.object({
@@ -101,6 +101,8 @@ type FormData = Step1Data & Step2Data;
 
 export default function RegisterPage() {
   const router = useRouter();
+  // Set once the application is in: swaps the form for the "check your email" screen.
+  const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
   const [step, setStep] = useState<1 | 2>(1);
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -201,8 +203,8 @@ export default function RegisterPage() {
         gender: data.gender,
       });
 
-      toast.success("Application submitted. The branch office must approve your membership before you can sign in.");
-      router.replace("/login?pending=1");
+      setSubmittedEmail(data.email.trim().toLowerCase());
+      window.scrollTo({ top: 0 });
     } catch (err: any) {
       const msg =
         err.data?.message ||
@@ -213,6 +215,34 @@ export default function RegisterPage() {
       setIsSubmitting(false);
     }
   };
+
+  if (submittedEmail) {
+    return (
+      <div className="min-h-screen bg-[var(--canvas)] flex items-center justify-center px-4 py-12 sm:px-6">
+        <div className="w-full max-w-lg rounded-2xl border border-[var(--line)] bg-white p-8 text-center shadow-[var(--shadow-panel)] sm:p-10">
+          <Image src="/logo.png" alt="KUPPET Logo" width={128} height={64} className="mx-auto mb-6 h-14 w-auto object-contain select-none" priority />
+          <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+            <MailCheck className="h-8 w-8" />
+          </span>
+          <h1 className="mt-6 font-serif text-2xl font-bold tracking-tight text-[var(--union)] sm:text-3xl">
+            Application received
+          </h1>
+          <p className="mt-3 text-[17px] leading-relaxed text-[var(--ink-body)]">
+            The branch office will verify your details. Once you&apos;re approved, we&apos;ll send an email to
+          </p>
+          <p className="mt-2 break-all rounded-xl bg-[var(--surface-sunk)] px-4 py-3 text-[17px] font-semibold text-[var(--ink)]">
+            {submittedEmail}
+          </p>
+          <p className="mt-4 text-[15px] leading-relaxed text-[var(--ink-muted)]">
+            Please check your inbox, and your spam folder too. You can sign in after you get that email.
+          </p>
+          <Button className="mt-8 w-full" onClick={() => router.push("/login")}>
+            Go to sign in
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[var(--canvas)] py-12 px-4 sm:px-6 lg:px-8 relative">

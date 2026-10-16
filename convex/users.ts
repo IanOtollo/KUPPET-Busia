@@ -310,6 +310,12 @@ export const approveMember = mutation({
       createdAt: now,
     });
 
+    await ctx.scheduler.runAfter(0, internal.emails.sendApproval, {
+      email: targetUser.email,
+      fullName: targetUser.fullName,
+      tscNumber: targetUser.tscNumber,
+    });
+
     await writeAudit(ctx, {
       action: "user.approved",
       entityType: "users",

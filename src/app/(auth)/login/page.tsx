@@ -22,7 +22,7 @@ const INVALID_CREDENTIALS = "Invalid TSC number or password. Please try again.";
 const BLOCKED_MESSAGES: Record<string, string> = {
   pending_verification: "Please verify your email address to continue.",
   pending_approval:
-    "Your membership registration is awaiting branch office approval. You'll be able to sign in once a branch administrator verifies your details.",
+    "Your registration is awaiting branch office approval. We'll email you as soon as it's approved, then you can sign in.",
   suspended: "Your account has been suspended. Please contact the branch office.",
   rejected: "Your membership registration was not approved. Please contact the branch office.",
   idle: "You were signed out after 10 minutes of inactivity. Please sign in again.",

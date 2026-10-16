@@ -53,11 +53,17 @@ export default function RootLayout({
           <PageTitle />
           {children}
           <Toaster
-            position="top-right"
+            position="top-center"
+            richColors
+            closeButton
+            visibleToasts={3}
             toastOptions={{
-              duration: 4000,
-              className:
-                "border border-[var(--line)] bg-[var(--surface)] text-[var(--ink)] shadow-[var(--shadow-panel)] rounded-[var(--r-md)]",
+              duration: 6000,
+              classNames: {
+                toast: "!rounded-xl !border !p-4 !shadow-lg !gap-3",
+                title: "!text-[16px] !font-semibold !leading-snug",
+                description: "!text-[14.5px]",
+              },
             }}
           />
         </ConvexClientProvider>
